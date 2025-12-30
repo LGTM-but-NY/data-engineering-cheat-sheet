@@ -1,0 +1,532 @@
+\documentclass[landscape]{article}
+\sloppy
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{multicol} % for multi-column layout
+\usepackage{enumitem} % to tighten list spacing
+% Tight margins for cheat sheet in landscape (A4 297mm x 210mm)
+\geometry{a4paper, landscape, left=8mm, right=8mm, top=8mm, bottom=8mm}
+
+\title{Data Engineering Cheat Sheet}
+\author{Son Hoang Pham}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\footnotesize % smaller font for dense content
+% Zero / minimal spacing in itemize and enumerate lists
+\setlist{itemsep=0pt,topsep=2pt,parsep=0pt,partopsep=0pt}
+\begin{multicols}{3}
+    \setlength{\columnsep}{8pt} % space between columns
+    \setlength{\multicolsep}{2pt} % vertical space before/after multicols
+    \raggedcolumns\section{Principles in Database Analysis \& Design}
+
+    \subsection{Design Phases Overview}
+    \begin{enumerate}[leftmargin=*,itemsep=2pt]
+        \item \textbf{Conceptual:} \textit{Goal/Focus} — capture requirements and semantics (implementation-independent); \textit{Key Model/Tool} — ER/EER; \textit{Output} — conceptual schema (entities, attributes, relationships, constraints).
+        \item \textbf{Logical:} \textit{Goal/Focus} — map conceptual to target DBMS model (e.g., relational); \textit{Key Model/Tool} — ER-to-relational mapping, normalization (FDs); \textit{Output} — relational schema (tables, keys, integrity constraints).
+        \item \textbf{Physical:} \textit{Goal/Focus} — specify storage structures and access paths for performance; \textit{Key Model/Tool} — workload analysis, indexing, file organization, hashing; \textit{Output} — internal schema (storage structures, indexes, access paths).
+    \end{enumerate}
+
+    \subsection{Conceptual Design Principles}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Requirements Analysis:} Engage users/domain experts to capture data requirements and functional requirements (operations/transactions).
+        \item \textbf{ER Components:} \textbf{Entity} (e.g., EMPLOYEE), \textbf{Attribute} (simple/composite/multivalued/derived), \textbf{Relationship} (associations among entities).
+        \item \textbf{Structural Constraints:} Cardinality ratios (1:1, 1:N, M:N) and participation constraints (\textit{total} vs \textit{partial}).
+        \item \textbf{Weak Entities:} Identified via an \textbf{identifying relationship} to an \textbf{owner} entity type and a \textbf{partial key}; weak entities have \textit{total participation} in the identifying relationship.
+        \item \textbf{Top-Down Refinement:} Iteratively refine broad entities; apply specialization/generalization (EER).
+    \end{itemize}
+
+    \subsection{Logical Design Principles}
+    \subsubsection{Relational Model Fundamentals}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Structure:} Relation schema $R(A_1, \dots, A_n)$; tuples are unordered and duplicates are disallowed in the formal model.
+        \item \textbf{Integrity Constraints:} Domain constraints (atomic, typed), key constraints (super/candidate/primary), entity integrity (primary key not NULL), referential integrity (foreign key values appear in referenced primary key).
+    \end{itemize}
+    \subsubsection{Normalization Theory}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Functional Dependency (FD):} $X \rightarrow Y$ means tuples equal on $X$ must be equal on $Y$.
+        \item \textbf{Design Properties:}
+        \begin{enumerate}[leftmargin=*]
+            \item \textbf{Lossless Join (Non-Additive):} Decompositions must not create spurious tuples.
+            \item \textbf{Dependency Preservation:} Original FDs enforceable on decomposed relations.
+            \item \textbf{Minimal Redundancy:} Avoid update anomalies (insertion, deletion, modification).
+        \end{enumerate}
+        \item \textbf{Normal Forms:} 1NF (atomic), 2NF (full FD on key), 3NF (no transitive FD), BCNF (for every FD $X \rightarrow A$, $X$ is a superkey; may not preserve dependencies). 4NF/5NF address multivalued and join dependencies.
+        \item \textbf{Denormalization:} Store joins as base relations to improve performance at the cost of anomalies.
+    \end{itemize}
+
+    \subsection{Physical Design Principles}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Storage Architecture:} Persistent data on disks/SSDs in fixed-size \textbf{blocks}.
+        \item \textbf{Workload Analysis (Job Mix):} Identify accessed relations/files, selection conditions (equality/inequality/range), and update vs retrieval frequencies.
+        \item \textbf{Indexing Structures:} Ordered indices (B+-Trees) and hash indices; \textbf{primary/clustering} index (determines physical order; at most one per file) vs \textbf{secondary} indices.
+        \item \textbf{Query Optimization:} Cost-based (statistics-driven) and heuristic rules (push selections/projections early) to choose efficient plans.
+    \end{itemize}
+
+    \section{Data Storage \& Indexing}
+
+    % ============================================================================
+    % PART 1: FOUNDATIONAL CONCEPTS
+    % ============================================================================
+    \subsection{Index Fundamentals}
+
+    \subsubsection{What is an Index?}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Purpose:} Accelerate data retrieval by creating auxiliary access paths to records.
+        \item \textbf{Search Key:} Attribute (s) used to locate records; need not be the primary key; can be composite (multi-column).
+        \item \textbf{Trade-off:} Faster reads vs slower writes (index maintenance overhead on INSERT/UPDATE/DELETE).
+    \end{itemize}
+
+    \subsubsection{Index Classification}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{By Structure:}
+        \begin{itemize}
+            \item \textit{Ordered:} Entries sorted (e.g., B+-tree); supports range queries.
+            \item \textit{Hash:} Key hashed to bucket; fast equality lookups only.
+        \end{itemize}
+        \item \textbf{By Density:}
+        \begin{itemize}
+            \item \textit{Dense:} One entry per distinct search-key value.
+            \item \textit{Sparse:} One entry per block (or per distinct clustering value); smaller, cheaper to maintain.
+        \end{itemize}
+        \item \textbf{By Physical Ordering:}
+        \begin{itemize}
+            \item \textit{Primary/Clustering Index:} Search key determines file's physical sort order (at most one per table); typically sparse.
+            \item \textit{Secondary Index:} Alternative access path independent of physical order; typically dense or uses indirection for non-unique keys.
+        \end{itemize}
+    \end{itemize}
+
+    % ============================================================================
+    % PART 2: CORE INDEX STRUCTURES
+    % ============================================================================
+    \subsection{B-Trees \& B+-Trees}
+
+    \subsubsection{Why B+-Trees?}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Goal:} Minimize expensive disk I/O by keeping tree height small via high fan-out.
+        \item \textbf{Structure:} Balanced tree; internal nodes store keys + child pointers; leaf nodes store keys + data pointers (or record IDs) + sibling link.
+        \item \textbf{Operations:} Search/insert/delete in $O(\log_{fo} n)$ block accesses; splits/merges maintain balance.
+        \item \textbf{B+- vs B-Tree:} B+- stores data pointers only in leaves $\Rightarrow$ higher internal fan-out, efficient sequential scans via leaf chain.
+    \end{itemize}
+
+    \subsubsection{Capacity Calculation Example}
+    \textit{Given parameters:} Block size $B=512$ bytes; key size $V=9$ bytes; data pointer $\Pr=7$ bytes; tree pointer $P=6$ bytes.
+
+    \paragraph{Step 1: Calculate Order (Maximum Pointers per Node)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{B-Tree Internal Node:} Holds $p$ tree pointers + $(p-1)$ keys + $(p-1)$ data pointers.
+        \[(p \times 6) + ((p-1) \times (7+9)) \le 512\]
+        \[6p + 16p - 16 \le 512 \quad \Rightarrow \quad 22p \le 528 \quad \Rightarrow \quad p = 23\]
+        
+        \item \textbf{B+-Tree Internal Node:} Holds $p$ tree pointers + $(p-1)$ keys (no data pointers).
+        \[(p \times 6) + ((p-1) \times 9) \le 512\]
+        \[6p + 9p - 9 \le 512 \quad \Rightarrow \quad 15p \le 521 \quad \Rightarrow \quad p = 34\]
+        
+        \item \textbf{B+-Tree Leaf Node:} Holds $p_{leaf}$ key/data-pointer pairs + 1 next-pointer.
+        \[(p_{leaf} \times (7+9)) + 6 \le 512\]
+        \[16 \times p_{leaf} \le 506 \quad \Rightarrow \quad p_{leaf} = 31\]
+    \end{itemize}
+
+    \paragraph{Step 2: Estimate Total Capacity (69\% Full)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{B-Tree (3 levels):} Avg fan-out $fo = 23 \times 0.69 \approx 16$.
+        \begin{itemize}
+            \item Level 0 (root): 15 entries, 16 pointers
+            \item Level 1: $16 \times 15 = 240$ entries
+            \item Level 2: $256 \times 15 = 3{,}840$ entries
+            \item \textbf{Total:} $15 + 240 + 3{,}840 \approx \mathbf{4{,}095}$ entries
+        \end{itemize}
+        
+        \item \textbf{B+-Tree (3 levels):} Internal $fo = 34 \times 0.69 \approx 23$; Leaf capacity $= 31 \times 0.69 \approx 21$.
+        \begin{itemize}
+            \item Level 0: 22 entries, 23 pointers
+            \item Level 1: $23 \times 22 = 506$ entries, 529 pointers
+            \item Leaf level: $12{,}167 \times 21 \approx \mathbf{255{,}507}$ data pointers
+        \end{itemize}
+        
+        \item \textbf{Key Insight:} B+- holds $\sim 4\times$ more entries at same height due to lighter internal nodes.
+    \end{itemize}
+
+    \subsubsection{Advanced Index Types}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Composite Index:} Multi-column key (e.g., (City, LastName)); supports leftmost prefix queries (City), (City, LastName); order columns by selectivity.
+        \item \textbf{Function-Based Index:} Index on expression (e.g., \texttt{LOWER(email)}); query must use same function to benefit.
+    \end{itemize}
+
+    % ============================================================================
+    % PART 3: SPECIALIZED STRUCTURES
+    % ============================================================================
+    \subsection{Hash \& Bitmap Indexes}
+
+    \subsubsection{Hash Indexes}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Use case:} Fast equality lookups (point queries); no range support.
+        \item \textbf{Collision handling:} Chaining with overflow buckets.
+        \item \textbf{Dynamic variants:} Extendible/linear hashing grow incrementally without full rebuild.
+    \end{itemize}
+
+    \subsubsection{Bitmap Indexes}
+    \textit{Optimized for low-cardinality attributes (few distinct values).}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Structure:} Sequential record numbering (0, 1, 2, ...); one bitmap per distinct value; bit $i=1$ if record $i$ has that value.
+        \item \textbf{Example (5-row table):}
+        \begin{itemize}
+            \item \texttt{gender='m'}: 10010 \quad \texttt{gender='f'}: 01101
+            \item \texttt{income='L1'}: 11000 \quad \texttt{income='L2'}: 00100
+        \end{itemize}
+        \item \textbf{Query: gender='f' AND income='L2'}
+        \[01101 \; \text{AND} \; 00100 = 00100 \quad \Rightarrow \quad \text{record 2}\]
+        \item \textbf{Advantages:} Compact (1M rows = 125 KB per bitmap); fast bitwise ops; efficient for multi-condition filters; supports COUNT via bit-counting.
+    \end{itemize}
+
+    % ============================================================================
+    % PART 4: QUERY COST MODELING
+    % ============================================================================
+    \subsection{Query Optimization \& Cost Analysis}
+
+    \subsubsection{Measures of Query Cost \& Catalog Information}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Primary metric (I/O):} Minimize block transfers ($b$) and random I/O accesses (seeks $S$). Time model: $b \times t_T + S \times t_S$.
+        \item \textbf{Relation size:} $r$ = tuples, $b$ = file blocks.
+        \item \textbf{Indexing details:} $x$ = multilevel index height (e.g., B+-tree), $b_{I1}$ = first-level index blocks.
+        \item \textbf{Blocking factor:} $bfr$ = tuples per block.
+        \item \textbf{Selection cardinality:} $s = sl \times r$ where $sl$ is selectivity fraction.
+        \item \textbf{Distinct counts:} $NDV(A)$ = distinct values of attribute $A$.
+    \end{itemize}
+
+    \subsubsection{Cost Functions for Selection}
+    	\textit{Selection ($\sigma$) can use file scans or index/hash access depending on available paths. Costs exclude write-out of the final result.}
+    \paragraph{\textbf{S1: Linear Search (Brute Force / A1)}}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item Worst case/non-key: $\mathbf{C_{S1a} = b}$.
+        \item Average equality on a key: $\mathbf{C_{S1b} = b/2}$ (stop when found).
+    \end{itemize}
+    \paragraph{\textbf{S2: Binary Search (ordered file)}}\mbox{}\\
+     $\mathbf{C_{S2} = \log_2 b + \lceil s/bfr \rceil - 1}$.
+    \paragraph{\textbf{S3a: Primary Index (single record)}}\mbox{}\\
+     $\mathbf{C_{S3a} = x + 1}$.
+    \paragraph{\textbf{S3b: Hash Key (single record)}}\mbox{}\\
+     $\mathbf{C_{S3b} = 1}$ (static/linear) or $\mathbf{2}$ (extendible).
+    \paragraph{\textbf{S5: Clustering Index (equality on non-key / A3)}}\mbox{}\\
+     $\mathbf{C_{S5} = x + \lceil s/bfr \rceil}$.
+    \paragraph{\textbf{S6a: Secondary Index (equality on non-key / A4)}}\mbox{}\\
+     $\mathbf{C_{S6a} = x + 1 + s}$ (worst case, scattered records).
+    \paragraph{\textbf{S6b: Secondary Index (range query)}}\mbox{}\\
+     $\mathbf{C_{S6b} = x + (b_{I1}/2) + (r/2)}$.\\
+    
+    \textit{Note: Time cost often modeled as $b \times t_T + S \times t_S$, separating transfer vs seek.}
+
+    \subsubsection{Worked Example: Selection on EMPLOYEE}
+    	\textit{Scenario:} EMPLOYEE with $r_E=10{,}000$, $b_E=2{,}000$, $bfr_E=5$. Available indices/access paths:
+    \begin{itemize}
+        \item \textbf{Salary} (clustering, non-key): $x=3$, $s_{Salary}=20$.
+        \item \textbf{Ssn} (secondary, key): $x=4$, $s_{Ssn}=1$.
+        \item \textbf{Dno} (secondary, non-key): $x=2$, $s_{Dno}=80$ (from $10{,}000/125$).
+        \item \textbf{Sex} (secondary, non-key): $x=1$, $s_{Sex}=5{,}000$ (from $10{,}000/2$).
+    \end{itemize}
+
+    \paragraph{OP1: Equality on Key}\mbox{}\\
+    Query: $\sigma_{\text{Ssn}='123456789'}(\text{EMPLOYEE})$.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item S1b (linear avg): $C_{S1b} = b_E/2 = 1{,}000$.
+        \item S6a (secondary index on key): $C_{S6a} = x_{Ssn} + 1 = 4 + 1 = \mathbf{5}$.
+        \item \textbf{Decision:} Choose S6a (5 $\ll$ 1{,}000).
+    \end{itemize}
+
+    \paragraph{OP3: Equality on Non-Key}\mbox{}\\
+    Query: $\sigma_{\text{Dno}=5}(\text{EMPLOYEE})$.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item S1a (linear): $C_{S1a} = b_E = \mathbf{2{,}000}$.
+        \item S6a (secondary on Dno): $C_{S6a} = x_{Dno} + s_{Dno} = 2 + 80 = \mathbf{82}$.
+        \item \textbf{Decision:} Choose S6a (82 $\ll$ 2{,}000). If clustering on Dno existed: $3 + \lceil 80/5 \rceil = 19$ blocks.
+    \end{itemize}
+
+    \paragraph{OP4: Conjunctive Selection}\mbox{}\\
+    Query: $\sigma_{\text{Dno}=5 \land \text{Salary}>30\,000 \land \text{Sex}='F'}(\text{EMPLOYEE})$.
+    Optimizer compares access paths to get the initial candidate set, then checks remaining predicates in memory.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item Via Dno (S6a): $C = x_{Dno} + s_{Dno} = \mathbf{82}$.
+        \item Via Salary range (clustered): $C \approx x_{Salary} + (b_E/2) = 3 + 1{,}000 = \mathbf{1{,}003}$.
+        \item Via Sex (S6a): $C = x_{Sex} + s_{Sex} = 1 + 5{,}000 = \mathbf{5{,}001}$.
+        \item Brute force (S1a): $C = 2{,}000$.
+        \item \textbf{Decision:} Use Dno index (82), retrieve 80 tuples, then filter $\text{Salary}>30\,000$ and $\text{Sex}='F'$ in RAM.
+    \end{itemize}
+
+    \subsubsection{Join Algorithms \& Cost Comparison}
+
+    \paragraph{Key Parameters}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Join selectivity:} $js = |R \bowtie S|/(|R|\,|S|)$; for equi-join $js \approx 1/\max(NDV(A), NDV(B))$.
+        \item \textbf{Join cardinality:} $jc = js\,|R|\,|S|$; \textbf{write cost}: $jc/bfr_{result}$ blocks.
+        \item \textbf{Buffers:} $n_B$ = available buffer pages (impacts nested-loop cost).
+    \end{itemize}
+
+    \paragraph{Unified Scenario}\mbox{}\\
+    EMPLOYEE ($|E|=10{,}000$, $b_E=2{,}000$) $\bowtie_{Dno=Dnumber}$ \\
+    DEPARTMENT ($|D|=125$, $b_D=13$). \\
+    Index on $E.Dno$ (secondary: $x=2$, $s=80$).\\
+    $Dnumber$ primary key ($x=1$).\\
+    Assume $js=1/125$, $jc=10{,}000$, $bfr_{result}=4$ (write cost $=2{,}500$ blocks), $n_B=3$.
+
+    \paragraph{J1: Block Nested-Loop}\mbox{}\\
+    Cost: $C_{J1} = b_R + \left\lceil \frac{b_R}{n_B - 2} \right\rceil b_S + \frac{jc}{bfr_{result}}$.
+    Using DEPARTMENT as outer: $C_{J1} = 13 + \lceil 13/1\rceil \times 2{,}000 + 2{,}500 = \mathbf{28{,}513}$.
+
+    \paragraph{J2: Indexed Nested-Loop}\mbox{}\\
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{DEPARTMENT outer $\to$ EMPLOYEE inner:} Per lookup $= x+s = 2+80 = 82$. Total $= 13 + 125 \times 82 + 2{,}500 = \mathbf{12{,}763}$.
+        \item \textbf{EMPLOYEE outer $\to$ DEPARTMENT inner:} Per lookup $= x+1 = 1+1 = 2$. Total $= 2{,}000 + 10{,}000 \times 2 + 2{,}500 = \mathbf{24{,}500}$.
+    \end{itemize}
+
+    \paragraph{J3: Sort-Merge}\mbox{}\\
+    If pre-sorted: \[C_{J3} = b_E + b_D + \frac{jc}{bfr_{result}} = 2{,}000 + 13 + 2{,}500 = \mathbf{4{,}513}\]. If not, add external sort cost per relation.
+
+    \paragraph{J4: Partition-Hash}\mbox{}\\
+    Approximate cost: $C_{J4} \approx 3\,(b_E + b_D) + \frac{jc}{bfr_{result}} = 3\times(2{,}000+13) + 2{,}500 = \mathbf{8{,}539}$.
+
+    \paragraph{Plan Decision}\mbox{}\\
+    J3 (if sorted) $<$ J4 $<$ J2\,(D outer) $<$ J2\,(E outer) $<$ J1. Prefer hash join when unsorted; prefer sort-merge when sorted order exists.
+
+    % ============================================================================
+    % PART 5: OPTIMIZATION STRATEGIES
+    % ============================================================================
+    \subsection{Query Optimization Pipeline}
+
+    \subsubsection{Process Overview}
+    \begin{enumerate}[leftmargin=*]
+        \item \textbf{Parse \& Validate:} Check syntax, schema compliance.
+        \item \textbf{Translate:} Convert SQL to relational algebra (query tree).
+        \item \textbf{Heuristic Optimization:} Apply transformation rules.
+        \item \textbf{Cost-Based Optimization:} Enumerate plans, estimate costs, pick minimum.
+        \item \textbf{Execute:} Materialize intermediates or pipeline results.
+    \end{enumerate}
+
+    \subsubsection{Heuristic Rules}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Push selections ($\sigma$) down:} Filter early to reduce intermediate size.
+        \item \textbf{Push projections ($\Pi$) down:} Reduce tuple width early.
+        \item \textbf{Replace $\sigma$ + Cartesian product ($\times$) with join ($\bowtie$):} Avoid expensive cross products.
+        \item \textbf{Reorder joins:} Use commutativity/associativity to seek low-cardinality intermediates.
+        \item \textbf{Left-deep trees:} Right child always a base table $\Rightarrow$ enables index lookups, reduces search space.
+    \end{itemize}
+
+    \subsubsection{Cost-Based Decisions}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Access path selection:} Compare full scan, clustering index, secondary index, bitmap for each predicate.
+        \item \textbf{Join algorithm:} Nested-loop (index/block), hash join, sort-merge based on cardinality, memory.
+        \item \textbf{Join order:} Estimate join selectivity $js \approx 1/\max(NDV(A), NDV(B))$; cardinality $jc = js \times |R| \times |S|$.
+    \end{itemize}
+
+    \subsection{Specialized Techniques}
+
+    \subsubsection{Write-Optimized Structures}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{LSM-Tree:} In-memory buffer (memtable) + sorted on-disk levels; sequential writes; periodic compaction; Bloom filters skip levels.
+        \item \textbf{Buffer Tree:} B-tree variant with per-node write buffers; batches mutations down tree; better read latency than LSM.
+    \end{itemize}
+
+    \subsubsection{Spatial \& Multi-Key Access}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Multi-key:} Composite index for prefix queries; covering index avoids table lookup.
+        \item \textbf{Spatial:} R-tree (bounding rectangles), kd-tree, quadtree for geospatial/interval data; support range + nearest-neighbor queries.
+    \end{itemize}
+
+    % ============================================================================
+    % PART 6: ADVANCED TOPICS
+    % ============================================================================
+    \section{Data Storage}
+
+    \subsection{Concepts}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{NoSQL motivation:} Horizontal scalability, availability, flexible schemas (BASE/CAP) vs strict ACID.
+        \item \textbf{Big Data 3V's:} Volume (TB–PB–EB), Velocity (real-time), Variety (structured/semi/unstructured); often add Veracity and Value.
+        \item \textbf{Schema strategy:} \textit{Schema-on-write} (DW) vs \textit{schema-on-read} (DL).
+        \item \textbf{Distributed storage:} HDFS-like systems provide fault-tolerant, scalable storage across clusters.
+    \end{itemize}
+
+        \subsubsection{NoSQL Motivation (BASE/CAP vs ACID)}
+        \begin{itemize}[leftmargin=*, label={--}]
+            \item \textbf{ACID vs BASE:} RDBMS enforce ACID; NoSQL often adopt BASE (Basically Available, Soft state, Eventually consistent) to scale.
+            \item \textbf{CAP trade-off:} In replicated distributed systems, cannot have Consistency, Availability, and Partition tolerance simultaneously. NoSQL commonly choose AP over strict C.
+            \item \textbf{Eventual consistency:} Replicas may diverge transiently but converge if no further updates; acceptable for many web-scale apps.
+            \item \textbf{Scale-out:} Horizontal scalability via sharding/partitioning and replication across commodity nodes.
+            \item \textbf{Flexible schemas:} Self-describing records (JSON/BSON), semi-structured data, heterogeneous attributes per item.
+            \item \textbf{Models:} Document (MongoDB), Key-Value (Redis/DynamoDB), Wide-column (BigTable/HBase/Cassandra), Graph (Neo4j).
+        \end{itemize}
+
+        \subsubsection{Big Data Five V's}
+        \begin{itemize}[leftmargin=*, label={--}]
+            \item \textbf{Volume:} Scale from TB to PB to EB; driven by logs, mobile, transactions, IoT sensors/RFID; requires massive parallelism.
+            \item \textbf{Velocity:} High ingest rates and real-time/stream processing for fraud intrusion detection, monitoring.
+            \item \textbf{Variety:} Structured, semi-structured, unstructured (web, social, location, images, video, logs, signals). Unstructured data is the major challenge.
+            \item \textbf{Veracity:} Data credibility/quality varies; requires testing and suitability checks before analytics.
+            \item \textbf{Value:} Analytics (descriptive/predictive/prescriptive) to derive business benefit and innovation.
+        \end{itemize}
+
+        \subsubsection{Distributed Storage (HDFS-like)}
+        \begin{itemize}[leftmargin=*, label={--}]
+            \item \textbf{Shared-nothing:} Each node has its own CPU/RAM/disk; coordination over network; scales economically with redundancy.
+            \item \textbf{HDFS architecture:} Master NameNode manages namespace/metadata; DataNodes store blocks and serve I/O; clusters can have thousands of DataNodes.
+            \item \textbf{Replication:} Blocks replicated (typically 3x) for durability and availability; clients read from nearest replica to maximize bandwidth.
+            \item \textbf{Parallel I/O:} Many machines read/write concurrently, increasing aggregate throughput.
+            \item \textbf{Append-only:} Simple coherency model optimized for batch: files are append-only (no random updates).
+            \item \textbf{Ecosystem:} HDFS underpins MapReduce, HBase, and other big data tools.
+        \end{itemize}
+
+    \subsection{Technologies}
+    \paragraph{Document Store (MongoDB)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item Flexible \textit{schema-on-read} for Variety; heterogeneous attributes per document.
+        \item JSON/BSON documents (arrays, nested objects); denormalized designs for data locality.
+        \item CRUD via \texttt{find(<cond>)}; auto-indexed \_id for key-based retrieval.
+        \item High availability via replica sets (primary/secondary reads).
+        \item Horizontal scaling with sharding on a shard key (range/hash; query router).
+        \item Read-only MapReduce over large collections.
+    \end{itemize}
+
+    \paragraph{Key-Value Cache (Redis)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item In-memory hash-map for very fast reads.
+        \item Complex data structures (sets, queues) supported natively.
+        \item Persistence via append-only log and snapshots for durability.
+        \item Read-through cache pattern; application manages invalidation.
+        \item Master-slave replication for high availability.
+    \end{itemize}
+
+    \paragraph{Graph DB (Neo4j)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item Property graph model: nodes, relationships, labels, properties.
+        \item Efficient path queries; variable-length traversals via Cypher.
+        \item Declarative language with arrow notation for patterns.
+        \item Enterprise features: caching, clustering, master-slave replication.
+        \item Centralized design optimized for graph workloads.
+    \end{itemize}
+
+    \paragraph{Wide-Column Stores (BigTable/HBase/Cassandra)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item Sparse multidimensional sorted maps: row key, column info, versions.
+        \item LSM-tree storage converts random writes to sequential I/O.
+        \item HBase on HDFS; ZooKeeper for coordination; regions by key range.
+        \item Column families group storage; qualifiers defined dynamically.
+        \item Cassandra: Dynamo-style leaderless replication; consistent hashing.
+        \item Compaction strategies (e.g., time-window); SASI secondary indexes.
+    \end{itemize}
+
+    \paragraph{Data Warehouse Engines}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item HiveQL on Hadoop; compiles to MapReduce/Tez/Spark execution plans.
+        \item SerDe exposes raw files as tables; predicate pushdown.
+        \item Columnar formats ORC/Parquet minimize I/O for analytics.
+        \item Cloud OLAP: Snowflake/BigQuery/Redshift for interactive analytics.
+        \item Parallel execution with scalable storage.
+    \end{itemize}
+
+    \paragraph{Processing Frameworks}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item MapReduce: map/shuffle/reduce over HDFS/HBase; resilient via re-execution.
+        \item Spark: in-memory RDDs; unified engines (SQL, graphs, ML, streaming).
+        \item Spark on YARN; reads from HDFS/HBase.
+        \item Tez: DAG execution; pipelines stages to avoid HDFS materialization.
+        \item Foundation for higher-level systems like Hive.
+    \end{itemize}
+
+    \subsection{Streaming}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Purpose:} Unbounded, real-time processing for fraud/intrusion detection, tracking, monitoring, traffic estimation.
+    \end{itemize}
+    \paragraph{Messaging: Kafka Durable Log \& CDC}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Log storage:} Append-only disks; producers append, consumers read sequentially.
+        \item \textbf{Partitioning/ordering:} Topic partitions with total order per partition via offsets.
+        \item \textbf{Durability/replay:} Retention keeps tuples; consumption is read-only; consumers can replay from offsets.
+        \item \textbf{CDC transport:} Change Data Capture streams preserve order; source DB is leader, followers rebuild state.
+        \item \textbf{Log compaction:} Retains last write per key, enabling up-to-date snapshots of tables.
+    \end{itemize}
+    \paragraph{Compute: Flink/Spark \& Cloud Analogs}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Apache Flink:} True streaming engine; pipelined execution; checkpointing for recovery.
+        \item \textbf{Spark Streaming:} Microbatching (\~1s) over RDDs; recompute on failure.
+        \item \textbf{Cloud:} Kinesis (log-based streams), Dataflow (checkpointed pipelines), Azure Stream Analytics (managed streaming SQL).
+    \end{itemize}
+    \paragraph{Windows: Tumbling vs Hopping}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Tumbling:} Fixed-length, adjacent, non-overlapping windows (e.g., 1 minute).
+        \item \textbf{Hopping:} Fixed-length, overlapping windows (e.g., 5-minute window hopping every 1 minute).
+        \item \textbf{Time semantics:} Event time vs processing time; manage late/straggler events.
+    \end{itemize}
+    \paragraph{Stream Joins: Time-Bounded \& Stateful}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Stream-Stream:} Windowed join on key with time bound (e.g., within 30 minutes).
+        \item \textbf{Stream-Table:} Enrichment of events using a relation/changelog treated as a table.
+        \item \textbf{Table-Table:} Joining changelogs to maintain materialized views (e.g., tweets $\times$ follows).
+        \item \textbf{State:} Processor maintains keyed state and window buffers to match arrivals.
+    \end{itemize}
+    \paragraph{Exactly-Once Semantics}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Goal:} Output equivalent to failure-free execution (no loss/duplicates).
+        \item \textbf{Framework recovery:} Microbatching (Spark) \& checkpointing (Flink) restart from consistent points; discard partial outputs.
+        \item \textbf{Distributed transactions:} Atomic commits for state + messaging within the processor.
+        \item \textbf{External idempotence:} Use unique, persistent offsets/keys to make side effects idempotent (dedupe on write).
+    \end{itemize}
+
+    \subsection{Pipelines: ETL vs ELT}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{ETL:} Extract $\rightarrow$ Transform $\rightarrow$ Load (transform before landing).
+        \item \textbf{ELT:} Extract $\rightarrow$ Load $\rightarrow$ Transform (use warehouse compute; schema-on-read).
+        \item \textbf{Kafka:} Transport/CDC stream for Extract/Load.
+        \item \textbf{Airflow:} Orchestrates batch dependencies for Transform/Load.
+    \end{itemize}
+
+    \subsection{IoT}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Sources:} Sensors/RFID (high-velocity, varied signal data).
+        \item \textbf{Apps:} Smart farming, athlete monitoring, mobility tracking.
+        \item \textbf{Protocols:} MQTT for real-time ingestion.
+    \end{itemize}
+
+    \subsection{Comparisons}
+    \paragraph{MongoDB vs Redis vs Neo4j}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{MongoDB:} Document store, BSON, replica sets, sharding, MapReduce.
+        \item \textbf{Redis:} In-memory key-value/cache, persistence, replication; fast reads.
+        \item \textbf{Neo4j:} Graph model, Cypher for paths, clustering; efficient graph queries.
+    \end{itemize}
+    \paragraph{Cassandra vs Hive vs Snowflake}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Cassandra:} Wide-column, leaderless replication, eventual consistency, LSM + compaction, SASI.
+        \item \textbf{Hive:} SQL-on-Hadoop compiled to MapReduce/Tez/Spark; SerDe for ORC/Parquet.
+        \item \textbf{Snowflake:} Cloud DW OLAP; peers include BigQuery/Redshift.
+    \end{itemize}
+    \paragraph{BigTable vs BigQuery}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{BigTable:} Distributed wide-column storage; sparse sorted map; range queries; inspired HBase.
+        \item \textbf{BigQuery:} Interactive OLAP analytics; Dremel lineage; SQL engines at web scale.
+    \end{itemize}
+
+    \subsection{Data Warehousing}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Characteristics:} Subject-oriented, integrated, non-volatile, time-variant; fewer queries but large scans.
+        \item \textbf{Schemas:} Fact (measures + dimension keys) and dimension tables; Star vs Snowflake.
+        \item \textbf{Storage:} Column-oriented favored; Teradata, Sybase IQ, Redshift; Oracle/HANA/SQL Server support columnar.
+        \item \textbf{Big Data integration:} Hadoop with Hive/Spark SQL for SQL over distributed files.
+    \end{itemize}
+
+    \subsection{Multi-Dimensional Models}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Tabular (Dimensional):} Star/Snowflake schemas enable dimensional analysis.
+        \item \textbf{Data Cube:} \texttt{GROUP BY CUBE} (all subsets); \texttt{ROLLUP} (hierarchical subsets).
+    \end{itemize}
+
+    \subsection{DW vs DL vs Lakehouse}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{DW:} Schema-on-write; strong consistency; structured data; OLAP (ETL).
+        \item \textbf{DL:} Schema-on-read; raw multi-format data; cheap storage; Hadoop/Spark for querying.
+        \item \textbf{Lakehouse:} Inferred hybrid combining lake flexibility with warehouse management (ACID, schema enforcement, indexing); not explicitly defined in sources.
+    \end{itemize}
+\end{multicols}
+\end{document}
