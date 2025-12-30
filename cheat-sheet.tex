@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{geometry}
+\usepackage{ulem}
 \usepackage{multicol} % for multi-column layout
 \usepackage{enumitem} % to tighten list spacing
 
@@ -31,6 +32,7 @@
     \setlength{\columnsep}{8pt} % space between columns
     \setlength{\multicolsep}{2pt} % vertical space before/after multicols
     \raggedcolumns
+
     \section{Nguyên lý Phân tích \& Thiết kế CSDL}
 
     \subsection{Tổng quan Các giai đoạn Thiết kế}
@@ -48,7 +50,7 @@
         \item \textbf{Thực thể Yếu:} Được xác định thông qua \textbf{mối kết hợp xác định} với một thực thể \textbf{chủ} và một \textbf{khóa bộ phận}; thực thể yếu tham gia \textit{toàn phần} vào mối kết hợp xác định.
         \item \textbf{Tinh chỉnh Top-Down:} Tinh chỉnh lặp lại các thực thể tổng quát; áp dụng chuyên biệt hóa/tổng quát hóa (EER).
     \end{itemize}
-
+    \columnbreak
     \subsection{Nguyên lý Thiết kế Mức Logic}
     \subsubsection{Cơ bản về Mô hình Quan hệ}
     \begin{itemize}[leftmargin=*, label={--}]
@@ -59,11 +61,11 @@
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Phụ thuộc Hàm (FD):} $X \rightarrow Y$ nghĩa là các bộ giống nhau trên $X$ thì phải giống nhau trên $Y$.
         \item \textbf{Các tính chất Thiết kế:}
-        \begin{enumerate}[leftmargin=*]
-            \item \textbf{Kết nối bảo toàn thông tin (Không tổn thất):} Phân rã không được tạo ra các bộ giả (spurious tuples).
-            \item \textbf{Bảo toàn phụ thuộc:} Các FD ban đầu có thể kiểm tra được trên các quan hệ đã phân rã.
-            \item \textbf{Giảm thiểu dư thừa:} Tránh các dị thường cập nhật (thêm, xóa, sửa).
-        \end{enumerate}
+              \begin{enumerate}[leftmargin=*]
+                  \item \textbf{Kết nối bảo toàn thông tin (Không tổn thất):} Phân rã không được tạo ra các bộ giả (spurious tuples).
+                  \item \textbf{Bảo toàn phụ thuộc:} Các FD ban đầu có thể kiểm tra được trên các quan hệ đã phân rã.
+                  \item \textbf{Giảm thiểu dư thừa:} Tránh các dị thường cập nhật (thêm, xóa, sửa).
+              \end{enumerate}
         \item \textbf{Các Dạng chuẩn:} 1NF (nguyên tố), 2NF (FD đầy đủ vào khóa), 3NF (không có FD bắc cầu), BCNF (với mọi FD $X \rightarrow A$, $X$ là siêu khóa; có thể không bảo toàn phụ thuộc). 4NF/5NF giải quyết phụ thuộc đa trị và phụ thuộc kết nối.
         \item \textbf{Phi chuẩn hóa (Denormalization):} Lưu trữ kết quả kết nối như quan hệ cơ sở để tăng hiệu năng nhưng chấp nhận dị thường.
     \end{itemize}
@@ -75,6 +77,85 @@
         \item \textbf{Cấu trúc Chỉ mục:} Chỉ mục có thứ tự (B+-Trees) và chỉ mục băm; chỉ mục \textbf{chính/phân cụm} (quy định thứ tự vật lý; tối đa một trên mỗi tập tin) so với chỉ mục \textbf{phụ}.
         \item \textbf{Tối ưu hóa Truy vấn:} Dựa trên chi phí (thống kê) và các quy tắc kinh nghiệm (đẩy phép chọn/chiếu xuống sớm) để chọn kế hoạch hiệu quả.
     \end{itemize}
+    \columnbreak
+    \subsection{Các bước vẽ ERD (Steps to Create ERD)}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Xác định Thực thể (Entities):} 
+        \newline Tìm các \textit{danh từ} (Nouns) quan trọng trong yêu cầu (Vd: Employee, Student). Tránh nhầm lẫn thuộc tính là thực thể.
+        
+        \item \textbf{Xác định Mối kết hợp (Relationships):} 
+        \newline Tìm các \textit{động từ} (Verbs) kết nối các thực thể (Vd: Works\_for, Teaches).
+        
+        \item \textbf{Xác định Thuộc tính (Attributes):} 
+        \newline Xác định thông tin chi tiết cho mỗi thực thể. Xác định thuộc tính đa trị, dẫn xuất, phức hợp.
+        
+        \item \textbf{Xác định Khóa chính (Primary Keys):} 
+        \newline Chọn thuộc tính định danh duy nhất cho mỗi thực thể và gạch chân nó.
+        
+        \item \textbf{Xác định Bản số (Cardinality Ratio):} 
+        \newline Phân tích số lượng tham gia: 1:1, 1:N, hay M:N.
+        
+        \item \textbf{Xác định Ràng buộc tham gia (Participation):} 
+        \newline Có bắt buộc không? (Total - Nét đôi) hay Tùy chọn? (Partial - Nét đơn).
+        \newline \textit{Hỏi: "Thực thể A có thể tồn tại mà không cần B không?"}
+        
+        \item \textbf{Vẽ phác thảo \& Tinh chỉnh:} 
+        \newline Vẽ sơ đồ, loại bỏ các thuộc tính dư thừa. Chuyển quan hệ M:N thành thực thể liên kết nếu cần thiết.
+    \end{enumerate}
+    \subsection{Ký hiệu Chen \& EER (Chen Notation)}
+    % Bảng cho Thực thể & Thuộc tính - Tiết kiệm không gian hơn liệt kê
+    \subsubsection{Thực thể \& Thuộc tính (Entities \& Attributes)}
+    \textit{Khi nào dùng:} \textbf{Thực thể} cho đối tượng độc lập (NHANVIEN, SANPHAM, KHACHHANG); \textbf{Thực thể yếu} cho đối tượng phụ thuộc (NGUOIPHUTHUOC của nhân viên, CHITIETDONHANG); \textbf{Khóa} là định danh duy nhất (MSNV, CCCD); \textbf{Đa trị} cho thuộc tính nhiều giá trị (số điện thoại, email); \textbf{Dẫn xuất} cho giá trị tính toán (tuổi từ ngày sinh, tổng tiền).
+    \begin{center}
+        \begin{tabular}{@{} c c @{}}
+            % Hàng 1: Thực thể & Thực thể yếu
+            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_entity.png}      &
+            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_weak_entity.png}                                \\
+            \footnotesize (Thực thể)                                                                             & \footnotesize (Thực thể yếu) \\[2pt]
+
+            % Hàng 2: Thuộc tính & Khóa
+            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_attribute.png}   &
+            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_key.png}                                        \\
+            \footnotesize (Thuộc tính)                                                                           & \footnotesize (Khóa)         \\[2pt]
+
+            % Hàng 3: Đa trị & Dẫn xuất
+            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_multivalued.png} &
+            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_derived.png}                                    \\
+            \footnotesize (Đa trị)                                                                               & \footnotesize (Dẫn xuất)     \\
+        \end{tabular}
+    \end{center}
+
+    \subsubsection{Mối kết hợp (Relationships)}
+    \textit{Khi nào dùng:} \textbf{Quan hệ thường} cho liên kết độc lập (NHANVIEN \textit{làm việc cho} PHONGBAN, KHACHHANG \textit{mua} SANPHAM); \textbf{Quan hệ xác định} khi thực thể yếu phụ thuộc vào thực thể chủ (NGUOIPHUOCTHUOC \textit{thuộc về} NHANVIEN với khóa bộ phận là tên người phụ thuộc).
+    \begin{center}
+        % Dùng minipage để căn chỉnh nếu ảnh có tỷ lệ khác nhau
+        \includegraphics[width=0.9\linewidth]{./images/chen_relationships_summary.png} \\
+        \footnotesize \textit{Bao gồm: Quan hệ (Hình thoi), Quan hệ xác định (Thoi đôi)}
+    \end{center}
+    
+    \subsubsection{Ràng buộc (Constraints)}
+    \textit{Khi nào dùng:} Xác định quy tắc nghiệp vụ giữa các thực thể.
+    \begin{itemize}[leftmargin=*, label={}]
+        \item \textbf{Bản số (Cardinality):} 1:1 (NHANVIEN \textit{quản lý} PHONGBAN - mỗi phòng có 1 trưởng), 1:N (PHONGBAN \textit{có} NHANVIEN - nhiều nhân viên/phòng), M:N (NHANVIEN \textit{tham gia} DUAN - nhiều-nhiều).
+        \item \textbf{Tham gia (Participation):}
+              \begin{center}
+                  \includegraphics[width=0.85\linewidth]{./images/chen_participation.png} \\
+                  \footnotesize (Partial Participation (Từng phần): Nét đơn \linebreak Total Participation (Toàn phần): Nét đôi)
+              \end{center}
+        \item \textbf{Min-Max (min, max):} Ghi cặp số trên cạnh. Ví dụ: NHANVIEN $(1,1)$ \textit{làm việc cho} $(0,N)$ PHONGBAN nghĩa là mỗi nhân viên bắt buộc làm việc cho đúng 1 phòng ban, mỗi phòng ban có thể có 0 đến nhiều nhân viên. $(0,1)$: tùy chọn, tối đa 1; $(1,N)$: bắt buộc, có thể nhiều. (An extension of Participation và Cardinality)
+    \end{itemize}
+
+    \subsubsection{EER Chuyên biệt hóa \& Tổng quát hóa}
+    \textit{Khi nào dùng:} \textbf{Disjoint} khi lớp con không chồng lấp (NHANVIEN là KỸ SƯ hoặc QUẢN LÝ, không đồng thời); \textbf{Overlapping} khi có thể thuộc nhiều lớp (NGƯỜI là SINH VIÊN và/hoặc NHÂN VIÊN); \textbf{Union} khi lớp con kế thừa từ nhiều lớp cha (CHỦ SỞ HỮU có thể là NGƯỜI hoặc CÔNG TY hoặc NGÂN HÀNG). \textbf{Total} khi mọi thực thể cha phải thuộc ít nhất 1 lớp con; \textbf{Partial} khi không bắt buộc.
+    \begin{center}
+        \begin{tabular}{@{} c @{}}
+            \includegraphics[width=0.7\linewidth]{./images/chen_eer_disjoint_overlap.png} \\
+            \footnotesize (Disjoint \& Overlapping)                                       \\[2pt]
+            \includegraphics[width=0.7\linewidth]{./images/chen_eer_union.png}            \\
+            \footnotesize (Union)                                                         \\
+        \end{tabular} \\[2pt]
+        \footnotesize \textit{Ký hiệu: Hình tròn (d: disjoint, o: overlapping, U: union),\linebreak Nét đôi (Total), Nét đơn (Partial).}
+    \end{center}
 
     \section{Lưu trữ Dữ liệu \& Chỉ mục}
 
@@ -93,20 +174,20 @@
     \subsubsection{Phân loại Chỉ mục}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Theo Cấu trúc:}
-        \begin{itemize}
-            \item \textit{Có thứ tự (Ordered):} Các mục được sắp xếp (vd: B+-tree); hỗ trợ truy vấn khoảng.
-            \item \textit{Băm (Hash):} Khóa được băm vào bucket; chỉ nhanh khi tìm kiếm chính xác (dấu bằng).
-        \end{itemize}
+              \begin{itemize}
+                  \item \textit{Có thứ tự (Ordered):} Các mục được sắp xếp (vd: B+-tree); hỗ trợ truy vấn khoảng.
+                  \item \textit{Băm (Hash):} Khóa được băm vào bucket; chỉ nhanh khi tìm kiếm chính xác (dấu bằng).
+              \end{itemize}
         \item \textbf{Theo Mật độ:}
-        \begin{itemize}
-            \item \textit{Đặc (Dense):} Một mục chỉ mục cho mỗi giá trị khóa tìm kiếm riêng biệt.
-            \item \textit{Thưa (Sparse):} Một mục chỉ mục cho mỗi khối (hoặc mỗi giá trị phân cụm); nhỏ hơn, chi phí bảo trì thấp hơn.
-        \end{itemize}
+              \begin{itemize}
+                  \item \textit{Đặc (Dense):} Một mục chỉ mục cho mỗi giá trị khóa tìm kiếm riêng biệt.
+                  \item \textit{Thưa (Sparse):} Một mục chỉ mục cho mỗi khối (hoặc mỗi giá trị phân cụm); nhỏ hơn, chi phí bảo trì thấp hơn.
+              \end{itemize}
         \item \textbf{Theo Thứ tự Vật lý:}
-        \begin{itemize}
-            \item \textit{Chỉ mục Chính/Phân cụm:} Khóa tìm kiếm quyết định thứ tự vật lý của tập tin (tối đa một per bảng); thường là chỉ mục thưa.
-            \item \textit{Chỉ mục Phụ:} Đường dẫn truy cập thay thế độc lập với thứ tự vật lý; thường là chỉ mục đặc hoặc dùng gián tiếp cho các khóa không duy nhất.
-        \end{itemize}
+              \begin{itemize}
+                  \item \textit{Chỉ mục Chính/Phân cụm:} Khóa tìm kiếm quyết định thứ tự vật lý của tập tin (tối đa một per bảng); thường là chỉ mục thưa.
+                  \item \textit{Chỉ mục Phụ:} Đường dẫn truy cập thay thế độc lập với thứ tự vật lý; thường là chỉ mục đặc hoặc dùng gián tiếp cho các khóa không duy nhất.
+              \end{itemize}
     \end{itemize}
 
     % ============================================================================
@@ -130,11 +211,11 @@
         \item \textbf{Nút trong B-Tree:} Chứa $p$ con trỏ cây + $(p-1)$ khóa + $(p-1)$ con trỏ dữ liệu.
         \item[] $(p \times 6) + ((p-1) \times (7+9)) \le 512$
         \item[] $6p + 16p - 16 \le 512 \quad \Rightarrow \quad 22p \le 528 \quad \Rightarrow \quad p = 23$
-        
+
         \item \textbf{Nút trong B+-Tree:} Chứa $p$ con trỏ cây + $(p-1)$ khóa (không có con trỏ dữ liệu).
         \item[] $(p \times 6) + ((p-1) \times 9) \le 512$
         \item[] $6p + 9p - 9 \le 512 \quad \Rightarrow \quad 15p \le 521 \quad \Rightarrow \quad p = 34$
-        
+
         \item \textbf{Nút lá B+-Tree:} Chứa $p_{leaf}$ cặp khóa/con trỏ dữ liệu + 1 con trỏ kế tiếp.
         \item[] $(p_{leaf} \times (7+9)) + 6 \le 512$
         \item[] $16 \times p_{leaf} \le 506 \quad \Rightarrow \quad p_{leaf} = 31$
@@ -143,20 +224,20 @@
     \paragraph{Bước 2: Ước lượng Tổng dung lượng (Đầy 69\%)}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{B-Tree (3 mức):} Hệ số rẽ nhánh trung bình $fo = 23 \times 0.69 \approx 16$.
-        \begin{itemize}
-            \item Mức 0 (gốc): 15 mục, 16 con trỏ
-            \item Mức 1: $16 \times 15 = 240$ mục
-            \item Mức 2: $256 \times 15 = 3{,}840$ mục
-            \item \textbf{Tổng:} $15 + 240 + 3{,}840 \approx \mathbf{4{,}095}$ mục
-        \end{itemize}
-        
+              \begin{itemize}
+                  \item Mức 0 (gốc): 15 mục, 16 con trỏ
+                  \item Mức 1: $16 \times 15 = 240$ mục
+                  \item Mức 2: $256 \times 15 = 3{,}840$ mục
+                  \item \textbf{Tổng:} $15 + 240 + 3{,}840 \approx \mathbf{4{,}095}$ mục
+              \end{itemize}
+
         \item \textbf{B+-Tree (3 mức):} Nút trong $fo = 34 \times 0.69 \approx 23$; Dung lượng lá $= 31 \times 0.69 \approx 21$.
-        \begin{itemize}
-            \item Mức 0: 22 mục, 23 con trỏ
-            \item Mức 1: $23 \times 22 = 506$ mục, 529 con trỏ
-            \item Mức lá: $12{,}167 \times 21 \approx \mathbf{255{,}507}$ con trỏ dữ liệu
-        \end{itemize}
-        
+              \begin{itemize}
+                  \item Mức 0: 22 mục, 23 con trỏ
+                  \item Mức 1: $23 \times 22 = 506$ mục, 529 con trỏ
+                  \item Mức lá: $12{,}167 \times 21 \approx \mathbf{255{,}507}$ con trỏ dữ liệu
+              \end{itemize}
+
         \item \textbf{Nhận xét:} B+- chứa được $\sim 4\times$ số mục ở cùng chiều cao nhờ nút trong nhẹ hơn.
     \end{itemize}
 
@@ -183,10 +264,10 @@
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Cấu trúc:} Đánh số thứ tự bản ghi (0, 1, 2, ...); mỗi giá trị riêng biệt có một bitmap; bit $i=1$ nếu bản ghi $i$ có giá trị đó.
         \item \textbf{Ví dụ (bảng 5 dòng):}
-        \begin{itemize}
-            \item \texttt{gender='m'}: 10010 \quad \texttt{gender='f'}: 01101
-            \item \texttt{income='L1'}: 11000 \quad \texttt{income='L2'}: 00100
-        \end{itemize}
+              \begin{itemize}
+                  \item \texttt{gender='m'}: 10010 \quad \texttt{gender='f'}: 01101
+                  \item \texttt{income='L1'}: 11000 \quad \texttt{income='L2'}: 00100
+              \end{itemize}
         \item \textbf{Truy vấn: gender='f' AND income='L2'}
         \item[] $01101 \; \text{AND} \; 00100 = 00100 \quad \Rightarrow \quad \text{bản ghi 2}$
         \item \textbf{Ưu điểm:} Gọn nhẹ (1 triệu dòng = 125 KB mỗi bitmap); thao tác bitwise nhanh; hiệu quả cho bộ lọc nhiều điều kiện; hỗ trợ COUNT qua đếm bit.
@@ -208,29 +289,29 @@
     \end{itemize}
 
     \subsubsection{Hàm Chi phí cho Phép Chọn}
-        \textit{Phép chọn ($\sigma$) có thể dùng quét tập tin hoặc truy cập chỉ mục/băm tùy đường dẫn có sẵn. Chi phí chưa tính việc ghi kết quả.}
+    \textit{Phép chọn ($\sigma$) có thể dùng quét tập tin hoặc truy cập chỉ mục/băm tùy đường dẫn có sẵn. Chi phí chưa tính việc ghi kết quả.}
     \paragraph{\textbf{S1: Tìm kiếm Tuyến tính (Vét cạn / A1)}}
     \begin{itemize}[leftmargin=*, label={--}]
         \item Trường hợp xấu nhất/không khóa: $\mathbf{C_{S1a} = b}$.
         \item Trung bình tìm bằng trên khóa: $\mathbf{C_{S1b} = b/2}$ (dừng khi thấy).
     \end{itemize}
     \paragraph{\textbf{S2: Tìm kiếm Nhị phân (tập tin có thứ tự)}}\mbox{}\\
-     $\mathbf{C_{S2} = \log_2 b + \lceil s/bfr \rceil - 1}$.
+    $\mathbf{C_{S2} = \log_2 b + \lceil s/bfr \rceil - 1}$.
     \paragraph{\textbf{S3a: Chỉ mục Chính (một bản ghi)}}\mbox{}\\
-     $\mathbf{C_{S3a} = x + 1}$.
+    $\mathbf{C_{S3a} = x + 1}$.
     \paragraph{\textbf{S3b: Khóa Băm (một bản ghi)}}\mbox{}\\
-     $\mathbf{C_{S3b} = 1}$ (tĩnh/tuyến tính) hoặc $\mathbf{2}$ (mở rộng).
+    $\mathbf{C_{S3b} = 1}$ (tĩnh/tuyến tính) hoặc $\mathbf{2}$ (mở rộng).
     \paragraph{\textbf{S5: Chỉ mục Phân cụm (bằng trên không khóa / A3)}}\mbox{}\\
-     $\mathbf{C_{S5} = x + \lceil s/bfr \rceil}$.
+    $\mathbf{C_{S5} = x + \lceil s/bfr \rceil}$.
     \paragraph{\textbf{S6a: Chỉ mục Phụ (bằng trên không khóa / A4)}}\mbox{}\\
-     $\mathbf{C_{S6a} = x + 1 + s}$ (trường hợp xấu nhất, bản ghi phân tán).
+    $\mathbf{C_{S6a} = x + 1 + s}$ (trường hợp xấu nhất, bản ghi phân tán).
     \paragraph{\textbf{S6b: Chỉ mục Phụ (truy vấn khoảng)}}\mbox{}\\
-     $\mathbf{C_{S6b} = x + (b_{I1}/2) + (r/2)}$.\\
-    
+    $\mathbf{C_{S6b} = x + (b_{I1}/2) + (r/2)}$.\\
+
     \textit{Lưu ý: Chi phí thời gian thường mô hình hóa là $b \times t_T + S \times t_S$, tách biệt truyền dữ liệu và tìm kiếm đầu từ.}
 
     \subsubsection{Ví dụ: Phép chọn trên EMPLOYEE}
-        \textit{Kịch bản:} EMPLOYEE có $r_E=10{,}000$, $b_E=2{,}000$, $bfr_E=5$. Các chỉ mục/đường dẫn có sẵn:
+    \textit{Kịch bản:} EMPLOYEE có $r_E=10{,}000$, $b_E=2{,}000$, $bfr_E=5$. Các chỉ mục/đường dẫn có sẵn:
     \begin{itemize}
         \item \textbf{Salary} (phân cụm, không khóa): $x=3$, $s_{Salary}=20$.
         \item \textbf{Ssn} (phụ, khóa): $x=4$, $s_{Ssn}=1$.
@@ -259,7 +340,8 @@
     Bộ tối ưu so sánh các đường dẫn truy cập để lấy tập ứng viên ban đầu, sau đó kiểm tra các vị từ còn lại trong RAM.
     \begin{itemize}[leftmargin=*, label={--}]
         \item Qua Dno (S6a): $C = x_{Dno} + s_{Dno} = \mathbf{82}$.
-        \item Qua khoảng Salary (phân cụm): $C \approx x_{Salary} + (b_E/2) = 3 + 1{,}000 = \mathbf{1{,}003}$.
+        \item Qua khoảng Salary (phân cụm): $C \approx x_{Salary} + (b_E/2) = 3 + 1{,}000 =
+                  \mathbf{1{,}003}$.
         \item Qua Sex (S6a): $C = x_{Sex} + s_{Sex} = 1 + 5{,}000 = \mathbf{5{,}001}$.
         \item Vét cạn (S1a): $C = 2{,}000$.
         \item \textbf{Quyết định:} Dùng chỉ mục Dno (82), lấy 80 bộ, sau đó lọc $\text{Salary}>30\,000$ và $\text{Sex}='F'$ trong RAM.
@@ -357,41 +439,43 @@
         \item \textbf{Lưu trữ phân tán:} Hệ thống kiểu HDFS cung cấp lưu trữ chịu lỗi, mở rộng trên các cụm máy.
     \end{itemize}
 
-        \subsubsection{Động lực NoSQL (BASE/CAP vs ACID)}
-        \begin{itemize}[leftmargin=*, label={--}]
-            \item \textbf{ACID vs BASE:} RDBMS tuân thủ ACID; NoSQL thường theo BASE (Basically Available, Soft state, Eventually consistent) để mở rộng.
-            \item \textbf{Đánh đổi CAP:} Trong hệ thống phân tán có sao chép, không thể đồng thời có Consistency (Nhất quán), Availability (Sẵn sàng), và Partition tolerance (Chịu phân hoạch). NoSQL thường chọn AP hơn C chặt chẽ.
-            \item \textbf{Nhất quán cuối cùng (Eventual consistency):} Các bản sao có thể lệch nhau tạm thời nhưng sẽ hội tụ nếu không có cập nhật mới; chấp nhận được cho nhiều ứng dụng web.
-            \item \textbf{Mở rộng ngang (Scale-out):} Mở rộng qua phân mảnh (sharding) và sao chép (replication) trên các node phổ thông.
-            \item \textbf{Lược đồ linh hoạt:} Bản ghi tự mô tả (JSON/BSON), bán cấu trúc, thuộc tính không đồng nhất.
-            \item \textbf{Mô hình:} Văn bản (MongoDB), Khóa-Giá trị (Redis/DynamoDB), Cột rộng (BigTable/HBase/Cassandra), Đồ thị (Neo4j).
-        \end{itemize}
+    \subsubsection{Động lực NoSQL (BASE/CAP vs ACID)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{ACID vs BASE:} RDBMS tuân thủ ACID; NoSQL thường theo BASE (Basically Available, Soft state, Eventually consistent) để mở rộng.
+        \item \textbf{Đánh đổi CAP:} Trong hệ thống phân tán có sao chép, không thể đồng thời có Consistency (Nhất quán), Availability (Sẵn sàng), và Partition tolerance (Chịu phân hoạch). NoSQL thường chọn AP hơn C chặt chẽ.
+        \item \textbf{Nhất quán cuối cùng (Eventual consistency):} Các bản sao có thể lệch nhau tạm thời nhưng sẽ hội tụ nếu không có cập nhật mới; chấp nhận được cho nhiều ứng dụng web.
+        \item \textbf{Mở rộng ngang (Scale-out):} Mở rộng qua phân mảnh (sharding) và sao chép (replication) trên các node phổ thông.
+        \item \textbf{Lược đồ linh hoạt:} Bản ghi tự mô tả (JSON/BSON), bán cấu trúc, thuộc tính không đồng nhất.
+        \item \textbf{Mô hình:} Văn bản (MongoDB), Khóa-Giá trị (Redis/DynamoDB), Cột rộng (BigTable/HBase/Cassandra), Đồ thị (Neo4j).
+    \end{itemize}
 
-        \subsubsection{5 chữ V của Big Data}
-        \begin{itemize}[leftmargin=*, label={--}]
-            \item \textbf{Volume (Dung lượng):} TB đến PB đến EB; từ log, di động, giao dịch, cảm biến IoT; cần song song hóa lớn.
-            \item \textbf{Velocity (Tốc độ):} Tốc độ nạp cao và xử lý luồng/thời gian thực để phát hiện gian lận, giám sát.
-            \item \textbf{Variety (Đa dạng):} Cấu trúc, bán cấu trúc, phi cấu trúc (web, mạng xã hội, vị trí, ảnh, video, log). Dữ liệu phi cấu trúc là thách thức lớn.
-            \item \textbf{Veracity (Độ xác thực):} Độ tin cậy/chất lượng dữ liệu biến thiên; cần kiểm tra trước khi phân tích.
-            \item \textbf{Value (Giá trị):} Phân tích (mô tả/dự đoán/đề xuất) để tạo ra lợi ích kinh doanh.
-        \end{itemize}
+    \subsubsection{5 chữ V của Big Data}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Volume (Dung lượng):} TB đến PB đến EB; từ log, di động, giao dịch, cảm biến IoT; cần song song hóa lớn.
+        \item \textbf{Velocity (Tốc độ):} Tốc độ nạp cao và xử lý luồng/thời gian thực để phát hiện gian lận, giám sát.
+        \item \textbf{Variety (Đa dạng):} Cấu trúc, bán cấu trúc, phi cấu trúc (web, mạng xã hội, vị trí, ảnh, video, log). Dữ liệu phi cấu trúc là thách thức lớn.
+        \item \textbf{Veracity (Độ xác thực):} Độ tin cậy/chất lượng dữ liệu biến thiên; cần kiểm tra trước khi phân tích.
+        \item \textbf{Value (Giá trị):} Phân tích (mô tả/dự đoán/đề xuất) để tạo ra lợi ích kinh doanh.
+    \end{itemize}
 
-        \subsubsection{Lưu trữ Phân tán (Kiểu HDFS)}
-        \begin{itemize}[leftmargin=*, label={--}]
-            \item \textbf{Không chia sẻ (Shared-nothing):} Mỗi node có CPU/RAM/đĩa riêng; phối hợp qua mạng; mở rộng kinh tế nhờ dư thừa.
-            \item \textbf{Kiến trúc HDFS:} NameNode quản lý không gian tên/metadata; DataNode lưu khối và phục vụ I/O; cụm có thể có hàng ngàn DataNode.
-            \item \textbf{Sao chép (Replication):} Khối được sao chép (thường 3x) để bền vững và sẵn sàng; client đọc từ bản sao gần nhất.
-            \item \textbf{I/O Song song:} Nhiều máy đọc/ghi đồng thời, tăng tổng thông lượng.
-            \item \textbf{Chỉ thêm (Append-only):} Mô hình nhất quán đơn giản tối ưu cho batch: tập tin chỉ được thêm vào cuối (không update ngẫu nhiên).
-            \item \textbf{Hệ sinh thái:} HDFS làm nền tảng cho MapReduce, HBase, và các công cụ big data khác.
-        \end{itemize}
+    \subsubsection{Lưu trữ Phân tán (Kiểu HDFS)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Không chia sẻ (Shared-nothing):} Mỗi node có CPU/RAM/đĩa riêng; phối hợp qua mạng; mở rộng kinh tế nhờ dư thừa.
+        \item \textbf{Kiến trúc HDFS:} NameNode quản lý không gian tên/metadata; DataNode lưu khối và phục vụ I/O; cụm có thể có hàng ngàn DataNode.
+        \item \textbf{Sao chép (Replication):} Khối được sao chép (thường 3x) để bền vững và sẵn sàng; client đọc từ bản sao gần nhất.
+        \item \textbf{I/O Song song:} Nhiều máy đọc/ghi đồng thời, tăng tổng thông lượng.
+        \item \textbf{Chỉ thêm (Append-only):} Mô hình nhất quán đơn giản tối ưu cho batch: tập tin chỉ được thêm vào cuối (không update ngẫu nhiên).
+        \item \textbf{Hệ sinh thái:} HDFS làm nền tảng cho MapReduce, HBase, và các công cụ big data khác.
+    \end{itemize}
 
     \subsection{Các Công nghệ}
     \paragraph{Document Store (MongoDB)}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textit{Lược đồ khi đọc} linh hoạt cho tính Đa dạng (Variety); thuộc tính không đồng nhất.
-        \item Tài liệu JSON/BSON (mảng, đối tượng lồng); thiết kế phi chuẩn hóa để tăng tính cục bộ dữ liệu.
-        \item CRUD qua \texttt{find(<cond>)}; tự động đánh chỉ mục \_id để truy xuất theo khóa.
+        \item Tài liệu JSON/BSON (mảng, đối tượng lồng); thiết kế phi chuẩn hóa để tăng tính
+              cục bộ dữ liệu.
+        \item CRUD qua \texttt{find(<cond>)}; tự động đánh chỉ mục \_id để truy xuất theo
+              khóa.
         \item Tính sẵn sàng cao qua Replica Sets (đọc primary/secondary).
         \item Mở rộng ngang với Sharding trên khóa shard (khoảng/băm; query router).
         \item MapReduce chỉ đọc trên các tập hợp (collection) lớn.
@@ -421,7 +505,8 @@
         \item Lưu trữ LSM-tree chuyển đổi ghi ngẫu nhiên thành I/O tuần tự.
         \item HBase trên HDFS; ZooKeeper để điều phối; vùng (region) theo khoảng khóa.
         \item Column families nhóm lưu trữ; bộ định danh cột (qualifier) định nghĩa động.
-        \item Cassandra: Sao chép không leader kiểu Dynamo; băm nhất quán (consistent hashing).
+        \item Cassandra: Sao chép không leader kiểu Dynamo; băm nhất quán (consistent
+              hashing).
         \item Chiến lược nén (vd: cửa sổ thời gian); chỉ mục phụ SASI.
     \end{itemize}
 
