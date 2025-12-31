@@ -7,7 +7,10 @@
 \usepackage{geometry}
 \usepackage{ulem}
 \usepackage{multicol} % for multi-column layout
-\usepackage{enumitem} % to tighten list spacing
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[inline]{enumitem} % to tighten list spacing
 
 % --- VIETNAMESE SUPPORT PACKAGES ---
 \usepackage[utf8]{inputenc}
@@ -45,30 +48,120 @@
     \subsection{Nguyên lý Thiết kế Mức Quan niệm}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Phân tích Yêu cầu:} Làm việc với người dùng/chuyên gia nghiệp vụ để nắm bắt yêu cầu dữ liệu và yêu cầu chức năng (thao tác/giao dịch).
-        \item \textbf{Thành phần ER:} \textbf{Thực thể} (vd: NHANVIEN), \textbf{Thuộc tính} (đơn/phức hợp/đa trị/dẫn xuất), \textbf{Mối kết hợp} (sự liên kết giữa các thực thể).
+        \item \textbf{Thành phần ER:} \textbf{Thực thể} (vd: NhanVien), \textbf{Thuộc tính} (đơn/phức hợp/đa trị/dẫn xuất), \textbf{Mối kết hợp} (sự liên kết giữa các thực thể).
         \item \textbf{Ràng buộc Cấu trúc:} Tỷ số bản số (1:1, 1:N, M:N) và ràng buộc tham gia (\textit{toàn phần} vs \textit{từng phần}).
         \item \textbf{Thực thể Yếu:} Được xác định thông qua \textbf{mối kết hợp xác định} với một thực thể \textbf{chủ} và một \textbf{khóa bộ phận}; thực thể yếu tham gia \textit{toàn phần} vào mối kết hợp xác định.
         \item \textbf{Tinh chỉnh Top-Down:} Tinh chỉnh lặp lại các thực thể tổng quát; áp dụng chuyên biệt hóa/tổng quát hóa (EER).
     \end{itemize}
-    \columnbreak
+    
     \subsection{Nguyên lý Thiết kế Mức Logic}
     \subsubsection{Cơ bản về Mô hình Quan hệ}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Cấu trúc:} Lược đồ quan hệ $R(A_1, \dots, A_n)$; các bộ (tuple) không có thứ tự và không cho phép trùng lặp trong mô hình hình thức.
         \item \textbf{Ràng buộc Toàn vẹn:} Ràng buộc miền giá trị (nguyên tố, có kiểu), ràng buộc khóa (siêu khóa/khóa ứng viên/khóa chính), toàn vẹn thực thể (khóa chính không NULL), toàn vẹn tham chiếu (giá trị khóa ngoại phải xuất hiện trong khóa chính được tham chiếu).
     \end{itemize}
-    \subsubsection{Lý thuyết Chuẩn hóa}
+
+    \subsubsection{Lý thuyết Chuẩn hóa (Normalization Theory)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Phụ thuộc Hàm (FD):} $X \rightarrow Y$ nghĩa là các bộ giống nhau trên $X$ thì phải giống nhau trên $Y$.
-        \item \textbf{Các tính chất Thiết kế:}
-              \begin{enumerate}[leftmargin=*]
-                  \item \textbf{Kết nối bảo toàn thông tin (Không tổn thất):} Phân rã không được tạo ra các bộ giả (spurious tuples).
-                  \item \textbf{Bảo toàn phụ thuộc:} Các FD ban đầu có thể kiểm tra được trên các quan hệ đã phân rã.
-                  \item \textbf{Giảm thiểu dư thừa:} Tránh các dị thường cập nhật (thêm, xóa, sửa).
-              \end{enumerate}
-        \item \textbf{Các Dạng chuẩn:} 1NF (nguyên tố), 2NF (FD đầy đủ vào khóa), 3NF (không có FD bắc cầu), BCNF (với mọi FD $X \rightarrow A$, $X$ là siêu khóa; có thể không bảo toàn phụ thuộc). 4NF/5NF giải quyết phụ thuộc đa trị và phụ thuộc kết nối.
-        \item \textbf{Phi chuẩn hóa (Denormalization):} Lưu trữ kết quả kết nối như quan hệ cơ sở để tăng hiệu năng nhưng chấp nhận dị thường.
+        \item \textbf{Mục tiêu:} Giảm thiểu dư thừa, tránh dị thường (Thêm, Xóa, Sửa).
+        \item \textbf{Phụ thuộc Hàm (FD):} $X \rightarrow Y$ (Nếu $t_1[X]=t_2[X]$ thì $t_1[Y]=t_2[Y]$).
+        \item \textbf{Các loại Key:}
+        \begin{itemize}
+            \item \textit{Superkey:} Xác định duy nhất một bộ.
+            \item \textit{Candidate Key:} Superkey tối thiểu.
+            \item \textit{Prime Attribute:} Thuộc tính nằm trong bất kỳ Candidate Key nào.
+        \end{itemize}
     \end{itemize}
+
+    \textbf{Các Dạng Chuẩn (Normal Forms)}
+    \begin{center}
+        \includegraphics[width=0.8\linewidth, height=3cm, keepaspectratio]{./images/normalization_pyramid.png} \\
+        \footnotesize \textit{(Hierarchy: BCNF $\subset$ 3NF $\subset$ 2NF $\subset$ 1NF)}
+    \end{center}
+
+    \begin{description}[leftmargin=*, labelindent=0pt, font=\bfseries\color{blue!80!black}, nosep]
+        
+        \item[1NF (Atomic):] Miền giá trị nguyên tố.
+        \newline $\hookrightarrow$ \textit{Vi phạm:} Thuộc tính đa trị, lồng nhau, lặp lại nhóm.
+
+        \item[2NF (No Partial):] Là 1NF + Thuộc tính \textit{non-prime} phụ thuộc đầy đủ vào khóa.
+        \newline $\hookrightarrow$ \textit{Vi phạm:} $\exists X \subsetneq Key$ sao cho $X \rightarrow NonPrime$.
+        \newline \textit{(Chỉ xảy ra nếu Key là khóa phức hợp)}.
+
+        \item[3NF (No Transitive):] Là 2NF + Không có phụ thuộc bắc cầu giữa các \textit{non-prime}.
+        \newline $\rightarrow$ \textit{Định nghĩa:} Với mọi $X \rightarrow A$ (không tầm thường), phải thỏa:
+        \begin{enumerate*}[label=(\alph*)]
+            \item $X$ là Superkey \textbf{HOẶC}
+            \item $A$ là Prime Attribute.
+        \end{enumerate*}
+
+        \item[BCNF (Strict):] Nghiêm ngặt hơn 3NF.
+        \newline $\rightarrow$ \textit{Định nghĩa:} Với mọi $X \rightarrow A$, $X$ \textbf{bắt buộc là Superkey}.
+        \newline \textit{(Khác biệt: BCNF không chấp nhận ngoại lệ "A là Prime" như 3NF)}.
+
+    \end{description}
+
+    \textbf{Tính chất Phân rã (Decomposition Properties)}
+    \begin{enumerate}[leftmargin=*, label={\arabic*.}]
+        \item \textbf{Kết nối bảo toàn thông tin (Lossless Join):} \textit{(Bắt buộc)}
+        \newline Để phân rã $R$ thành $R_1, R_2$ không bị mất dữ liệu, điều kiện là:
+        \newline $(R_1 \cap R_2) \rightarrow R_1$ \textbf{HOẶC} $(R_1 \cap R_2) \rightarrow R_2$.
+        \newline \textit{(Giao của 2 bảng phải là khóa của ít nhất 1 bảng).}
+        \item \textbf{Bảo toàn phụ thuộc (Dependency Preservation):}
+        \newline Các FD ban đầu có thể được kiểm tra riêng lẻ trên từng $R_i$ mà không cần join lại. (BCNF có thể không bảo toàn phụ thuộc).
+    \end{enumerate}
+
+    \subsubsection{Phi chuẩn hóa (Denormalization)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Mục tiêu:} Cải thiện hiệu suất đọc bằng cách đưa dư thừa vào lược đồ, ngược với chuẩn hóa.
+        \item \textbf{Động lực:} Tránh Join tốn kém; giảm độ phức tạp truy vấn; tăng locality dữ liệu.
+    \end{itemize}
+    
+    \textbf{Kỹ thuật Denormalization:}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Materialized Views:} Kết quả truy vấn được tính trước và lưu trữ; cập nhật khi dữ liệu thay đổi.
+        \item \textbf{Precomputed Aggregates:} Lưu giá trị tổng hợp (COUNT, SUM) trong bản ghi để tránh tính lại.
+        \newline \textit{VD: Lưu số email chưa đọc trong bảng User thay vì đếm mỗi lần.}
+        \item \textbf{Document Databases:} Nhúng (embedding) dữ liệu liên quan trong một document thay vì tham chiếu.
+        \newline \textit{VD: MongoDB nhúng thông tin Worker vào document Project.}
+        \item \textbf{Star Schema (DW):} Dimension tables được denormalize (VD: Brand, Category trong dim\_product).
+        \item \textbf{Microservices:} Sao chép (replicate) dữ liệu giữa các service để tách biệt và giảm phụ thuộc.
+    \end{itemize}
+    
+    \textbf{Đánh đổi (Trade-offs):}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Write Overhead:} Mỗi cập nhật phải sửa tất cả bản sao dư thừa $\Rightarrow$ ghi chậm hơn, phức tạp hơn.
+        \item \textbf{Data Inconsistency:} Rủi ro không nhất quán nếu một bản sao được cập nhật mà bản khác thì không.
+        \item \textbf{Storage Cost:} Lưu trữ dữ liệu trùng lặp tốn bộ nhớ hơn.
+    \end{itemize}
+    \textit{Khi nào dùng:} OLAP/DW (đọc nhiều), NoSQL (thiếu join), microservices (tách biệt). \textit{Tránh:} OLTP cần ACID chặt.
+
+    \subsubsection{Bẫy Thiết kế CSDL (Design Traps)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Bẫy Kết nối trong ER:}
+        \begin{center}
+            \begin{tabular}{@{} c c @{}}
+                \includegraphics[width=0.45\linewidth]{./images/design_trap_fan.png} & 
+                \includegraphics[width=0.45\linewidth]{./images/design_trap_chasm.png} \\
+                \footnotesize (Fan Trap) & \footnotesize (Chasm Trap) \\
+            \end{tabular}
+        \end{center}
+        \begin{itemize}
+            \item \textit{Fan Trap:} Đường dẫn giữa các thực thể mơ hồ do nhiều quan hệ 1:N phân nhánh từ một thực thể. VD: NhanVien $\to$ PhongBan $\to$ ChiNhanh (không xác định được nhân viên làm ở chi nhánh nào). \textit{Giải pháp:} Thêm quan hệ trực tiếp NhanVien-ChiNhanh.
+            \item \textit{Chasm Trap:} Đường dẫn không tồn tại do tham gia tùy chọn. VD: KhanhHang $\to$ TaiSan $\to$ ChiNhanh (nếu tài sản chưa niêm yết thì không liên kết được khách hàng với chi nhánh). \textit{Giải pháp:} Đổi sang tham gia bắt buộc hoặc thêm quan hệ trực tiếp.
+        \end{itemize}
+        \item \textbf{Dị thường Cập nhật (Update Anomalies):} Do thiết kế không chuẩn hóa:
+        \begin{itemize}
+            \item \textit{Insertion:} Không thể thêm phòng ban mới nếu chưa có nhân viên.
+            \item \textit{Deletion:} Xóa nhân viên cuối cùng làm mất thông tin phòng ban.
+            \item \textit{Modification:} Thay đổi tên phòng ban phải cập nhật nhiều bộ.
+        \end{itemize}
+        \item \textbf{Bộ giả (Spurious Tuples):} Kết nối các quan hệ phân rã sai (không qua PK/FK hợp lệ) tạo ra bản ghi ảo. \textit{Giải pháp:} Dùng phân rã bảo toàn thông tin (lossless join).
+        \item \textbf{Bẫy NULL:} Quá nhiều thuộc tính NULL lãng phí bộ nhớ và gây khó khăn trong truy vấn tổng hợp.
+        \item \textbf{Sai lầm phổ biến:} Dùng PK của thực thể này làm thuộc tính của thực thể khác thay vì mô hình hóa quan hệ; gán PK vào thuộc tính của quan hệ; dùng thuộc tính đơn trị khi cần đa trị.
+        \item \textbf{Entity Trap (Kiến trúc):} Thiết kế component 1-1 với bảng DB (VD: CustomerManager cho bảng Customer) thay vì theo workflow nghiệp vụ $\to$ vi phạm tách biệt dữ liệu trong microservices.
+    \end{itemize}
+    \textit{Thực hành tốt:} Dùng BCNF/3NF; phân rã bảo toàn thông tin; đảm bảo đường dẫn ER rõ ràng; thiết kế theo hành vi nghiệp vụ, không theo thực thể.
 
     \subsection{Nguyên lý Thiết kế Mức Vật lý}
     \begin{itemize}[leftmargin=*, label={--}]
@@ -77,7 +170,6 @@
         \item \textbf{Cấu trúc Chỉ mục:} Chỉ mục có thứ tự (B+-Trees) và chỉ mục băm; chỉ mục \textbf{chính/phân cụm} (quy định thứ tự vật lý; tối đa một trên mỗi tập tin) so với chỉ mục \textbf{phụ}.
         \item \textbf{Tối ưu hóa Truy vấn:} Dựa trên chi phí (thống kê) và các quy tắc kinh nghiệm (đẩy phép chọn/chiếu xuống sớm) để chọn kế hoạch hiệu quả.
     \end{itemize}
-    \columnbreak
     \subsection{Các bước vẽ ERD (Steps to Create ERD)}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
         \item \textbf{Xác định Thực thể (Entities):} 
@@ -105,7 +197,7 @@
     \subsection{Ký hiệu Chen \& EER (Chen Notation)}
     % Bảng cho Thực thể & Thuộc tính - Tiết kiệm không gian hơn liệt kê
     \subsubsection{Thực thể \& Thuộc tính (Entities \& Attributes)}
-    \textit{Khi nào dùng:} \textbf{Thực thể} cho đối tượng độc lập (NHANVIEN, SANPHAM, KHACHHANG); \textbf{Thực thể yếu} cho đối tượng phụ thuộc (NGUOIPHUTHUOC của nhân viên, CHITIETDONHANG); \textbf{Khóa} là định danh duy nhất (MSNV, CCCD); \textbf{Đa trị} cho thuộc tính nhiều giá trị (số điện thoại, email); \textbf{Dẫn xuất} cho giá trị tính toán (tuổi từ ngày sinh, tổng tiền).
+    \textit{Khi nào dùng:} \textbf{Thực thể} cho đối tượng độc lập (NhanVien, SanPham, KhanhHang); \textbf{Thực thể yếu} cho đối tượng phụ thuộc (NguoiPhuThuoccủa nhân viên, ChiTietDonHang); \textbf{Khóa} là định danh duy nhất (MSNV, CCCD); \textbf{Đa trị} cho thuộc tính nhiều giá trị (số điện thoại, email); \textbf{Dẫn xuất} cho giá trị tính toán (tuổi từ ngày sinh, tổng tiền).
     \begin{center}
         \begin{tabular}{@{} c c @{}}
             % Hàng 1: Thực thể & Thực thể yếu
@@ -126,7 +218,7 @@
     \end{center}
 
     \subsubsection{Mối kết hợp (Relationships)}
-    \textit{Khi nào dùng:} \textbf{Quan hệ thường} cho liên kết độc lập (NHANVIEN \textit{làm việc cho} PHONGBAN, KHACHHANG \textit{mua} SANPHAM); \textbf{Quan hệ xác định} khi thực thể yếu phụ thuộc vào thực thể chủ (NGUOIPHUOCTHUOC \textit{thuộc về} NHANVIEN với khóa bộ phận là tên người phụ thuộc).
+    \textit{Khi nào dùng:} \textbf{Quan hệ thường} cho liên kết độc lập (NhanVien \textit{làm việc cho} PhongBan, KhanhHang \textit{mua} SanPham); \textbf{Quan hệ xác định} khi thực thể yếu phụ thuộc vào thực thể chủ (NguoiPhuThuoc \textit{thuộc về} NhanVien với khóa bộ phận là tên người phụ thuộc).
     \begin{center}
         % Dùng minipage để căn chỉnh nếu ảnh có tỷ lệ khác nhau
         \includegraphics[width=0.9\linewidth]{./images/chen_relationships_summary.png} \\
@@ -136,27 +228,27 @@
     \subsubsection{Ràng buộc (Constraints)}
     \textit{Khi nào dùng:} Xác định quy tắc nghiệp vụ giữa các thực thể.
     \begin{itemize}[leftmargin=*, label={}]
-        \item \textbf{Bản số (Cardinality):} 1:1 (NHANVIEN \textit{quản lý} PHONGBAN - mỗi phòng có 1 trưởng), 1:N (PHONGBAN \textit{có} NHANVIEN - nhiều nhân viên/phòng), M:N (NHANVIEN \textit{tham gia} DUAN - nhiều-nhiều).
+        \item \textbf{Bản số (Cardinality):} 1:1 (NhanVien \textit{quản lý} PhongBan - mỗi phòng có 1 trưởng), 1:N (PhongBan \textit{có} NhanVien - nhiều nhân viên/phòng), M:N (NhanVien \textit{tham gia} DUAN - nhiều-nhiều).
         \item \textbf{Tham gia (Participation):}
               \begin{center}
                   \includegraphics[width=0.85\linewidth]{./images/chen_participation.png} \\
                   \footnotesize (Partial Participation (Từng phần): Nét đơn \linebreak Total Participation (Toàn phần): Nét đôi)
               \end{center}
-        \item \textbf{Min-Max (min, max):} Ghi cặp số trên cạnh. Ví dụ: NHANVIEN $(1,1)$ \textit{làm việc cho} $(0,N)$ PHONGBAN nghĩa là mỗi nhân viên bắt buộc làm việc cho đúng 1 phòng ban, mỗi phòng ban có thể có 0 đến nhiều nhân viên. $(0,1)$: tùy chọn, tối đa 1; $(1,N)$: bắt buộc, có thể nhiều. (An extension of Participation và Cardinality)
+        \item \textbf{Min-Max (min, max):} Ghi cặp số trên cạnh. Ví dụ: NhanVien $(1,1)$ \textit{làm việc cho} $(0,N)$ PhongBan nghĩa là mỗi nhân viên bắt buộc làm việc cho đúng 1 phòng ban, mỗi phòng ban có thể có 0 đến nhiều nhân viên. $(0,1)$: tùy chọn, tối đa 1; $(1,N)$: bắt buộc, có thể nhiều. (An extension of Participation và Cardinality)
     \end{itemize}
 
     \subsubsection{EER Chuyên biệt hóa \& Tổng quát hóa}
-    \textit{Khi nào dùng:} \textbf{Disjoint} khi lớp con không chồng lấp (NHANVIEN là KỸ SƯ hoặc QUẢN LÝ, không đồng thời); \textbf{Overlapping} khi có thể thuộc nhiều lớp (NGƯỜI là SINH VIÊN và/hoặc NHÂN VIÊN); \textbf{Union} khi lớp con kế thừa từ nhiều lớp cha (CHỦ SỞ HỮU có thể là NGƯỜI hoặc CÔNG TY hoặc NGÂN HÀNG). \textbf{Total} khi mọi thực thể cha phải thuộc ít nhất 1 lớp con; \textbf{Partial} khi không bắt buộc.
+    \textit{Khi nào dùng:} \textbf{Disjoint} khi lớp con không chồng lấp (NhanVien là KỸ SƯ hoặc QUẢN LÝ, không đồng thời); \textbf{Overlapping} khi có thể thuộc nhiều lớp (NGƯỜI là SINH VIÊN và/hoặc NHÂN VIÊN); \textbf{Union} khi lớp con kế thừa từ nhiều lớp cha (CHỦ SỞ HỮU có thể là NGƯỜI hoặc CÔNG TY hoặc NGÂN HÀNG). \textbf{Total} khi mọi thực thể cha phải thuộc ít nhất 1 lớp con; \textbf{Partial} khi không bắt buộc.
     \begin{center}
         \begin{tabular}{@{} c @{}}
-            \includegraphics[width=0.7\linewidth]{./images/chen_eer_disjoint_overlap.png} \\
+            \includegraphics[width=1\linewidth]{./images/chen_eer_disjoint_overlap.png} \\
             \footnotesize (Disjoint \& Overlapping)                                       \\[2pt]
-            \includegraphics[width=0.7\linewidth]{./images/chen_eer_union.png}            \\
+            \includegraphics[width=1\linewidth]{./images/chen_eer_union.png}            \\
             \footnotesize (Union)                                                         \\
         \end{tabular} \\[2pt]
         \footnotesize \textit{Ký hiệu: Hình tròn (d: disjoint, o: overlapping, U: union),\linebreak Nét đôi (Total), Nét đơn (Partial).}
     \end{center}
-
+    
     \section{Lưu trữ Dữ liệu \& Chỉ mục}
 
     % ============================================================================
@@ -202,6 +294,8 @@
         \item \textbf{Thao tác:} Tìm/thêm/xóa trong $O(\log_{fo} n)$ lần truy cập khối; tách/gộp nút để duy trì cân bằng.
         \item \textbf{B+- so với B-Tree:} B+- chỉ lưu con trỏ dữ liệu ở lá $\Rightarrow$ hệ số rẽ nhánh nút trong cao hơn, quét tuần tự hiệu quả qua chuỗi liên kết lá.
     \end{itemize}
+    
+    
 
     \subsubsection{Ví dụ Tính Dung lượng}
     \textit{Tham số:} Kích thước khối $B=512$ bytes; kích thước khóa $V=9$ bytes; con trỏ dữ liệu $\Pr=7$ bytes; con trỏ cây $P=6$ bytes.
@@ -258,7 +352,7 @@
         \item \textbf{Xử lý đụng độ:} Dùng danh sách liên kết (chaining) với bucket tràn.
         \item \textbf{Biến thể động:} Băm mở rộng/tuyến tính (Extendible/Linear hashing) tăng trưởng dần mà không cần xây lại toàn bộ.
     \end{itemize}
-
+    
     \subsubsection{Chỉ mục Bitmap}
     \textit{Tối ưu cho thuộc tính có độ chọn lọc thấp (ít giá trị riêng biệt).}
     \begin{itemize}[leftmargin=*, label={--}]
@@ -355,8 +449,8 @@
         \item \textbf{Số bộ kết quả:} $jc = js\,|R|\,|S|$; \textbf{chi phí ghi}: $jc/bfr_{result}$ khối.
         \item \textbf{Bộ đệm:} $n_B$ = số trang đệm khả dụng (ảnh hưởng chi phí nested-loop).
     \end{itemize}
-
-    \paragraph{Kịch bản Thống nhất}\mbox{}\\
+    
+    \paragraph{Kịch bản Thống nhất (Join)}\mbox{}\\
     EMPLOYEE ($|E|=10{,}000$, $b_E=2{,}000$) $\bowtie_{Dno=Dnumber}$ \\
     DEPARTMENT ($|D|=125$, $b_D=13$). \\
     Chỉ mục trên $E.Dno$ (phụ: $x=2$, $s=80$).\\
@@ -395,7 +489,7 @@
         \item \textbf{Tối ưu hóa Dựa trên Chi phí:} Liệt kê các kế hoạch, ước tính chi phí, chọn chi phí thấp nhất.
         \item \textbf{Thực thi:} Hiện thực hóa kết quả trung gian hoặc pipeline kết quả.
     \end{enumerate}
-
+    
     \subsubsection{Quy tắc Heuristic}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Đẩy phép chọn ($\sigma$) xuống:} Lọc sớm để giảm kích thước trung gian.
@@ -429,197 +523,144 @@
     % ============================================================================
     % PART 6: ADVANCED TOPICS
     % ============================================================================
-    \section{Lưu trữ Dữ liệu Lớn}
+    \section{Big Data \& Data Engineering}
 
-    \subsection{Khái niệm}
+    % --- PHẦN 1: KHÁI NIỆM CỐT LÕI ---
+    \subsection{Khái niệm Cốt lõi (Core Concepts)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Động lực NoSQL:} Khả năng mở rộng ngang, tính sẵn sàng, lược đồ linh hoạt (BASE/CAP) so với ACID chặt chẽ.
-        \item \textbf{3V của Big Data:} Volume (TB–PB–EB), Velocity (thời gian thực), Variety (cấu trúc/bán cấu trúc/phi cấu trúc); thường thêm Veracity (độ tin cậy) và Value (giá trị).
-        \item \textbf{Chiến lược lược đồ:} \textit{Lược đồ khi ghi (Schema-on-write)} (DW) so với \textit{Lược đồ khi đọc (Schema-on-read)} (DL).
-        \item \textbf{Lưu trữ phân tán:} Hệ thống kiểu HDFS cung cấp lưu trữ chịu lỗi, mở rộng trên các cụm máy.
-    \end{itemize}
-
-    \subsubsection{Động lực NoSQL (BASE/CAP vs ACID)}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{ACID vs BASE:} RDBMS tuân thủ ACID; NoSQL thường theo BASE (Basically Available, Soft state, Eventually consistent) để mở rộng.
-        \item \textbf{Đánh đổi CAP:} Trong hệ thống phân tán có sao chép, không thể đồng thời có Consistency (Nhất quán), Availability (Sẵn sàng), và Partition tolerance (Chịu phân hoạch). NoSQL thường chọn AP hơn C chặt chẽ.
-        \item \textbf{Nhất quán cuối cùng (Eventual consistency):} Các bản sao có thể lệch nhau tạm thời nhưng sẽ hội tụ nếu không có cập nhật mới; chấp nhận được cho nhiều ứng dụng web.
-        \item \textbf{Mở rộng ngang (Scale-out):} Mở rộng qua phân mảnh (sharding) và sao chép (replication) trên các node phổ thông.
-        \item \textbf{Lược đồ linh hoạt:} Bản ghi tự mô tả (JSON/BSON), bán cấu trúc, thuộc tính không đồng nhất.
-        \item \textbf{Mô hình:} Văn bản (MongoDB), Khóa-Giá trị (Redis/DynamoDB), Cột rộng (BigTable/HBase/Cassandra), Đồ thị (Neo4j).
+        \item \textbf{5V Big Data:} 
+        \begin{itemize}
+            \item \textbf{Volume:} Dung lượng lớn (TB $\to$ PB).
+            \item \textbf{Velocity:} Tốc độ sinh/xử lý nhanh (Streaming).
+            \item \textbf{Variety:} Đa dạng (Cấu trúc, bán cấu trúc JSON, phi cấu trúc).
+            \item \textbf{Veracity:} Độ tin cậy/nhiễu của dữ liệu.
+            \item \textbf{Value:} Giá trị chuyển hóa thành lợi ích kinh doanh.
+        \end{itemize}
+        \item \textbf{CAP Theorem:} Chỉ đạt được 2/3: \textbf{C}onsistency, \textbf{A}vailability, \textbf{P}artition Tolerance.
+        \newline $\rightarrow$ \textit{NoSQL thường chọn AP (Sẵn sàng + Chịu lỗi) thay vì CP.}
+        \item \textbf{BASE:} \textbf{B}asically \textbf{A}vailable, \textbf{S}oft state, \textbf{E}ventual consistency (Nhất quán cuối cùng - chấp nhận dữ liệu cũ tạm thời).
     \end{itemize}
 
-    \subsubsection{5 chữ V của Big Data}
+    % --- PHẦN 2: HỆ SINH THÁI HADOOP ---
+    \subsection{Hệ sinh thái Hadoop (Hadoop Ecosystem)}
+    \textit{Khung làm việc mã nguồn mở cho lưu trữ và xử lý phân tán.}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{HDFS (Storage):} Hệ thống tệp phân tán.
+        \begin{itemize}
+            \item \textit{NameNode:} Quản lý metadata (vị trí block).
+            \item \textit{DataNode:} Lưu trữ block dữ liệu thực tế.
+            \item \textit{Cơ chế:} Chia file thành block (128MB), replicate (x3) để chịu lỗi.
+        \end{itemize}
+        \item \textbf{YARN (Resource Management):} "Hệ điều hành" của cluster.
+        \begin{itemize}
+            \item Phân phối tài nguyên (RAM, CPU) cho các ứng dụng.
+            \item Cho phép chạy nhiều engine (Spark, MapReduce) trên cùng 1 cụm.
+        \end{itemize}
+        \item \textbf{MapReduce (Processing):} Mô hình xử lý Batch.
+        \begin{itemize}
+            \item \textit{Map:} Xử lý song song cục bộ.
+            \item \textit{Reduce:} Tổng hợp kết quả.
+        \end{itemize}
+    \end{enumerate}
+
+    % --- PHẦN 3: CÔNG NGHỆ LƯU TRỮ NOSQL ---
+    \subsection{Công nghệ NoSQL (Storage Tech)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Volume (Dung lượng):} TB đến PB đến EB; từ log, di động, giao dịch, cảm biến IoT; cần song song hóa lớn.
-        \item \textbf{Velocity (Tốc độ):} Tốc độ nạp cao và xử lý luồng/thời gian thực để phát hiện gian lận, giám sát.
-        \item \textbf{Variety (Đa dạng):} Cấu trúc, bán cấu trúc, phi cấu trúc (web, mạng xã hội, vị trí, ảnh, video, log). Dữ liệu phi cấu trúc là thách thức lớn.
-        \item \textbf{Veracity (Độ xác thực):} Độ tin cậy/chất lượng dữ liệu biến thiên; cần kiểm tra trước khi phân tích.
-        \item \textbf{Value (Giá trị):} Phân tích (mô tả/dự đoán/đề xuất) để tạo ra lợi ích kinh doanh.
+        \item \textbf{Document (MongoDB):} Schema-on-read (JSON/BSON). Linh hoạt, tốt cho CMS, Mobile apps. Query: \texttt{find()}.
+        \item \textbf{Key-Value (Redis):} In-memory, cực nhanh ($<1$ms). Dùng cho Caching, Session, Queue. Persist dạng Snapshot/AOF.
+        \item \textbf{Wide-Column (Cassandra/HBase):} Ghi cực nhanh (LSM Tree). Tốt cho Time-series, Log, IoT. Query theo RowKey.
+        \item \textbf{Graph (Neo4j):} Tối ưu cho quan hệ phức tạp (Mạng xã hội, Gợi ý, Fraud detection). Query: Cypher.
     \end{itemize}
 
-    \subsubsection{Lưu trữ Phân tán (Kiểu HDFS)}
+    % --- PHẦN 4: XỬ LÝ LUỒNG (STREAMING) ---
+    \subsection{Xử lý Luồng (Streaming Processing)}
+    \textit{Xử lý dữ liệu liên tục, độ trễ thấp (Real-time).}
+    
+    \subsubsection{Các chiến lược xử lý (Strategies)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Không chia sẻ (Shared-nothing):} Mỗi node có CPU/RAM/đĩa riêng; phối hợp qua mạng; mở rộng kinh tế nhờ dư thừa.
-        \item \textbf{Kiến trúc HDFS:} NameNode quản lý không gian tên/metadata; DataNode lưu khối và phục vụ I/O; cụm có thể có hàng ngàn DataNode.
-        \item \textbf{Sao chép (Replication):} Khối được sao chép (thường 3x) để bền vững và sẵn sàng; client đọc từ bản sao gần nhất.
-        \item \textbf{I/O Song song:} Nhiều máy đọc/ghi đồng thời, tăng tổng thông lượng.
-        \item \textbf{Chỉ thêm (Append-only):} Mô hình nhất quán đơn giản tối ưu cho batch: tập tin chỉ được thêm vào cuối (không update ngẫu nhiên).
-        \item \textbf{Hệ sinh thái:} HDFS làm nền tảng cho MapReduce, HBase, và các công cụ big data khác.
+        \item \textbf{Thời gian (Time Domain):}
+        \begin{itemize}
+            \item \textit{Event Time:} Thời gian sự kiện xảy ra (quan trọng nhất).
+            \item \textit{Processing Time:} Thời gian hệ thống nhận được dữ liệu.
+            \item \textit{Watermark:} Cơ chế xử lý độ trễ (data đến muộn) trong Event Time.
+        \end{itemize}
+        \item \textbf{Cửa sổ (Windowing):}
+        \begin{itemize}
+            \item \textit{Tumbling:} Cố định, không chồng (vd: mỗi 5p).
+            \item \textit{Hopping/Sliding:} Có chồng lấp (vd: 5p, trượt mỗi 1p).
+            \item \textit{Session:} Dựa trên hoạt động người dùng (hết timeout thì đóng).
+        \end{itemize}
+        \item \textbf{Đảm bảo (Guarantees):}
+        \begin{itemize}
+            \item \textit{At-most-once:} Gửi 1 lần, chấp nhận mất (vd: Log).
+            \item \textit{At-least-once:} Không mất, chấp nhận trùng lặp.
+            \item \textit{Exactly-once:} Chính xác 1 lần (Khó nhất, cần Flink/Kafka).
+        \end{itemize}
     \end{itemize}
 
-    \subsection{Các Công nghệ}
-    \paragraph{Document Store (MongoDB)}
+    % --- PHẦN 5: PIPELINES & ORCHESTRATION ---
+    \subsection{Pipelines \& Orchestration}
+    
+    \subsubsection{Apache Kafka vs Airflow}
+\begin{center}
+    \renewcommand{\arraystretch}{1.2} % Adjust row height for readability
+    \begin{tabular}{@{} >{\raggedright\arraybackslash}p{0.48\linewidth} >{\raggedright\arraybackslash}p{0.48\linewidth} @{}}
+        \toprule
+        \textbf{Apache Kafka} & \textbf{Apache Airflow} \\
+        \midrule
+        
+        \textbf{Loại:} Event Streaming Platform (Message Broker). & 
+        \textbf{Loại:} Workflow Orchestration (Quản lý quy trình). \\
+        \addlinespace[4pt] % Extra space between sections
+        
+        \textbf{Đặc trưng:}
+        \begin{itemize}[leftmargin=10pt, nosep, label=\tiny$\bullet$]
+            \item Log bền vững (Durable log).
+            \item Decoupling (Tách rời).
+            \item Replayable, High throughput.
+        \end{itemize} & 
+        \textbf{Đặc trưng:}
+        \begin{itemize}[leftmargin=10pt, nosep, label=\tiny$\bullet$]
+            \item Code-as-infra (Python DAGs).
+            \item Quản lý dependency phức tạp.
+            \item Backfill (chạy lại quá khứ).
+        \end{itemize} \\
+        \addlinespace[4pt]
+        
+        \textbf{Vai trò:} "Xương sống" vận chuyển dữ liệu \textit{Real-time}. & 
+        \textbf{Vai trò:} "Nhạc trưởng" điều phối Job (\textit{Batch/ETL}). \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+    \subsubsection{ETL vs ELT}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textit{Lược đồ khi đọc} linh hoạt cho tính Đa dạng (Variety); thuộc tính không đồng nhất.
-        \item Tài liệu JSON/BSON (mảng, đối tượng lồng); thiết kế phi chuẩn hóa để tăng tính
-              cục bộ dữ liệu.
-        \item CRUD qua \texttt{find(<cond>)}; tự động đánh chỉ mục \_id để truy xuất theo
-              khóa.
-        \item Tính sẵn sàng cao qua Replica Sets (đọc primary/secondary).
-        \item Mở rộng ngang với Sharding trên khóa shard (khoảng/băm; query router).
-        \item MapReduce chỉ đọc trên các tập hợp (collection) lớn.
+        \item \textbf{ETL (Extract-Transform-Load):} Transform \textit{trước} khi vào kho. Schema-on-write. Dữ liệu sạch, bảo mật. (Truyền thống).
+        \item \textbf{ELT (Extract-Load-Transform):} Load raw vào kho \textit{trước}, transform sau. Schema-on-read. Tận dụng sức mạnh Cloud DW (BigQuery, Snowflake). (Hiện đại).
     \end{itemize}
 
-    \paragraph{Key-Value Cache (Redis)}
+    % --- PHẦN 6: DATA WAREHOUSING ---
+    \subsection{Kho Dữ liệu (Data Warehousing)}
+    
+    \subsubsection{Mô hình hóa (Modeling)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item Hash-map trong bộ nhớ (In-memory) cho tốc độ đọc cực nhanh.
-        \item Hỗ trợ cấu trúc dữ liệu phức tạp (set, queue) một cách tự nhiên.
-        \item Bền vững qua nhật ký append-only và snapshot.
-        \item Mẫu Read-through cache; ứng dụng quản lý việc vô hiệu hóa cache.
-        \item Sao chép Master-slave cho tính sẵn sàng cao.
+        \item \textbf{Star Schema:} Fact ở giữa, Dimension xung quanh. Phi chuẩn hóa dimension. \textit{Hiệu năng cao, dễ query.}
+        \item \textbf{Snowflake Schema:} Chuẩn hóa dimension (tách nhỏ). \textit{Tiết kiệm không gian, join phức tạp.}
     \end{itemize}
 
-    \paragraph{Graph DB (Neo4j)}
+    \subsubsection{SCD (Slowly Changing Dimensions)}
+    \textit{Tại sao cần?} Để đảm bảo báo cáo lịch sử chính xác. Nếu KH chuyển từ HCM ra HN năm 2024, doanh số năm 2020 vẫn phải tính cho HCM.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item Mô hình đồ thị thuộc tính: nút, quan hệ, nhãn, thuộc tính.
-        \item Truy vấn đường dẫn hiệu quả; duyệt độ dài thay đổi qua Cypher.
-        \item Ngôn ngữ khai báo với ký hiệu mũi tên cho các mẫu (patterns).
-        \item Tính năng doanh nghiệp: caching, clustering, sao chép master-slave.
-        \item Thiết kế tập trung tối ưu cho tải công việc đồ thị.
+        \item \textbf{Type 1 (Overwrite):} Ghi đè giá trị cũ. \textit{Mất lịch sử.}
+        \item \textbf{Type 2 (Add Row):} Thêm dòng mới + cột thời gian (Start/End Date) + cờ (is\_current). \textit{Chuẩn nhất cho DW.}
+        \item \textbf{Type 3 (Add Column):} Thêm cột "Previous Value". \textit{Chỉ lưu được 1 giá trị cũ.}
     \end{itemize}
 
-    \paragraph{Wide-Column Stores (BigTable/HBase/Cassandra)}
+    \subsubsection{DW vs DL vs Lakehouse}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item Bản đồ đa chiều thưa được sắp xếp: row key, column info, phiên bản.
-        \item Lưu trữ LSM-tree chuyển đổi ghi ngẫu nhiên thành I/O tuần tự.
-        \item HBase trên HDFS; ZooKeeper để điều phối; vùng (region) theo khoảng khóa.
-        \item Column families nhóm lưu trữ; bộ định danh cột (qualifier) định nghĩa động.
-        \item Cassandra: Sao chép không leader kiểu Dynamo; băm nhất quán (consistent
-              hashing).
-        \item Chiến lược nén (vd: cửa sổ thời gian); chỉ mục phụ SASI.
-    \end{itemize}
-
-    \paragraph{Data Warehouse Engines}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item HiveQL trên Hadoop; biên dịch sang kế hoạch thực thi MapReduce/Tez/Spark.
-        \item SerDe hiển thị tập tin thô dưới dạng bảng; đẩy vị từ (predicate pushdown).
-        \item Định dạng cột ORC/Parquet giảm thiểu I/O cho phân tích.
-        \item Cloud OLAP: Snowflake/BigQuery/Redshift cho phân tích tương tác.
-        \item Thực thi song song với lưu trữ mở rộng.
-    \end{itemize}
-
-    \paragraph{Khung xử lý (Processing Frameworks)}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item MapReduce: map/shuffle/reduce trên HDFS/HBase; chịu lỗi thông qua thực thi lại.
-        \item Spark: RDD trong bộ nhớ; động cơ thống nhất (SQL, đồ thị, ML, streaming).
-        \item Spark trên YARN; đọc từ HDFS/HBase.
-        \item Tez: Thực thi DAG; pipeline các giai đoạn để tránh hiện thực hóa xuống HDFS.
-        \item Nền tảng cho các hệ thống cấp cao hơn như Hive.
-    \end{itemize}
-
-    \subsection{Xử lý Luồng (Streaming)}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Mục đích:} Xử lý thời gian thực, không giới hạn cho phát hiện gian lận/xâm nhập, theo dõi, giám sát.
-    \end{itemize}
-    \paragraph{Thông điệp: Kafka Durable Log \& CDC}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Lưu trữ Log:} Đĩa append-only; producer thêm vào, consumer đọc tuần tự.
-        \item \textbf{Phân hoạch/Thứ tự:} Phân hoạch Topic với thứ tự toàn cục trên mỗi phân hoạch qua offset.
-        \item \textbf{Độ bền/Replay:} Retention giữ lại các bộ; việc tiêu thụ là chỉ đọc; consumer có thể replay từ offset.
-        \item \textbf{CDC transport:} Luồng Change Data Capture bảo toàn thứ tự; DB nguồn là leader, follower xây lại trạng thái.
-        \item \textbf{Nén Log:} Giữ lại lần ghi cuối cùng cho mỗi khóa, cho phép snapshot bảng mới nhất.
-    \end{itemize}
-    \paragraph{Tính toán: Flink/Spark \& Cloud}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Apache Flink:} Động cơ streaming thực thụ; thực thi pipeline; checkpoint để phục hồi.
-        \item \textbf{Spark Streaming:} Microbatching (\~1s) trên RDD; tính toán lại khi lỗi.
-        \item \textbf{Cloud:} Kinesis (log-based), Dataflow (checkpointed pipelines), Azure Stream Analytics (SQL streaming được quản lý).
-    \end{itemize}
-    \paragraph{Cửa sổ (Windows): Tumbling vs Hopping}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Tumbling (Trượt không chồng):} Độ dài cố định, liền kề, không chồng lấp (vd: 1 phút).
-        \item \textbf{Hopping (Trượt chồng lấp):} Độ dài cố định, có chồng lấp (vd: cửa sổ 5 phút trượt mỗi 1 phút).
-        \item \textbf{Ngữ nghĩa thời gian:} Thời gian sự kiện (Event time) vs Thời gian xử lý (Processing time); quản lý sự kiện đến muộn.
-    \end{itemize}
-    \paragraph{Stream Joins: Có giới hạn thời gian \& Có trạng thái}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Stream-Stream:} Kết nối cửa sổ trên khóa có giới hạn thời gian (vd: trong vòng 30 phút).
-        \item \textbf{Stream-Table:} Làm giàu sự kiện dùng một quan hệ/changelog được xem như bảng.
-        \item \textbf{Table-Table:} Kết nối các changelog để duy trì khung nhìn vật lý hóa (vd: tweets $\times$ follows).
-        \item \textbf{Trạng thái (State):} Bộ xử lý duy trì trạng thái theo khóa và bộ đệm cửa sổ để khớp các sự kiện đến.
-    \end{itemize}
-    \paragraph{Ngữ nghĩa Exactly-Once}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Mục tiêu:} Đầu ra tương đương với việc thực thi không lỗi (không mất/không trùng).
-        \item \textbf{Phục hồi Framework:} Microbatching (Spark) \& checkpointing (Flink) khởi động lại từ điểm nhất quán; loại bỏ đầu ra một phần.
-        \item \textbf{Giao dịch phân tán:} Atomic commits cho trạng thái + thông điệp trong bộ xử lý.
-        \item \textbf{Tính lũy đẳng bên ngoài:} Dùng offset/khóa duy nhất, bền vững để làm các tác dụng phụ trở nên lũy đẳng (khử trùng khi ghi).
-    \end{itemize}
-
-    \subsection{Pipelines: ETL vs ELT}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{ETL:} Extract $\rightarrow$ Transform $\rightarrow$ Load (biến đổi trước khi nạp).
-        \item \textbf{ELT:} Extract $\rightarrow$ Load $\rightarrow$ Transform (dùng khả năng tính toán của kho dữ liệu; schema-on-read).
-        \item \textbf{Kafka:} Transport/CDC stream cho Extract/Load.
-        \item \textbf{Airflow:} Điều phối các phụ thuộc batch cho Transform/Load.
-    \end{itemize}
-
-    \subsection{IoT}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Nguồn:} Cảm biến/RFID (tốc độ cao, dữ liệu tín hiệu đa dạng).
-        \item \textbf{Ứng dụng:} Nông nghiệp thông minh, giám sát vận động viên, theo dõi di chuyển.
-        \item \textbf{Giao thức:} MQTT cho nạp dữ liệu thời gian thực.
-    \end{itemize}
-
-    \subsection{So sánh}
-    \paragraph{MongoDB vs Redis vs Neo4j}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{MongoDB:} Document store, BSON, replica sets, sharding, MapReduce.
-        \item \textbf{Redis:} In-memory key-value/cache, bền vững, sao chép; đọc nhanh.
-        \item \textbf{Neo4j:} Mô hình đồ thị, Cypher cho đường dẫn, clustering; truy vấn đồ thị hiệu quả.
-    \end{itemize}
-    \paragraph{Cassandra vs Hive vs Snowflake}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Cassandra:} Wide-column, sao chép không leader, nhất quán cuối cùng, LSM + compaction, SASI.
-        \item \textbf{Hive:} SQL-on-Hadoop biên dịch sang MapReduce/Tez/Spark; SerDe cho ORC/Parquet.
-        \item \textbf{Snowflake:} Cloud DW OLAP; tương đương BigQuery/Redshift.
-    \end{itemize}
-    \paragraph{BigTable vs BigQuery}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{BigTable:} Lưu trữ cột rộng phân tán; bản đồ thưa được sắp xếp; truy vấn khoảng; cảm hứng cho HBase.
-        \item \textbf{BigQuery:} Phân tích OLAP tương tác; dòng dõi Dremel; động cơ SQL ở quy mô web.
-    \end{itemize}
-
-    \subsection{Kho dữ liệu (Data Warehousing)}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Đặc điểm:} Hướng chủ đề, tích hợp, bất biến, biến thiên theo thời gian; ít truy vấn nhưng quét lớn.
-        \item \textbf{Lược đồ:} Bảng Fact (độ đo + khóa chiều) và bảng Dimension (chiều); Hình sao (Star) vs Bông tuyết (Snowflake).
-        \item \textbf{Lưu trữ:} Ưu tiên hướng cột; Teradata, Sybase IQ, Redshift; Oracle/HANA/SQL Server hỗ trợ cột.
-        \item \textbf{Tích hợp Big Data:} Hadoop với Hive/Spark SQL cho SQL trên tập tin phân tán.
-    \end{itemize}
-
-    \subsection{Mô hình Đa chiều}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Dạng bảng (Dimensional):} Lược đồ Star/Snowflake cho phép phân tích chiều.
-        \item \textbf{Data Cube:} \texttt{GROUP BY CUBE} (mọi tập con); \texttt{ROLLUP} (tập con phân cấp).
-    \end{itemize}
-
-    \subsection{DW vs DL vs Lakehouse}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{DW (Kho dữ liệu):} Schema-on-write; nhất quán mạnh; dữ liệu có cấu trúc; OLAP (ETL).
-        \item \textbf{DL (Hồ dữ liệu):} Schema-on-read; dữ liệu thô đa định dạng; lưu trữ rẻ; Hadoop/Spark để truy vấn.
-        \item \textbf{Lakehouse:} Lai ghép, kết hợp sự linh hoạt của hồ với quản lý của kho (ACID, thực thi lược đồ, đánh chỉ mục).
+        \item \textbf{Data Warehouse:} Dữ liệu có cấu trúc, cho BI/Reporting.
+        \item \textbf{Data Lake:} Dữ liệu thô (Raw), đa dạng, giá rẻ, cho ML/DS.
+        \item \textbf{Lakehouse:} Kết hợp (Lưu trữ rẻ của Lake + Quản lý/ACID của Warehouse).
     \end{itemize}
 \end{multicols}
 \end{document}
