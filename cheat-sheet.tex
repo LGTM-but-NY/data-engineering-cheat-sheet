@@ -136,6 +136,8 @@
     \end{itemize}
     \textit{Khi nào dùng:} OLAP/DW (đọc nhiều), NoSQL (thiếu join), microservices (tách biệt). \textit{Tránh:} OLTP cần ACID chặt.
 
+    \columnbreak
+
     \subsubsection{Bẫy Thiết kế CSDL (Design Traps)}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Bẫy Kết nối trong ER:}
@@ -194,7 +196,7 @@
         \item \textbf{Vẽ phác thảo \& Tinh chỉnh:} 
         \newline Vẽ sơ đồ, loại bỏ các thuộc tính dư thừa. Chuyển quan hệ M:N thành thực thể liên kết nếu cần thiết.
     \end{enumerate}
-    \subsection{Ký hiệu Chen \& EER (Chen Notation)}
+    \subsection{Chen Notation: ER \& EER}
     % Bảng cho Thực thể & Thuộc tính - Tiết kiệm không gian hơn liệt kê
     \subsubsection{Thực thể \& Thuộc tính (Entities \& Attributes)}
     \textit{Khi nào dùng:} \textbf{Thực thể} cho đối tượng độc lập (NhanVien, SanPham, KhanhHang); \textbf{Thực thể yếu} cho đối tượng phụ thuộc (NguoiPhuThuoccủa nhân viên, ChiTietDonHang); \textbf{Khóa} là định danh duy nhất (MSNV, CCCD); \textbf{Đa trị} cho thuộc tính nhiều giá trị (số điện thoại, email); \textbf{Dẫn xuất} cho giá trị tính toán (tuổi từ ngày sinh, tổng tiền).
@@ -248,11 +250,14 @@
         \end{tabular} \\[2pt]
         \footnotesize \textit{Ký hiệu: Hình tròn (d: disjoint, o: overlapping, U: union),\linebreak Nét đôi (Total), Nét đơn (Partial).}
     \end{center}
-    
-    \section{Lưu trữ Dữ liệu \& Chỉ mục}
+
+    % ===========================================================================
+    % SECTION INDEXING & QUERY OPTIMIZATION
+    % ===========================================================================
+    \section{Chỉ mục \& Tối ưu hóa Truy vấn}
 
     % ============================================================================
-    % PART 1: FOUNDATIONAL CONCEPTS
+    % FOUNDATIONAL CONCEPTS
     % ============================================================================
     \subsection{Cơ bản về Chỉ mục}
 
@@ -283,7 +288,7 @@
     \end{itemize}
 
     % ============================================================================
-    % PART 2: CORE INDEX STRUCTURES
+    % CORE INDEX STRUCTURES
     % ============================================================================
     \subsection{B-Trees \& B+-Trees}
 
@@ -294,8 +299,6 @@
         \item \textbf{Thao tác:} Tìm/thêm/xóa trong $O(\log_{fo} n)$ lần truy cập khối; tách/gộp nút để duy trì cân bằng.
         \item \textbf{B+- so với B-Tree:} B+- chỉ lưu con trỏ dữ liệu ở lá $\Rightarrow$ hệ số rẽ nhánh nút trong cao hơn, quét tuần tự hiệu quả qua chuỗi liên kết lá.
     \end{itemize}
-    
-    
 
     \subsubsection{Ví dụ Tính Dung lượng}
     \textit{Tham số:} Kích thước khối $B=512$ bytes; kích thước khóa $V=9$ bytes; con trỏ dữ liệu $\Pr=7$ bytes; con trỏ cây $P=6$ bytes.
@@ -342,7 +345,7 @@
     \end{itemize}
 
     % ============================================================================
-    % PART 3: SPECIALIZED STRUCTURES
+    % SPECIALIZED STRUCTURES
     % ============================================================================
     \subsection{Chỉ mục Băm \& Bitmap}
 
@@ -368,116 +371,257 @@
     \end{itemize}
 
     % ============================================================================
-    % PART 4: QUERY COST MODELING
+    % QUERY COST MODELING
     % ============================================================================
     \subsection{Tối ưu hóa Truy vấn \& Phân tích Chi phí}
 
-    \subsubsection{Đo lường Chi phí \& Thông tin Catalog}
+    \subsubsection{Ký hiệu Chi phí (Cost Function Notation)}
+    \textit{Ước tính tài nguyên (disk I/O) để xử lý truy vấn: số block transfers ($b$) và số disk seeks ($S$).}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Độ đo chính (I/O):} Giảm thiểu chuyển khối ($b$) và truy cập ngẫu nhiên (seek $S$). Thời gian: $b \times t_T + S \times t_S$.
-        \item \textbf{Kích thước quan hệ:} $r$ = số bộ, $b$ = số khối tập tin.
-        \item \textbf{Chi tiết chỉ mục:} $x$ = chiều cao chỉ mục đa mức (vd: B+-tree), $b_{I1}$ = số khối chỉ mục mức 1.
-        \item \textbf{Hệ số khối (Blocking factor):} $bfr$ = số bộ trên mỗi khối.
-        \item \textbf{Số lượng chọn (Selection cardinality):} $s = sl \times r$ với $sl$ là độ chọn lọc (selectivity).
-        \item \textbf{Số giá trị phân biệt:} $NDV(A)$ = số giá trị khác nhau của thuộc tính $A$.
+        \item $b$ (hoặc $b_r$): Tổng số blocks trong file.
+        \item $r$ (hoặc $n_r$): Tổng số records (tuples) trong relation.
+        \item $s$ (hoặc $s_A$): \textbf{Selection cardinality} - số records trung bình thỏa điều kiện.
+        \item $bfr$: Blocking factor (số records trên mỗi block).
+        \item $x$ (hoặc $h_i$): Số levels trong index (chiều cao B+-tree).
+        \item $t_S$: Average time cho disk seek.
+        \item $t_T$: Average time để transfer một block.
+        \item \textbf{Công thức tổng:} Cost = $b \times t_T + S \times t_S$ (transfer time + seek time).
     \end{itemize}
 
-    \subsubsection{Hàm Chi phí cho Phép Chọn}
-    \textit{Phép chọn ($\sigma$) có thể dùng quét tập tin hoặc truy cập chỉ mục/băm tùy đường dẫn có sẵn. Chi phí chưa tính việc ghi kết quả.}
-    \paragraph{\textbf{S1: Tìm kiếm Tuyến tính (Vét cạn / A1)}}
+    \subsubsection{Hàm Chi phí cho Phép Chọn (SELECT Cost Functions)}
+    \textit{Phép chọn ($\sigma$) có thể dùng quét file hoặc truy cập index. Chi phí chưa tính ghi kết quả.}
+    
+    \paragraph{S1: Linear Search (File Scan)}\mbox{}\\
+    Quét mọi block và test tất cả records. Áp dụng cho mọi cấu trúc file.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item Trường hợp xấu nhất/không khóa: $\mathbf{C_{S1a} = b}$.
-        \item Trung bình tìm bằng trên khóa: $\mathbf{C_{S1b} = b/2}$ (dừng khi thấy).
+        \item \textbf{Trường hợp chung:} $\mathbf{C_{S1a} = b}$ blocks. 
+        \newline \textit{Time:} $t_S + b \times t_T$ (1 seek ban đầu + transfer all blocks).
+        \item \textbf{Equality on Key:} $\mathbf{C_{S1b} = b/2}$ blocks (trung bình, dừng khi tìm thấy).
+        \newline \textit{Time:} $t_S + (b/2) \times t_T$.
     \end{itemize}
-    \paragraph{\textbf{S2: Tìm kiếm Nhị phân (tập tin có thứ tự)}}\mbox{}\\
-    $\mathbf{C_{S2} = \log_2 b + \lceil s/bfr \rceil - 1}$.
-    \paragraph{\textbf{S3a: Chỉ mục Chính (một bản ghi)}}\mbox{}\\
-    $\mathbf{C_{S3a} = x + 1}$.
-    \paragraph{\textbf{S3b: Khóa Băm (một bản ghi)}}\mbox{}\\
-    $\mathbf{C_{S3b} = 1}$ (tĩnh/tuyến tính) hoặc $\mathbf{2}$ (mở rộng).
-    \paragraph{\textbf{S5: Chỉ mục Phân cụm (bằng trên không khóa / A3)}}\mbox{}\\
-    $\mathbf{C_{S5} = x + \lceil s/bfr \rceil}$.
-    \paragraph{\textbf{S6a: Chỉ mục Phụ (bằng trên không khóa / A4)}}\mbox{}\\
-    $\mathbf{C_{S6a} = x + 1 + s}$ (trường hợp xấu nhất, bản ghi phân tán).
-    \paragraph{\textbf{S6b: Chỉ mục Phụ (truy vấn khoảng)}}\mbox{}\\
-    $\mathbf{C_{S6b} = x + (b_{I1}/2) + (r/2)}$.\\
 
-    \textit{Lưu ý: Chi phí thời gian thường mô hình hóa là $b \times t_T + S \times t_S$, tách biệt truyền dữ liệu và tìm kiếm đầu từ.}
+    \paragraph{S2: Binary Search}\mbox{}\\
+    File đã sắp xếp theo search attribute. $\mathbf{C_{S2} = \lceil \log_2 b \rceil + \lceil s/bfr \rceil - 1}$ blocks.
+    \newline \textit{Giải thích:} $\log_2 b$ để locate first block + $\lceil s/bfr \rceil$ để retrieve matching blocks contiguous.
+
+    \paragraph{S3a: Primary Index (Equality on Unique Key)}\mbox{}\\
+    File được sắp xếp vật lý theo search key. $\mathbf{C_{S3a} = x + 1}$ blocks.
+    \newline \textit{Time:} $(h_i + 1) \times (t_T + t_S)$ (traverse index tree + 1 data block access).
+    \newline \textit{VD:} B+-tree height 3 $\rightarrow$ 3 index blocks + 1 data block = 4 I/Os.
+
+    \paragraph{S3b: Hash Index (Equality)}\mbox{}\\
+    $\mathbf{C_{S3b} = 1}$ (static/linear hashing) hoặc $\mathbf{2}$ (extendible hashing).
+
+    \paragraph{S5: Clustering Index (Equality on Non-Unique Key)}\mbox{}\\
+    File sắp xếp, matching records lưu contiguous. $\mathbf{C_{S5} = x + \lceil s/bfr \rceil}$ blocks.
+    \newline \textit{Time:} $h_i \times (t_T + t_S) + t_S + b_{matches} \times t_T$ (index + 1 seek to data + transfer).
+    \newline \textit{VD:} Tìm Dno=5 với 1000 matching records, bfr=10 $\rightarrow$ x + 100 blocks.
+
+    \paragraph{S6a: Secondary Index (Equality on Non-Unique Key)}\mbox{}\\
+    File \textbf{không} sắp xếp theo attribute này $\rightarrow$ matching records phân tán. 
+    \newline $\mathbf{C_{S6a} = x + s + 1}$ blocks (worst case: mỗi record cần 1 random I/O).
+    \newline \textit{Time:} $(h_i + n) \times (t_T + t_S)$ với $n$ = số records.
+    \newline \textbf{Nguy cơ:} Nếu $s$ lớn, secondary index đắt hơn linear scan do nhiều random seeks.
+
+    \paragraph{S6b: Secondary Index (Range Query)}\mbox{}\\
+    $\mathbf{C_{S6b} = x + (b_{I1}/2) + (r/2)}$ (giả sử half file thỏa điều kiện).
+    \newline \textit{Performance Implication:} Nếu số records lớn, optimizer thích linear scan hơn secondary index.
+
+    \subsubsection{Selections với Comparisons (Range Queries)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Clustering Index:} Hiệu quả - records contiguous. 
+        \newline \textit{Cost:} $x + b_{range}$ (find first + sequential scan).
+        \item \textbf{Secondary Index:} Đắt - index leaves scan + random I/O cho mỗi record. 
+        \newline \textit{Nếu range lớn:} Prefer linear scan.
+    \end{itemize}
+
+    \subsubsection{Complex Selections}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Conjunctive (AND):} Chọn single most restrictive access path (smallest selectivity) $\rightarrow$ check conditions còn lại trong RAM. 
+        \newline \textit{Hoặc:} Dùng nhiều secondary indices $\rightarrow$ retrieve pointers $\rightarrow$ compute \textbf{intersection}.
+        \item \textbf{Disjunctive (OR):} Nếu 1 condition cần linear scan $\rightarrow$ toàn bộ query cần linear scan. 
+        \newline \textit{Nếu indices cho tất cả:} Retrieve pointers $\rightarrow$ compute \textbf{union}.
+    \end{itemize}
+
+    \subsubsection{Bảng Tóm tắt Chi phí SELECT}
+    \begin{center}
+        \renewcommand{\arraystretch}{1.15}
+        \begin{tabular}{@{} l | l | l @{}}
+            \toprule
+            \textbf{Algorithm} & \textbf{Mô tả} & \textbf{Block Accesses} \\
+            \midrule
+            \textbf{S1} & Linear Search & $b$ \\
+            \textbf{S2} & Binary Search & $\lceil \log_2 b \rceil + \lceil s/bfr \rceil - 1$ \\
+            \textbf{S3a} & Primary Index (Unique) & $x + 1$ \\
+            \textbf{S5} & Clustering Index (Equality) & $x + \lceil s/bfr \rceil$ \\
+            \textbf{S6a} & Secondary Index (Equality) & $x + s + 1$ \\
+            \textbf{S6b} & Secondary Index (Range) & $x + (b_{I1}/2) + (r/2)$ \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+
+    \textit{Lưu ý: Chi phí thời gian = $b \times t_T + S \times t_S$ (tách biệt transfer và seek).}
 
     \subsubsection{Ví dụ: Phép chọn trên EMPLOYEE}
-    \textit{Kịch bản:} EMPLOYEE có $r_E=10{,}000$, $b_E=2{,}000$, $bfr_E=5$. Các chỉ mục/đường dẫn có sẵn:
-    \begin{itemize}
-        \item \textbf{Salary} (phân cụm, không khóa): $x=3$, $s_{Salary}=20$.
-        \item \textbf{Ssn} (phụ, khóa): $x=4$, $s_{Ssn}=1$.
-        \item \textbf{Dno} (phụ, không khóa): $x=2$, $s_{Dno}=80$ (từ $10{,}000/125$).
-        \item \textbf{Sex} (phụ, không khóa): $x=1$, $s_{Sex}=5{,}000$ (từ $10{,}000/2$).
+    \textit{Kịch bản:} Quan hệ EMPLOYEE có thông số:
+    \begin{itemize}[leftmargin=*, nosep]
+        \item $r_E = 10{,}000$ records, $b_E = 2{,}000$ blocks, $bfr_E = 5$ records/block.
+        \item \textbf{Available Access Paths:}
+        \begin{itemize}
+            \item \textit{Ssn} (Secondary, Unique Key): $x=4$, $s=1$.
+            \item \textit{Dno} (Secondary, Non-Unique): $x=2$, $s=80$ (assumption: 125 depts, so $10{,}000/125=80$).
+            \item \textit{Salary} (Clustering, Non-Unique): $x=3$, $s=20$.
+            \item \textit{Sex} (Secondary, Non-Unique): $x=1$, $s=5{,}000$ (assumption: 2 values, so $10{,}000/2=5{,}000$).
+        \end{itemize}
     \end{itemize}
 
-    \paragraph{OP1: Tìm bằng trên Khóa}\mbox{}\\
-    Truy vấn: $\sigma_{\text{Ssn}='123456789'}(\text{EMPLOYEE})$.
+    \paragraph{Example 1: Equality on Unique Key}\mbox{}\\
+    Query: $\sigma_{\text{Ssn}='123456789'}(\text{EMPLOYEE})$.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item S1b (tuyến tính tb): $C_{S1b} = b_E/2 = 1{,}000$.
-        \item S6a (chỉ mục phụ trên khóa): $C_{S6a} = x_{Ssn} + 1 = 4 + 1 = \mathbf{5}$.
-        \item \textbf{Quyết định:} Chọn S6a (5 $\ll$ 1{,}000).
+        \item \textbf{S1b (Linear Search):} $C = b_E/2 = 2{,}000/2 = 1{,}000$ blocks.
+        \newline \textit{Explanation:} Scan half file on average until record found.
+        \item \textbf{S6a (Secondary Index on Key):} $C = x + 1 = 4 + 1 = 5$ blocks.
+        \newline \textit{Explanation:} Traverse 4-level index + retrieve 1 data block.
+        \item \textbf{Decision:} Use S6a (5 blocks $\ll$ 1{,}000 blocks). \textit{Speedup: 200x}.
     \end{itemize}
 
-    \paragraph{OP3: Tìm bằng trên Không khóa}\mbox{}\\
-    Truy vấn: $\sigma_{\text{Dno}=5}(\text{EMPLOYEE})$.
+    \paragraph{Example 2: Equality on Non-Unique Key}\mbox{}\\
+    Query: $\sigma_{\text{Dno}=5}(\text{EMPLOYEE})$.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item S1a (tuyến tính): $C_{S1a} = b_E = \mathbf{2{,}000}$.
-        \item S6a (phụ trên Dno): $C_{S6a} = x_{Dno} + s_{Dno} = 2 + 80 = \mathbf{82}$.
-        \item \textbf{Quyết định:} Chọn S6a (82 $\ll$ 2{,}000). Nếu có chỉ mục phân cụm trên Dno: $3 + \lceil 80/5 \rceil = 19$ khối.
+        \item \textbf{S1a (Linear Search):} $C = b_E = 2{,}000$ blocks.
+        \item \textbf{S6a (Secondary Index):} $C = x + s = 2 + 80 = 82$ blocks.
+        \newline \textit{Explanation:} 2 index blocks + 80 random I/Os (records scattered across blocks).
+        \item \textbf{S5 (If Clustering Index existed):} $C = x + \lceil s/bfr \rceil = 3 + \lceil 80/5 \rceil = 3 + 16 = 19$ blocks.
+        \newline \textit{Explanation:} 3 index blocks + 16 contiguous data blocks (records stored together).
+        \item \textbf{Decision:} Use S6a (82 blocks $\ll$ 2{,}000). \textit{Note: Clustering index would be 4.3x better (19 vs 82)}.
     \end{itemize}
 
-    \paragraph{OP4: Phép chọn Hội (Nhiều điều kiện)}\mbox{}\\
-    Truy vấn: $\sigma_{\text{Dno}=5 \land \text{Salary}>30\,000 \land \text{Sex}='F'}(\text{EMPLOYEE})$.
-    Bộ tối ưu so sánh các đường dẫn truy cập để lấy tập ứng viên ban đầu, sau đó kiểm tra các vị từ còn lại trong RAM.
+    \paragraph{Example 3: Conjunctive Selection (Multiple Conditions)}\mbox{}\\
+    Query: $\sigma_{\text{Dno}=5 \land \text{Salary}>30{,}000 \land \text{Sex}='F'}(\text{EMPLOYEE})$.
+    \newline \textit{Strategy:} Choose most selective access path to retrieve candidate set, then filter remaining conditions in memory.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item Qua Dno (S6a): $C = x_{Dno} + s_{Dno} = \mathbf{82}$.
-        \item Qua khoảng Salary (phân cụm): $C \approx x_{Salary} + (b_E/2) = 3 + 1{,}000 =
-                  \mathbf{1{,}003}$.
-        \item Qua Sex (S6a): $C = x_{Sex} + s_{Sex} = 1 + 5{,}000 = \mathbf{5{,}001}$.
-        \item Vét cạn (S1a): $C = 2{,}000$.
-        \item \textbf{Quyết định:} Dùng chỉ mục Dno (82), lấy 80 bộ, sau đó lọc $\text{Salary}>30\,000$ và $\text{Sex}='F'$ trong RAM.
+        \item \textbf{Via Dno (S6a):} $C = x + s = 2 + 80 = 82$ blocks. \textit{Retrieves 80 records}.
+        \item \textbf{Via Salary Range (Clustering):} $C \approx x + (b_E/2) = 3 + 1{,}000 = 1{,}003$ blocks.
+        \newline \textit{Assumption: Half employees earn $>30{,}000$, need to scan half file.}
+        \item \textbf{Via Sex (S6a):} $C = x + s = 1 + 5{,}000 = 5{,}001$ blocks. \textit{5{,}000 random I/Os (very expensive)}.
+        \item \textbf{Linear Scan (S1a):} $C = 2{,}000$ blocks.
+        \item \textbf{Decision:} Use Dno index (82 blocks) to retrieve 80 candidate records $\rightarrow$ filter Salary $>30{,}000$ and Sex='F' in memory.
+        \newline \textit{Final result size estimated:} $80 \times 0.5 \times 0.5 = 20$ records (assuming 50\% pass each filter).
     \end{itemize}
 
-    \subsubsection{Thuật toán Kết nối (Join) \& So sánh Chi phí}
-
-    \paragraph{Tham số Chính}
+    \paragraph{Example 4: Secondary Index vs Linear Scan Trade-off}\mbox{}\\
+    Query: $\sigma_{\text{Sex}='F'}(\text{EMPLOYEE})$ (highly non-selective).
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Độ chọn lọc kết nối:} $js = |R \bowtie S|/(|R|\,|S|)$; với equi-join $js \approx 1/\max(NDV(A), NDV(B))$.
-        \item \textbf{Số bộ kết quả:} $jc = js\,|R|\,|S|$; \textbf{chi phí ghi}: $jc/bfr_{result}$ khối.
-        \item \textbf{Bộ đệm:} $n_B$ = số trang đệm khả dụng (ảnh hưởng chi phí nested-loop).
+        \item \textbf{S6a (Secondary Index):} $C = x + s = 1 + 5{,}000 = 5{,}001$ blocks.
+        \newline \textit{Problem:} 5{,}000 random seeks $\rightarrow$ extremely expensive. At $t_S=10$ms, $t_T=1$ms: $(1 + 5{,}000) \times 11 = 55{,}011$ms $\approx$ 55 seconds.
+        \item \textbf{S1a (Linear Scan):} $C = 2{,}000$ blocks.
+        \newline \textit{Time:} $1 \times 10 + 2{,}000 \times 1 = 2{,}010$ms $\approx$ 2 seconds.
+        \item \textbf{Decision:} Use linear scan (2{,}000 blocks $\ll$ 5{,}001 blocks). \textit{27x faster despite having index!}
+        \newline \textbf{Key Insight:} Secondary index only beneficial when selectivity is high ($s \ll b$).
     \end{itemize}
-    
-    \paragraph{Kịch bản Thống nhất (Join)}\mbox{}\\
-    EMPLOYEE ($|E|=10{,}000$, $b_E=2{,}000$) $\bowtie_{Dno=Dnumber}$ \\
-    DEPARTMENT ($|D|=125$, $b_D=13$). \\
-    Chỉ mục trên $E.Dno$ (phụ: $x=2$, $s=80$).\\
-    $Dnumber$ là khóa chính ($x=1$).\\
-    Giả sử $js=1/125$, $jc=10{,}000$, $bfr_{result}=4$ (chi phí ghi $=2{,}500$ khối), $n_B=3$.
 
-    \paragraph{J1: Block Nested-Loop}\mbox{}\\
-    Chi phí: $C_{J1} = b_R + \left\lceil \frac{b_R}{n_B - 2} \right\rceil b_S + \frac{jc}{bfr_{result}}$.
-    Dùng DEPARTMENT làm vòng ngoài: $C_{J1} = 13 + \lceil 13/1\rceil \times 2{,}000 + 2{,}500 = \mathbf{28{,}513}$.
+    \subsubsection{Cost Functions for JOIN Operations}
 
-    \paragraph{J2: Indexed Nested-Loop}\mbox{}\\
+    \paragraph{Notation}
+    \begin{itemize}[leftmargin=*, nosep]
+        \item $b_r, b_s$: Number of blocks (số khối) in relations $r$ and $s$.
+        \item $n_r, n_s$ (or $|R|, |S|$): Number of tuples (số bộ) in relations $r$ and $s$.
+        \item $js$: Join selectivity (độ chọn lọc kết nối) - fraction of tuple pairs matching. For equi-join: $js \approx 1/\max(NDV(A), NDV(B))$.
+        \item $jc$: Join cardinality (lực lượng kết nối) - number of result tuples = $js \times |R| \times |S|$.
+        \item $bfr_{result}$: Blocking factor (hệ số khối) of result relation.
+        \item $n_B$ (or $M$): Number of available memory buffer blocks (số khối bộ đệm).
+        \item $h_i$ (or $x$): Height of index tree (chiều cao B+-tree).
+        \item $s_B$: Selection cardinality - average matching records in index lookup.
+    \end{itemize}
+
+    \paragraph{J1: Nested-Loop Join Variants}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{DEPARTMENT ngoài $\to$ EMPLOYEE trong:} Mỗi lần tìm $= x+s = 2+80 = 82$. Tổng $= 13 + 125 \times 82 + 2{,}500 = \mathbf{12{,}763}$.
-        \item \textbf{EMPLOYEE ngoài $\to$ DEPARTMENT trong:} Mỗi lần tìm $= x+1 = 1+1 = 2$. Tổng $= 2{,}000 + 10{,}000 \times 2 + 2{,}500 = \mathbf{24{,}500}$.
+        \item \textbf{Basic Nested-Loop:} For each record in outer relation (quan hệ ngoài) $r$, scan entire inner relation (quan hệ trong) $s$.
+        \newline \textit{Cost:} $b_r + n_r \times b_s$ block transfers + $(n_r + b_r)$ seeks.
+        \newline \textit{Problem:} Cực kỳ đắt nếu $n_r$ lớn.
+        
+        \item \textbf{Block Nested-Loop:} Process block-by-block thay vì row-by-row.
+        \newline \textit{Cost (Worst):} $b_r + (b_r \times b_s)$ transfers + $2 \times b_r$ seeks.
+        \newline \textit{Cost (With $n_B$ buffers):} $b_r + \lceil b_r / (n_B - 2) \rceil \times b_s$ transfers.
+        \newline \textit{Strategy:} Dùng $n_B - 2$ buffers cho outer, 1 cho inner, 1 cho output. Dùng quan hệ nhỏ hơn làm outer.
     \end{itemize}
 
-    \paragraph{J3: Sort-Merge (Trộn sắp xếp)}\mbox{}\\
-    Nếu đã sắp xếp: \[C_{J3} = b_E + b_D + \frac{jc}{bfr_{result}} = 2{,}000 + 13 + 2{,}500 = \mathbf{4{,}513}\]. Nếu chưa, cộng thêm chi phí sắp xếp ngoài mỗi quan hệ.
+    \paragraph{J2: Indexed Nested-Loop Join}\mbox{}\\
+    Index tồn tại trên join attribute của inner relation $s$. Thay file scans bằng index lookups (tra cứu chỉ mục).
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{General Formula:} $b_r + (n_r \times \text{cost of selection on } s)$.
+        \newline \textit{Explanation:} Đọc outer $r$ ($b_r$) + thực hiện $n_r$ index lookups trên $s$.
+        \item \textbf{Secondary Index (Chỉ mục phụ):} $b_r + n_r \times (x + s_B + 1)$ blocks.
+        \newline \textit{$s_B$:} Average matching records. Mỗi record cần random I/O nếu non-unique.
+        \item \textbf{Primary/Clustering Index (Chỉ mục chính/phân cụm):} $b_r + n_r \times (x + 1)$ blocks.
+        \newline \textit{Assumption:} Unique keys hoặc matching records lưu contiguous (liền kề).
+    \end{itemize}
 
-    \paragraph{J4: Partition-Hash (Băm phân hoạch)}\mbox{}\\
-    Chi phí xấp xỉ: $C_{J4} \approx 3\,(b_E + b_D) + \frac{jc}{bfr_{result}} = 3\times(2{,}000+13) + 2{,}500 = \mathbf{8{,}539}$.
+    \paragraph{J3: Sort-Merge Join}\mbox{}\\
+    Cả hai quan hệ phải được sắp xếp theo join attributes. Hiệu quả cao nếu đã pre-sorted.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{If already sorted:} $b_r + b_s$ block transfers (đọc cả hai một lần).
+        \item \textbf{If not sorted:} Cost(Sort $r$) + Cost(Sort $s$) + $b_r + b_s$.
+        \newline \textit{Sort Cost:} Thường $b \times (2 \lceil \log_{n_B-1}(b/n_B) \rceil + 1)$ cho external merge-sort.
+        \item \textbf{Best Use Case:} Dữ liệu đã sorted, hoặc khi kết quả cần sorted.
+    \end{itemize}
 
-    \paragraph{Quyết định Kế hoạch}\mbox{}\\
-    J3 (nếu đã sắp xếp) $<$ J4 $<$ J2\,(D ngoài) $<$ J2\,(E ngoài) $<$ J1. Ưu tiên Hash Join khi chưa sắp xếp; ưu tiên Sort-Merge khi đã có thứ tự.
+    \paragraph{J4: Hash Join}\mbox{}\\
+    Partition both relations by hash of join key. Matching tuples fall into same partition.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Standard Hash Join:} $3(b_r + b_s)$ block transfers.
+        \newline \textit{3 Passes:} 1. Read/write partitions for $r$. 2. Read/write partitions for $s$. 3. Join partitions.
+        \newline \textit{Requirement:} Partitions of smaller relation must fit in memory.
+        \item \textbf{Hybrid Hash Join:} $b_r + b_s$ (best case).
+        \newline \textit{Optimization:} If entire build relation fits in memory, skip disk writes for some partitions.
+    \end{itemize}
+
+    \paragraph{Writing the Result}\mbox{}\\
+    Chi phí trên chỉ ước tính *processing*. Phải cộng thêm write cost (chi phí ghi) để có tổng chi phí.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Write Cost:} $jc / bfr_{result}$ blocks.
+        \item \textbf{Total Cost:} Processing Cost + $(js \times |R| \times |S|) / bfr_{result}$.
+    \end{itemize}
+
+    \subsubsection{Example: EMPLOYEE $\bowtie$ DEPARTMENT}
+    \textbf{Scenario:} EMPLOYEE ($|E|=10{,}000$, $b_E=2{,}000$) $\bowtie_{Dno=Dnumber}$ DEPARTMENT ($|D|=125$, $b_D=13$).
+    \newline \textbf{Indices:} Secondary on $E.Dno$ ($x=2$, $s=80$). Primary on $D.Dnumber$ ($x=1$).
+    \newline \textbf{Parameters:} $js=1/125$, $jc=10{,}000$, $bfr_{result}=4$ $\rightarrow$ write cost $= 2{,}500$ blocks. $n_B=3$ buffers.
+
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{J1: Block Nested-Loop (D outer):} 
+        \newline $C = 13 + \lceil 13/1 \rceil \times 2{,}000 + 2{,}500 = 13 + 26{,}000 + 2{,}500 = \mathbf{28{,}513}$ blocks.
+        \newline \textit{Explanation:} Đọc D (13) + scan E 13 lần (26,000) + ghi kết quả (2,500).
+
+        \item \textbf{J2a: Indexed Nested-Loop (D outer $\to$ E inner):} 
+        \newline $C = 13 + 125 \times (2 + 80) + 2{,}500 = 13 + 10{,}250 + 2{,}500 = \mathbf{12{,}763}$ blocks.
+        \newline \textit{Explanation:} Đọc D (13) + 125 lookups trên E (mỗi lần: 2 index + 80 scattered records) + ghi.
+
+        \item \textbf{J2b: Indexed Nested-Loop (E outer $\to$ D inner):} 
+        \newline $C = 2{,}000 + 10{,}000 \times (1 + 1) + 2{,}500 = 2{,}000 + 20{,}000 + 2{,}500 = \mathbf{24{,}500}$ blocks.
+        \newline \textit{Explanation:} Đọc E (2,000) + 10,000 lookups trên D (mỗi lần: 1 index + 1 data block) + ghi.
+
+        \item \textbf{J3: Sort-Merge (if already sorted):}
+        \newline $C = 2{,}000 + 13 + 2{,}500 = \mathbf{4{,}513}$ blocks.
+        \newline \textit{Best case:} Chỉ đọc cả hai quan hệ một lần + ghi kết quả.
+        \newline \textit{If not sorted:} Cộng thêm sorting cost (thường $\approx 2b \log b$ per relation).
+
+        \item \textbf{J4: Hash Join:}
+        \newline $C = 3 \times (2{,}000 + 13) + 2{,}500 = 6{,}039 + 2{,}500 = \mathbf{8{,}539}$ blocks.
+        \newline \textit{Explanation:} 3 passes qua cả hai quan hệ (partition + build + probe) + ghi kết quả.
+    \end{itemize}
+
+    \paragraph{Decision Ranking}\mbox{}\\
+    J3 (if sorted) $<$ J4 $<$ J2a $<$ J2b $<$ J1.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Best:} Sort-Merge nếu đã sorted (4,513).
+        \item \textbf{Good:} Hash Join nếu chưa sorted (8,539) - không có sorting overhead.
+        \item \textbf{Moderate:} Indexed Nested-Loop với small outer (12,763).
+        \item \textbf{Avoid:} Block Nested-Loop (28,513) - chỉ dùng khi không có index/memory.
+    \end{itemize}
 
     % ============================================================================
-    % PART 5: OPTIMIZATION STRATEGIES
+    % OPTIMIZATION STRATEGIES
     % ============================================================================
     \subsection{Quy trình Tối ưu hóa Truy vấn}
 
@@ -521,7 +665,7 @@
     \end{itemize}
 
     % ============================================================================
-    % PART: Big Data & Data Engineering
+    % SECTION: Big Data & Data Engineering
     % ============================================================================
     \section{Big Data \& Data Engineering}
 
@@ -547,11 +691,6 @@
             \item \textbf{Volatility:} Độ bay hơi (Thời gian lưu trữ trước khi xóa/lưu trữ lâu dài).
             \item \textbf{Visualization:} Khả năng trực quan hóa (Để con người hiểu được).
         \end{itemize}
-    \end{itemize}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{CAP Theorem:} Chỉ đạt được 2/3: \textbf{C}onsistency, \textbf{A}vailability, \textbf{P}artition Tolerance.
-        \newline $\rightarrow$ \textit{NoSQL thường chọn AP (Sẵn sàng + Chịu lỗi) thay vì CP.}
-        \item \textbf{BASE:} \textbf{B}asically \textbf{A}vailable, \textbf{S}oft state, \textbf{E}ventual consistency (Nhất quán cuối cùng - chấp nhận dữ liệu cũ tạm thời).
     \end{itemize}
 
     \subsection{Paradigm: Batch vs Streaming}
@@ -659,7 +798,6 @@
         \end{itemize}
     \end{enumerate}
 
-    % --- PHẦN 3: CÔNG NGHỆ LƯU TRỮ NOSQL ---
     \subsection{Công nghệ NoSQL (Storage Tech)}
     \textit{Các mô hình NoSQL cho use case khác nhau.}
 
@@ -879,12 +1017,6 @@
 
     \subsubsection{SCD (Slowly Changing Dimensions)}
     \textit{Tại sao cần?} Để đảm bảo báo cáo lịch sử chính xác. Nếu KH chuyển từ HCM ra HN năm 2024, doanh số năm 2020 vẫn phải tính cho HCM.
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Type 1 (Overwrite):} Ghi đè giá trị cũ. \textit{Mất lịch sử.}
-        \item \textbf{Type 2 (Add Row):} Thêm dòng mới + cột thời gian (Start/End Date) + cờ (is\_current). \textit{Chuẩn nhất cho DW.}
-        \item \textbf{Type 3 (Add Column):} Thêm cột "Previous Value". \textit{Chỉ lưu được 1 giá trị cũ.}
-    \end{itemize}
-
     \begin{center}
         \renewcommand{\arraystretch}{1.2}
         \begin{tabular}{@{} c | p{0.32\linewidth} | p{0.5\linewidth} @{}}
@@ -927,38 +1059,171 @@
 
     \subsubsection{Vấn đề Tích hợp (Data Integration Issues)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Heterogeneous data sources:} Khác biệt về DBMSs và files.
-        \item \textbf{Data Conflicts:} Khác kiểu dữ liệu (String vs Int, Date format).
-        \item \textbf{Data Mapping:} Khác biệt về schema (vd: `Full Name' vs `First Name' + `Last Name').
-        \item \textbf{Entity Resolution:} Xác định 2 bản ghi từ 2 nguồn là cùng 1 thực thể (vd: `Nguyen V. A' và `A Nguyen').
-        \item \textbf{Data redundancy:} Dữ liệu trùng lặp cần khử trùng (Deduplication).
+        \item \textbf{Heterogeneous data sources:} Khác biệt về hệ quản trị cơ sở dữ liệu và định dạng tệp.
+        \newline \textit{VD: MySQL, PostgreSQL, Oracle, MongoDB, CSV, JSON, XML, Parquet.}
+        
+        \item \textbf{Data Mapping:} Khác biệt về cấu trúc schema giữa các nguồn.
+        \newline \textit{VD: Bảng `Employee' (Full\_Name, DOB) vs `Emp' (First\_Name, Last\_Name, Birth\_Date).}
+        
+        \item \textbf{Data Conflicts:} Xung đột về kiểu dữ liệu, giá trị, định dạng, đơn vị, độ chính xác.
+        \newline \textit{Kiểu:} String vs Integer cho mã nhân viên. \textit{Định dạng:} DD/MM/YYYY vs MM/DD/YYYY. 
+        \newline \textit{Đơn vị:} USD vs VND, km vs miles. \textit{Độ chính xác:} 2 vs 4 chữ số thập phân.
+        
+        \item \textbf{Data Redundancy:} Dữ liệu trùng lặp từ nhiều nguồn cần khử trùng (Deduplication).
+        \newline \textit{VD: Cùng khách hàng xuất hiện trong CRM và ERP với ID khác nhau.}
+        
+        \item \textbf{Entity Resolution:} Xác định 2 bản ghi từ 2 nguồn khác nhau là cùng 1 thực thể.
+        \newline \textit{VD: `Nguyen Van A' (DB1) và `A Nguyen' (DB2), `IBM' vs `International Business Machines'.}
+        \newline \textit{Kỹ thuật:} Fuzzy matching, similarity scores (Levenshtein distance), Master Data Management (MDM).
+        
+        \item \textbf{Constraints Violation:} Vi phạm ràng buộc khi tích hợp dữ liệu.
+        \newline \textit{Primary Key:} Trùng lặp khóa chính khi merge. \textit{Foreign Key:} Tham chiếu không tồn tại.
+        \newline \textit{Semantic:} Giá trị không hợp lệ (tuổi âm, ngày trong tương lai).
+        
+        \item \textbf{Data Quality Issues:} Các vấn đề chất lượng dữ liệu trong quá trình tích hợp.
+        \newline \textit{Accuracy:} Sai lệch so với thực tế. \textit{Completeness:} Thiếu trường bắt buộc (NULL).
+        \newline \textit{Uniqueness:} Trùng lặp. \textit{Timeliness:} Dữ liệu cũ/lỗi thời. \textit{Consistency:} Mâu thuẫn giữa các nguồn.
+        
+        \item \textbf{Communication Heterogeneity:} Khác biệt về giao diện và giao thức truyền thông.
+        \newline \textit{VD: REST API vs SOAP, HTTP vs FTP, Batch files vs Real-time streams, GraphQL vs SQL.}
     \end{itemize}
 
-    \subsubsection{6 Chiều Chất lượng Dữ liệu (Data Quality)}
+    \subsubsection{Chiều Chất lượng Dữ liệu (Data Quality Dimensions)}
+    \textit{Các tiêu chí đánh giá chất lượng dữ liệu trong hệ thống thông tin.}
+    
+    \paragraph{6 Chiều Cốt lõi (Core Dimensions)}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Completeness (Đầy đủ):} Không bị thiếu (Null/Missing values).
-        \item \textbf{Accuracy (Chính xác):} Phản ánh đúng thực tế.
-        \item \textbf{Consistency (Nhất quán):} Dữ liệu thống nhất giữa các bảng/hệ thống.
-        \item \textbf{Validity (Hợp lệ):} Đúng định dạng, nằm trong miền giá trị cho phép.
-        \item \textbf{Timeliness (Kịp thời):} Dữ liệu có sẵn khi cần (độ trễ thấp).
-        \item \textbf{Uniqueness (Duy nhất):} Không trùng lặp.
+        \item \textbf{Accuracy (Chính xác):} Mức độ dữ liệu phản ánh đúng đối tượng/sự kiện thực tế.
+        \newline \textit{Định nghĩa:} Sự không chính xác có nghĩa là hệ thống biểu diễn một trạng thái thế giới thực khác với trạng thái đáng lẽ phải được biểu diễn.
+        \newline \textit{VD:} Địa chỉ sai, số điện thoại cũ, thông tin lỗi thời.
+        
+        \item \textbf{Completeness (Đầy đủ):} Tỷ lệ dữ liệu được lưu trữ so với khả năng 100\% hoàn chỉnh.
+        \newline \textit{Định nghĩa:} Khả năng của hệ thống biểu diễn mọi trạng thái có nghĩa của hệ thống thế giới thực.
+        \newline \textit{VD:} NULL values, missing fields, incomplete records (thiếu email, số điện thoại).
+        
+        \item \textbf{Consistency (Nhất quán):} Sự vắng mặt của sự khác biệt khi so sánh hai hoặc nhiều biểu diễn của cùng một thứ.
+        \newline \textit{Định nghĩa:} Sự không nhất quán có nghĩa là ánh xạ biểu diễn là một-nhiều (one-to-many).
+        \newline \textit{VD:} Tổng doanh thu trong bảng Orders $\neq$ tổng trong Report, tên KH khác nhau giữa CRM và ERP.
+        
+        \item \textbf{Validity (Hợp lệ):} Dữ liệu hợp lệ nếu tuân thủ cú pháp của định nghĩa (format, type, range).
+        \newline \textit{VD:} Email đúng format (có @), tuổi trong khoảng [0, 150], enum đúng giá trị cho phép.
+        
+        \item \textbf{Timeliness (Kịp thời):} Mức độ dữ liệu phản ánh thực tế từ mốc thời gian yêu cầu.
+        \newline \textit{Định nghĩa:} Độ trễ giữa thay đổi trạng thái thế giới thực và sửa đổi tương ứng trong hệ thống.
+        \newline \textit{VD:} Giá cổ phiếu cập nhật delay 10s, báo cáo tồn kho cách 1 ngày (stale data).
+        
+        \item \textbf{Uniqueness (Duy nhất):} Không có thứ nào được ghi lại nhiều hơn một lần dựa trên cách xác định thứ đó.
+        \newline \textit{VD:} Không có duplicate records, một khách hàng chỉ có một ID duy nhất.
     \end{enumerate}
+    
+    \paragraph{Các Chiều Mở rộng (Extended Dimensions)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Interpretability (Khả năng Diễn giải):} Liên quan đến tài liệu và metadata có sẵn để diễn giải chính xác ý nghĩa và thuộc tính của nguồn dữ liệu.
+        \newline \textit{VD:} Data dictionary, schema documentation, column descriptions, business glossary.
+        
+        \item \textbf{Accessibility (Khả năng Truy cập):} Đo lường khả năng người dùng truy cập dữ liệu từ văn hóa, trạng thái/chức năng vật lý và công nghệ có sẵn của họ.
+        \newline \textit{VD:} API có rate limit, quyền truy cập dựa trên role (RBAC), hỗ trợ đa ngôn ngữ.
+        
+        \item \textbf{Usability (Khả dụng):} Đo lường hiệu quả, hiệu suất, sự hài lòng mà người dùng cụ thể cảm nhận và sử dụng dữ liệu.
+        \newline \textit{VD:} Dashboard dễ hiểu, query response time nhanh, format phù hợp với use case.
+        
+        \item \textbf{Trustworthiness (Độ Tin cậy):} Đo lường mức độ đáng tin cậy của tổ chức trong việc cung cấp nguồn dữ liệu.
+        \newline \textit{VD:} Data lineage rõ ràng, audit logs đầy đủ, SLA đảm bảo, data provenance.
+    \end{itemize}
 
     \subsubsection{Quản lý Thông tin (Information Management)}
-    \textit{Là việc quản lý dữ liệu như một tài sản doanh nghiệp.}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item Bao gồm: Data Governance (Quản trị), Data Quality, Master Data Management (MDM), Security.
-        \item Mục tiêu: Đảm bảo dữ liệu tin cậy, an toàn, dễ truy cập để tạo giá trị.
-    \end{itemize}
-
-    \subsection{Thách thức Xử lý Phân tán (Distributed Challenges)}
+    \textit{Quản lý dữ liệu như một tài sản chiến lược của doanh nghiệp.}
     
+    \paragraph{6 Khía cạnh Quản lý Thông tin}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Information Collection (Thu thập):} Xác định và thu thập dữ liệu từ các nguồn khác nhau.
+        \newline \textit{Hoạt động:} Data ingestion, ETL pipelines, API integration, web scraping, sensors/IoT.
+        \newline \textit{VD:} Crawl web data, stream từ Kafka, batch import từ CSV, CDC từ transactional DB.
+        
+        \item \textbf{Information Organization (Tổ chức):} Cấu trúc hóa và phân loại dữ liệu để dễ quản lý và truy xuất.
+        \newline \textit{Hoạt động:} Schema design, data modeling (Star/Snowflake), taxonomy, metadata management.
+        \newline \textit{VD:} Thiết kế DW dimensions/facts, tạo data catalog, tag dữ liệu theo domain.
+        
+        \item \textbf{Information Storage (Lưu trữ):} Chọn và triển khai hệ thống lưu trữ phù hợp với đặc điểm dữ liệu.
+        \newline \textit{Hoạt động:} Chọn DBMS (RDBMS, NoSQL, DW), partitioning, replication, backup strategy.
+        \newline \textit{VD:} OLTP trên PostgreSQL, OLAP trên Snowflake, unstructured data trên S3/Data Lake.
+        
+        \item \textbf{Information Manipulation (Thao tác):} Thực hiện các thao tác CRUD và chuyển đổi dữ liệu.
+        \newline \textit{Hoạt động:} INSERT/UPDATE/DELETE, data transformation, cleansing, enrichment, aggregation.
+        \newline \textit{VD:} Chuẩn hóa địa chỉ, deduplicate records, merge datasets, derive calculated fields.
+        
+        \item \textbf{Information Processing (Xử lý):} Phân tích và tính toán để tạo insights từ dữ liệu thô.
+        \newline \textit{Hoạt động:} Query execution, analytics, ML training, reporting, dashboarding, data mining.
+        \newline \textit{VD:} SQL queries, Spark jobs, BI reports, predictive models, real-time analytics.
+        
+        \item \textbf{Information Protection (Bảo vệ):} Đảm bảo an toàn, riêng tư và tuân thủ quy định.
+        \newline \textit{Hoạt động:} Access control (RBAC), encryption (at-rest/in-transit), audit logging, compliance (GDPR).
+        \newline \textit{VD:} Mã hóa PII, masking sensitive data, role-based permissions, backup/disaster recovery.
+    \end{enumerate}
+    
+    \textit{Tổng thể:} Information Management bao gồm Data Governance (quản trị), Data Quality, Master Data Management (MDM), Security, và Lifecycle Management. Mục tiêu cuối cùng là đảm bảo dữ liệu \textbf{tin cậy, an toàn, dễ truy cập} để tạo giá trị kinh doanh.
+
+    \subsection{Thách thức Hệ Phân tán (Distributed Systems Challenges)}
+    \textit{Khác với hệ thống đơn, hệ phân tán đối mặt với \textbf{partial failures} - một số phần hỏng trong khi phần khác hoạt động.}
+    
+    \subsubsection{8 Fallacies (Ngụy biện) của Distributed Computing}
+    \textit{Những giả định sai lầm mà lập trình viên thường mắc phải (L. Peter Deutsch, Sun Microsystems).}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{The Network is Reliable:} Mạng không đáng tin cậy - switches hỏng, cables ngắt, packets bị mất/reorder.
+        \item \textbf{Latency is Zero:} Local call (ns/$\mu$s) $\neq$ Remote call (ms). Chain calls $\rightarrow$ latency tích lũy.
+        \item \textbf{Bandwidth is Infinite:} Băng thông hữu hạn. Stamp coupling (truyền dữ liệu thừa) gây bottleneck.
+        \item \textbf{The Network is Secure:} Attack surface tăng. Mọi endpoint phải được bảo mật.
+        \item \textbf{Topology Never Changes:} Topology thay đổi liên tục (upgrades, failures, scaling) $\rightarrow$ timeout/failures.
+        \item \textbf{Only One Administrator:} Nhiều admin quản lý các segment khác nhau (firewall, DB) $\rightarrow$ khó phối hợp.
+        \item \textbf{Transport Cost is Zero:} Serialization, marshalling, network infra đều tốn chi phí.
+        \item \textbf{Network is Homogeneous:} Mạng gồm nhiều vendor (routers, switches) $\rightarrow$ packet loss, anomalies.
+    \end{enumerate}
+    
+    \subsubsection{Unreliability: Network \& Time}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Data Skew (Lệch dữ liệu):} Tình trạng một partition chứa quá nhiều dữ liệu so với các partition khác.
-        \newline $\rightarrow$ \textit{Hậu quả:} "Straggler problem" - Cả job phải đợi node chậm nhất hoàn thành.
-        \newline $\rightarrow$ \textit{Giải pháp:} Salting (thêm tiền tố ngẫu nhiên vào khóa) để chia nhỏ key hot.
-        \item \textbf{Shuffle:} Quá trình chuyển dữ liệu giữa các node qua mạng (Map $\to$ Reduce).
-        \newline $\rightarrow$ \textit{Tối ưu:} Dùng \textbf{Broadcast Join} (chép bảng nhỏ đến tất cả node chứa bảng lớn) để tránh shuffle bảng lớn.
+        \item \textbf{Network Unreliability:}
+        \begin{itemize}
+            \item \textit{Timeouts:} Không có bounded time $\rightarrow$ phải dùng timeout. Ngắn quá: false positive. Dài quá: delay detection.
+            \item \textit{Network Partition (Netsplit):} Nhóm nodes bị cô lập $\rightarrow$ "Split brain" (2 leaders cùng chấp nhận ghi xung đột).
+        \end{itemize}
+        \item \textbf{Time Unreliability:} "Time is an illusion" - không có global clock.
+        \begin{itemize}
+            \item \textit{Clock Drift:} Đồng hồ quartz drift do nhiệt độ. Ngay cả NTP sync vẫn có sai lệch.
+            \item \textit{Process Pauses:} GC hoặc VM suspension $\rightarrow$ node pause lâu hơn lease timeout $\rightarrow$ bị khai tử nhưng vẫn nghĩ mình sống $\rightarrow$ data corruption.
+            \item \textit{Ordering Issues:} Last Write Wins (LWW) dùng timestamp nguy hiểm - clock không sync $\rightarrow$ ghi đè giá trị mới bằng cũ.
+        \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{Consistency \& Consensus Challenges}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{CAP Theorem:} Chỉ đạt 2/3: \textbf{C}onsistency, \textbf{A}vailability, \textbf{P}artition Tolerance. Partition không tránh được $\rightarrow$ chọn CP hoặc AP.
+        \newline $\rightarrow$ \textit{NoSQL thường chọn AP (Sẵn sàng + Chịu lỗi) thay vì CP.}
+        \item \textbf{FLP Impossibility:} Hệ async không thể đảm bảo consensus termination nếu có 1 node crash $\rightarrow$ phải dùng timeout.
+        \item \textbf{Two Generals' Problem:} Không thể đạt common knowledge (chắc chắn đồng ý) qua kênh unreliable - ACK cuối cùng có thể bị mất.
+        \item \textbf{BASE:} \textbf{B}asically \textbf{A}vailable, \textbf{S}oft state, \textbf{E}ventual consistency (Nhất quán cuối cùng - chấp nhận dữ liệu cũ tạm thời).
+    \end{itemize}
+    
+    \subsubsection{Failure Models}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Crash Faults:} Process dừng hẳn, không bao giờ quay lại (đơn giản nhất).
+        \item \textbf{Omission Faults:} Process bỏ qua bước hoặc không gửi/nhận message (buffer overflow, congestion).
+        \item \textbf{Byzantine Faults:} Process hành xử tùy ý/độc hại, gửi message sai (khó nhất, blockchain).
+    \end{itemize}
+    
+    \subsubsection{Managing "Truth" in Distributed Systems}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Truth by Majority:} Không node nào tin được view của chính mình. \textit{Sự thật = Quorum quyết định.}
+        \newline \textit{VD:} Node tưởng mình là leader, nhưng quorum khai tử (do GC pause) $\rightarrow$ node đó "đã chết".
+        \item \textbf{Fencing Tokens:} Số monotonic để storage từ chối ghi từ node cầm lock đã hết hạn (zombie nodes).
+    \end{itemize}
+    
+    \subsubsection{Thách thức Xử lý Dữ liệu Phân tán}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Data Skew (Lệch dữ liệu):} Một partition chứa quá nhiều dữ liệu.
+        \newline $\rightarrow$ \textit{Hậu quả:} Straggler problem - job đợi node chậm nhất.
+        \newline $\rightarrow$ \textit{Giải pháp:} Salting (thêm prefix ngẫu nhiên) để chia nhỏ hot key.
+        \item \textbf{Shuffle:} Chuyển dữ liệu giữa nodes qua mạng (Map $\to$ Reduce).
+        \newline $\rightarrow$ \textit{Tối ưu:} Broadcast Join (chép bảng nhỏ đến tất cả node) để tránh shuffle bảng lớn.
     \end{itemize}
 \end{multicols}
 \end{document}
