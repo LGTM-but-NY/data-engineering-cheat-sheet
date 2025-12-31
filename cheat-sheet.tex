@@ -21,7 +21,7 @@
 % Tight margins for cheat sheet in landscape (A4 297mm x 210mm)
 \geometry{a4paper, landscape, left=8mm, right=8mm, top=8mm, bottom=8mm}
 
-\title{Tổng hợp Kiến thức Kỹ thuật Dữ liệu (Data Engineering)}
+\title{Tổng hợp Kiến thức Môn Kỹ thuật Dữ liệu (Data Engineering)}
 \author{Học viên Cao học KHMT Bách Khoa TP.HCM (HCMUT)}
 \date{\today}
 
@@ -292,56 +292,113 @@
     % ============================================================================
     \subsection{B-Trees \& B+-Trees}
 
-    \subsubsection{Tại sao dùng B+-Trees?}
+    \subsubsection{Structural Differences (Khác biệt Cấu trúc)}
+    \textit{Mặc dù thường dùng thay thế cho nhau, B-Tree và B+-Tree có sự khác biệt quan trọng về nơi lưu data pointers.}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Mục tiêu:} Giảm thiểu I/O đĩa tốn kém bằng cách giữ chiều cao cây thấp thông qua hệ số rẽ nhánh (fan-out) cao.
-        \item \textbf{Cấu trúc:} Cây cân bằng; nút trong chứa khóa + con trỏ con; nút lá chứa khóa + con trỏ dữ liệu (hoặc ID bản ghi) + liên kết đến lá kế tiếp.
-        \item \textbf{Thao tác:} Tìm/thêm/xóa trong $O(\log_{fo} n)$ lần truy cập khối; tách/gộp nút để duy trì cân bằng.
-        \item \textbf{B+- so với B-Tree:} B+- chỉ lưu con trỏ dữ liệu ở lá $\Rightarrow$ hệ số rẽ nhánh nút trong cao hơn, quét tuần tự hiệu quả qua chuỗi liên kết lá.
+        \item \textbf{B-Tree:} Search key values xuất hiện \textit{chỉ một lần} trong tree. Data pointers tồn tại ở \textit{tất cả levels} (internal + leaf nodes).
+        \newline $\rightarrow$ Lookup có thể terminate tại internal node nếu tìm thấy key.
+        \item \textbf{B+-Tree:} Data pointers chỉ lưu ở \textit{leaf nodes}. Internal nodes chỉ chứa separator keys (khóa phân tách) để guide search.
+        \newline $\rightarrow$ Internal nodes chứa nhiều keys hơn $\rightarrow$ higher fan-out (hệ số rẽ nhánh cao hơn) $\rightarrow$ shorter tree height.
+        \newline $\rightarrow$ Leaf nodes linked together $\rightarrow$ efficient sequential access \& range scans.
+        \item \textbf{Industry Standard:} Hầu hết DBMS hiện đại dùng B+-Tree (gọi tắt là B-Tree) vì fewer disk I/Os.
     \end{itemize}
 
-    \subsubsection{Ví dụ Tính Dung lượng}
-    \textit{Tham số:} Kích thước khối $B=512$ bytes; kích thước khóa $V=9$ bytes; con trỏ dữ liệu $\Pr=7$ bytes; con trỏ cây $P=6$ bytes.
-
-    \paragraph{Bước 1: Tính Bậc (Số con trỏ tối đa mỗi nút)}
+    \subsubsection{General Structure \& Properties}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Nút trong B-Tree:} Chứa $p$ con trỏ cây + $(p-1)$ khóa + $(p-1)$ con trỏ dữ liệu.
-        \item[] $(p \times 6) + ((p-1) \times (7+9)) \le 512$
-        \item[] $6p + 16p - 16 \le 512 \quad \Rightarrow \quad 22p \le 528 \quad \Rightarrow \quad p = 23$
-
-        \item \textbf{Nút trong B+-Tree:} Chứa $p$ con trỏ cây + $(p-1)$ khóa (không có con trỏ dữ liệu).
-        \item[] $(p \times 6) + ((p-1) \times 9) \le 512$
-        \item[] $6p + 9p - 9 \le 512 \quad \Rightarrow \quad 15p \le 521 \quad \Rightarrow \quad p = 34$
-
-        \item \textbf{Nút lá B+-Tree:} Chứa $p_{leaf}$ cặp khóa/con trỏ dữ liệu + 1 con trỏ kế tiếp.
-        \item[] $(p_{leaf} \times (7+9)) + 6 \le 512$
-        \item[] $16 \times p_{leaf} \le 506 \quad \Rightarrow \quad p_{leaf} = 31$
+        \item \textbf{Balanced Tree:} Mọi path từ root đến leaf có cùng length (chiều cao đồng đều).
+        \item \textbf{Node Capacity:} Mỗi node = fixed-size disk block (thường 4KB hoặc lớn hơn).
+        \item \textbf{Fan-out:} Internal nodes chứa từ $\lceil n/2 \rceil$ đến $n$ children. High fan-out $\rightarrow$ B-Trees "fat and short".
+        \newline \textit{VD:} 3-4 levels có thể store terabytes of data.
+        \item \textbf{Leaf Nodes:} Chứa từ $\lceil (n-1)/2 \rceil$ đến $n-1$ values, sorted by search key.
+        \item \textbf{Separator Keys:} Internal node với keys $K_1, K_2, \ldots, K_{n-1}$: pointer $P_i$ trỏ đến subtree với values $X$ thỏa $K_{i-1} < X < K_i$.
     \end{itemize}
 
-    \paragraph{Bước 2: Ước lượng Tổng dung lượng (Đầy 69\%)}
+    \subsubsection{Algorithms (Complexity: $O(\log_N M)$)}
+    
+    \paragraph{Search (Lookup)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{B-Tree (3 mức):} Hệ số rẽ nhánh trung bình $fo = 23 \times 0.69 \approx 16$.
+        \item \textbf{Traversal:} Bắt đầu từ root. Tại mỗi internal node, binary search tìm correct child pointer covering search key range.
+        \item \textbf{Termination:} Lặp lại cho đến leaf node. Trong B+-Tree, search leaf cho specific key và associated record pointer.
+        \item \textbf{Range Queries:} Leaf nodes linked (sibling pointers) $\rightarrow$ efficient range scan. Tìm starting key, traverse linked list.
+    \end{itemize}
+
+    \paragraph{Insertion}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Locate Leaf:} Tìm leaf node nơi new key thuộc về.
+        \item \textbf{Space Available:} Nếu leaf có space $\rightarrow$ insert entry in sorted order.
+        \item \textbf{Splitting (Overflow):} Nếu leaf full:
+        \begin{itemize}
+            \item Split thành 2 nodes: first $\lceil n/2 \rceil$ entries ở original, rest ở new node.
+            \item Middle key promoted (copied) lên parent làm separator.
+        \end{itemize}
+        \item \textbf{Propagation:} Nếu parent cũng full $\rightarrow$ split propagates upward. Root split $\rightarrow$ new root $\rightarrow$ tree height tăng 1.
+    \end{enumerate}
+
+    \paragraph{Deletion}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Locate \& Remove:} Tìm entry trong leaf node và xóa.
+        \item \textbf{Underflow:} Nếu node $< \lceil n/2 \rceil$ full:
+        \begin{itemize}
+            \item \textit{Redistribute:} Borrow entries từ sibling node (shift keys qua parent).
+            \item \textit{Merge (Coalesce):} Nếu không thể redistribute $\rightarrow$ merge với sibling. Separator key ở parent bị deleted/demoted.
+        \end{itemize}
+        \item \textbf{Propagation:} Merge có thể propagate upward, potentially giảm tree height.
+    \end{enumerate}
+    \columnbreak
+    \subsubsection{Implementation \& Optimizations}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Write-Ahead Log (WAL):} B-Trees overwrite pages on disk. Crash trong multi-page update (split) $\rightarrow$ corruption.
+        \newline $\rightarrow$ WAL ghi modifications trước khi update tree pages $\rightarrow$ durability \& atomicity.
+        \item \textbf{Concurrency (Latches):} Multiple threads access index đồng thời $\rightarrow$ dùng latches (lightweight locks).
+        \newline \textit{Latch Crabbing:} Lock parent $\rightarrow$ lock child $\rightarrow$ release parent $\rightarrow$ high concurrency.
+        \item \textbf{Bulk Loading:} Inserting records one-by-one $\rightarrow$ random I/O $\rightarrow$ inefficient.
+        \newline $\rightarrow$ Bulk load: Sort data $\rightarrow$ build tree bottom-up (sequential writes) $\rightarrow$ create parent nodes as needed.
+        \item \textbf{Flash Storage (SSD):} Random reads nhanh, random writes đắt (erase-modify-write cycles).
+        \newline $\rightarrow$ LSM-Tree (Log-Structured Merge-Tree) preferred cho write-heavy workloads, nhưng B-Trees vẫn là general-purpose standard.
+        \item \textbf{Prefix Compression:} Internal nodes chỉ lưu prefix của key (đủ để distinguish subtrees) thay vì full key $\rightarrow$ tăng fan-out.
+        \item \textbf{Right-Only Appends:} Với auto-incrementing keys, allocate new node khi rightmost leaf full thay vì split $\rightarrow$ tránh half-empty pages.
+    \end{itemize}
+
+    \subsubsection{Capacity Calculation Example}
+    \textit{Parameters:} Block size $B=512$ bytes; key size $V=9$ bytes; data pointer $\Pr=7$ bytes; tree pointer $P=6$ bytes.
+
+    \paragraph{Step 1: Fan-out Calculation}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{B-Tree Internal Node:} Chứa $p$ tree pointers + $(p-1)$ keys + $(p-1)$ data pointers.
+        \newline $(p \times 6) + ((p-1) \times (7+9)) \le 512 \Rightarrow 22p \le 528 \Rightarrow p = 23$
+
+        \item \textbf{B+-Tree Internal Node:} Chứa $p$ tree pointers + $(p-1)$ keys (no data pointers).
+        \newline $(p \times 6) + ((p-1) \times 9) \le 512 \Rightarrow 15p \le 521 \Rightarrow p = 34$
+        \newline \textit{Insight:} B+-Tree fan-out 48\% higher (34 vs 23) $\rightarrow$ shorter tree.
+
+        \item \textbf{B+-Tree Leaf Node:} Chứa $p_{leaf}$ key/data pointer pairs + 1 next pointer.
+        \newline $(p_{leaf} \times (7+9)) + 6 \le 512 \Rightarrow 16 \times p_{leaf} \le 506 \Rightarrow p_{leaf} = 31$
+    \end{itemize}
+
+    \paragraph{Step 2: Estimate Total Capacity (69\% Full)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{B-Tree (3 levels):} Average fan-out $fo = 23 \times 0.69 \approx 16$.
               \begin{itemize}
-                  \item Mức 0 (gốc): 15 mục, 16 con trỏ
-                  \item Mức 1: $16 \times 15 = 240$ mục
-                  \item Mức 2: $256 \times 15 = 3{,}840$ mục
-                  \item \textbf{Tổng:} $15 + 240 + 3{,}840 \approx \mathbf{4{,}095}$ mục
+                  \item Level 0 (root): 15 entries, 16 pointers
+                  \item Level 1: $16 \times 15 = 240$ entries
+                  \item Level 2: $256 \times 15 = 3{,}840$ entries
+                  \item \textbf{Total:} $15 + 240 + 3{,}840 \approx \mathbf{4{,}095}$ entries
               \end{itemize}
 
-        \item \textbf{B+-Tree (3 mức):} Nút trong $fo = 34 \times 0.69 \approx 23$; Dung lượng lá $= 31 \times 0.69 \approx 21$.
+        \item \textbf{B+-Tree (3 levels):} Internal nodes $fo = 34 \times 0.69 \approx 23$; Leaf capacity $= 31 \times 0.69 \approx 21$.
               \begin{itemize}
-                  \item Mức 0: 22 mục, 23 con trỏ
-                  \item Mức 1: $23 \times 22 = 506$ mục, 529 con trỏ
-                  \item Mức lá: $12{,}167 \times 21 \approx \mathbf{255{,}507}$ con trỏ dữ liệu
+                  \item Level 0: 22 entries, 23 pointers
+                  \item Level 1: $23 \times 22 = 506$ entries, 529 pointers
+                  \item Leaf level: $12{,}167 \times 21 \approx \mathbf{255{,}507}$ data pointers
               \end{itemize}
 
-        \item \textbf{Nhận xét:} B+- chứa được $\sim 4\times$ số mục ở cùng chiều cao nhờ nút trong nhẹ hơn.
+        \item \textbf{Observation:} B+-Tree holds $\sim 4\times$ more entries at the same height due to lighter internal nodes.
     \end{itemize}
 
-    \subsubsection{Các loại Chỉ mục Nâng cao}
+    \subsubsection{Advanced Index Types}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Chỉ mục Phức hợp:} Khóa nhiều cột (vd: (City, LastName)); hỗ trợ truy vấn tiền tố trái nhất (City), (City, LastName); sắp xếp cột theo độ chọn lọc.
-        \item \textbf{Chỉ mục Dựa trên Hàm:} Chỉ mục trên biểu thức (vd: \texttt{LOWER(email)}); truy vấn phải dùng đúng hàm đó mới tận dụng được.
+        \item \textbf{Composite Indexes:} Multi-column keys (e.g., (City, LastName)); support leftmost prefix queries (City), (City, LastName); order columns by selectivity.
+        \item \textbf{Function-Based Indexes:} Indexes on expressions (e.g., \texttt{LOWER(email)}); queries must use the exact function to utilize the index.
     \end{itemize}
 
     % ============================================================================
@@ -582,7 +639,7 @@
         \item \textbf{Write Cost:} $jc / bfr_{result}$ blocks.
         \item \textbf{Total Cost:} Processing Cost + $(js \times |R| \times |S|) / bfr_{result}$.
     \end{itemize}
-
+    \columnbreak
     \subsubsection{Example: EMPLOYEE $\bowtie$ DEPARTMENT}
     \textbf{Scenario:} EMPLOYEE ($|E|=10{,}000$, $b_E=2{,}000$) $\bowtie_{Dno=Dnumber}$ DEPARTMENT ($|D|=125$, $b_D=13$).
     \newline \textbf{Indices:} Secondary on $E.Dno$ ($x=2$, $s=80$). Primary on $D.Dnumber$ ($x=1$).
@@ -623,31 +680,79 @@
     % ============================================================================
     % OPTIMIZATION STRATEGIES
     % ============================================================================
-    \subsection{Quy trình Tối ưu hóa Truy vấn}
+    \subsection{Quy trình Tối ưu hóa Truy vấn (Query Optimization Process)}
 
     \subsubsection{Tổng quan Quy trình}
     \begin{enumerate}[leftmargin=*]
-        \item \textbf{Phân tích \& Kiểm tra (Parse):} Kiểm tra cú pháp, tuân thủ lược đồ.
-        \item \textbf{Dịch (Translate):} Chuyển SQL sang đại số quan hệ (cây truy vấn).
-        \item \textbf{Tối ưu hóa Kinh nghiệm (Heuristic):} Áp dụng các quy tắc biến đổi.
-        \item \textbf{Tối ưu hóa Dựa trên Chi phí:} Liệt kê các kế hoạch, ước tính chi phí, chọn chi phí thấp nhất.
-        \item \textbf{Thực thi:} Hiện thực hóa kết quả trung gian hoặc pipeline kết quả.
+        \item \textbf{Parse \& Validate:} Kiểm tra cú pháp (syntax), tuân thủ schema (schema compliance).
+        \item \textbf{Translate:} Chuyển SQL sang relational algebra (đại số quan hệ) - tạo query tree (cây truy vấn) canonical.
+        \item \textbf{Heuristic Optimization (Tối ưu Kinh nghiệm):} Áp dụng equivalence rules (quy tắc tương đương) để restructure tree.
+        \item \textbf{Cost-Based Optimization (Tối ưu Dựa Chi phí):} Liệt kê execution plans (kế hoạch thực thi), ước tính cost, chọn plan tối ưu.
+        \item \textbf{Execution (Thực thi):} Materialization (hiện thực hóa) kết quả trung gian hoặc pipelining.
     \end{enumerate}
     
-    \subsubsection{Quy tắc Heuristic}
+    \subsubsection{Heuristic Optimization}
+    \textit{Mục tiêu:} Transform initial query tree thành equivalent tree hiệu quả hơn mà không cần estimate cost chi tiết.
+    
+    \paragraph{3 Quy tắc Heuristic Cốt lõi}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Perform Selections Early ($\sigma$ down):} Đẩy selection xuống gần leaf nodes (quan hệ gốc).
+        \newline \textit{Lý do:} Giảm số tuples (rows) trước khi join $\rightarrow$ intermediate results nhỏ hơn.
+        \item \textbf{Perform Projections Early ($\pi$ down):} Đẩy projection xuống để giảm số attributes (columns).
+        \newline \textit{Lý do:} Giảm "chiều rộng" quan hệ trung gian $\rightarrow$ tiết kiệm memory.
+        \item \textbf{Avoid Cartesian Products ($\times$):} Combine Cartesian product + selection thành Join ($\bowtie$).
+        \newline \textit{Lý do:} Cartesian product tạo intermediate relations cực lớn - rất tốn kém.
+    \end{enumerate}
+
+    \paragraph{Transformation Rules (Quy tắc Biến đổi)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Đẩy phép chọn ($\sigma$) xuống:} Lọc sớm để giảm kích thước trung gian.
-        \item \textbf{Đẩy phép chiếu ($\Pi$) xuống:} Giảm chiều rộng bộ dữ liệu sớm.
-        \item \textbf{Thay thế $\sigma$ + Tích đề-các ($\times$) bằng Kết ($\bowtie$):} Tránh tích đề-các tốn kém.
-        \item \textbf{Sắp xếp lại thứ tự kết:} Dùng tính giao hoán/kết hợp để tìm kết quả trung gian có lực lượng thấp.
-        \item \textbf{Cây nghiêng trái (Left-deep trees):} Con phải luôn là bảng cơ sở $\Rightarrow$ cho phép tìm kiếm chỉ mục, giảm không gian tìm kiếm.
+        \item \textbf{Cascading of Selections:} $\sigma_{c1 \land c2}(R) = \sigma_{c1}(\sigma_{c2}(R))$.
+        \newline \textit{Ứng dụng:} Break conjunctive conditions để move các parts xuống different branches.
+        \item \textbf{Commutativity (Giao hoán):} $\sigma_{c1}(R \bowtie S) = (\sigma_{c1}(R)) \bowtie S$ (nếu $c1$ chỉ liên quan $R$).
+        \newline \textit{Ứng dụng:} Push selections down past joins.
+        \item \textbf{Associativity (Kết hợp):} $(R \bowtie S) \bowtie T = R \bowtie (S \bowtie T)$.
+        \newline \textit{Ứng dụng:} Reorder join sequence để most restrictive joins (joins có selectivity cao nhất) xảy ra trước.
     \end{itemize}
 
-    \subsubsection{Quyết định Dựa trên Chi phí}
+    \paragraph{Heuristic Algorithm (6 bước)}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Break up Selections:} Dùng cascading rule để tách conjunctive select conditions.
+        \item \textbf{Move Selections Down:} Đẩy $\sigma$ xuống xa nhất có thể (dùng commutativity).
+        \item \textbf{Reorder Leaf Nodes:} Sắp xếp lại leaf nodes (relations) - quan hệ có most restrictive selection (selectivity thấp nhất) trước.
+        \item \textbf{Form Joins:} Combine Cartesian products với subsequent selections thành Join operations.
+        \item \textbf{Move Projections Down:} Break projection lists, chỉ giữ attributes cần thiết cho query result hoặc subsequent operations.
+        \item \textbf{Identify Subtrees:} Nhóm operations có thể thực thi bởi single algorithm (vd: single access method).
+    \end{enumerate}
+
+    \paragraph{Trade-offs \& Limitations}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Chọn đường dẫn truy cập:} So sánh quét toàn bộ, chỉ mục phân cụm, chỉ mục phụ, bitmap cho mỗi vị từ.
-        \item \textbf{Thuật toán kết nối:} Nested-loop (index/block), hash join, sort-merge dựa trên số lượng bộ và bộ nhớ.
-        \item \textbf{Thứ tự kết nối:} Ước lượng độ chọn lọc kết nối $js \approx 1/\max(NDV(A), NDV(B))$; số lượng $jc = js \times |R| \times |S|$.
+        \item \textbf{Not Always Optimal:} Heuristics giảm optimization cost nhưng không đảm bảo tìm optimal plan.
+        \newline \textit{VD:} "Selection early" thường tốt, nhưng nếu selection cần scan large relation mà join có efficient index, join trước có thể rẻ hơn.
+        \item \textbf{Hybrid Approaches:} Commercial optimizers kết hợp cả hai.
+        \newline \textit{System R:} Heuristics (chỉ xét left-deep trees) + cost-based (trong constraints đó).
+        \newline \textit{Oracle:} Heuristics rank access paths + cost-based chọn join methods.
+    \end{itemize}
+
+    \subsubsection{Cost-Based Optimization}
+    Sau khi heuristic optimization, system estimate cost cho remaining candidate plans.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Chọn Access Path:} So sánh full scan, clustering index, secondary index, bitmap cho mỗi predicate (vị từ).
+        \item \textbf{Chọn Join Algorithm:} Nested-loop (index/block), hash join, sort-merge dựa trên tuple count và available memory ($n_B$).
+        \item \textbf{Chọn Join Order:} Ước lượng join selectivity $js \approx 1/\max(NDV(A), NDV(B))$; join cardinality $jc = js \times |R| \times |S|$.
+        \newline \textit{Strategy:} Dynamic programming (System R) - build optimal plan cho subqueries, combine lên.
+    \end{itemize}
+
+    \subsubsection{Left-Deep Trees}
+    \textit{Constraint phổ biến trong cost-based optimization để giảm search space.}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Đặc điểm:} Right child (con phải) luôn là base table (bảng cơ sở), không phải intermediate result.
+        \item \textbf{Lợi ích:} 
+        \begin{itemize}
+            \item Cho phép index lookups trên right child.
+            \item Giảm exponential search space (chỉ $n!$ thay vì $O(4^n)$ bushy trees).
+            \item Enable pipelining - không cần materialize mọi intermediate results.
+        \end{itemize}
+        \item \textbf{Nhược điểm:} Có thể bỏ lỡ optimal bushy tree plans, nhưng trade-off chấp nhận được cho performance.
     \end{itemize}
 
     \subsection{Kỹ thuật Chuyên biệt}
@@ -663,7 +768,7 @@
         \item \textbf{Đa khóa:} Chỉ mục phức hợp cho truy vấn tiền tố; chỉ mục bao phủ (covering index) tránh tra cứu bảng.
         \item \textbf{Không gian:} R-tree (hình chữ nhật bao), kd-tree, quadtree cho dữ liệu địa lý/khoảng; hỗ trợ truy vấn vùng + lân cận gần nhất.
     \end{itemize}
-
+    \columnbreak
     % ============================================================================
     % SECTION: Big Data & Data Engineering
     % ============================================================================
@@ -716,7 +821,7 @@
         \item \textbf{Kappa Architecture:} Chỉ dùng Streaming (đơn giản hóa). Mọi dữ liệu qua stream processor, replay từ Kafka khi cần.
     \end{itemize}
 
-    \subsection{Phân mảnh \& Sao chép (Partitioning \& Replication)}
+    \subsection{Partitioning \& Replication}
     
     \subsubsection{Sao chép (Replication)}
     \textit{Mục đích: High Availability (HA) và giảm độ trễ đọc.}
@@ -776,21 +881,21 @@
     % ============================================================================
     % TIER 2: STORAGE LAYER
     % ============================================================================
-    \subsection{Hệ sinh thái Hadoop (Hadoop Ecosystem)}
-    \textit{Khung làm việc mã nguồn mở cho lưu trữ và xử lý phân tán.}
+    \subsection{Hadoop Ecosystem}
+    \textit{Open-source framework for distributed storage and processing.}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{HDFS (Storage):} Hệ thống tệp phân tán.
+        \item \textbf{HDFS (Storage):} Distributed file system.
         \begin{itemize}
-            \item \textit{NameNode:} Quản lý metadata (vị trí block).
-            \item \textit{DataNode:} Lưu trữ block dữ liệu thực tế.
-            \item \textit{Cơ chế:} Chia file thành block (128MB), replicate (x3) để chịu lỗi.
+            \item \textit{NameNode:} Manages metadata (block locations).
+            \item \textit{DataNode:} Stores actual data blocks.
+            \item \textit{Mechanism:} Splits files into blocks (128MB), replicates (x3) for fault tolerance.
         \end{itemize}
-        \item \textbf{YARN (Resource Management):} "Hệ điều hành" của cluster.
+        \item \textbf{YARN (Resource Management):} "Operating system" of the cluster.
         \begin{itemize}
-            \item Phân phối tài nguyên (RAM, CPU) cho các ứng dụng.
-            \item Cho phép chạy nhiều engine (Spark, MapReduce) trên cùng 1 cụm.
+            \item Distributes resources (RAM, CPU) to applications.
+            \item Allows multiple engines (Spark, MapReduce) to run on the same cluster.
         \end{itemize}
-        \item \textbf{MapReduce (Processing):} Mô hình xử lý Batch - chia để trị trên cụm phân tán.
+        \item \textbf{MapReduce (Processing):} Batch processing model - divide and conquer on a distributed cluster.
         \begin{itemize}
             \item \textit{Map:} Chia nhỏ \& Gán nhãn. Input $\rightarrow$ Split $\rightarrow$ \texttt{<Key, Value>}.
             \item \textit{Shuffle:} Xáo trộn \& Gom nhóm. Chuyển dữ liệu qua mạng, gom cùng Key.
@@ -840,7 +945,7 @@
     % ============================================================================
     % TIER 3: PROCESSING LAYER
     % ============================================================================
-    \subsection{Xử lý Batch (Batch Processing)}
+    \subsection{Batch Processing}
 
     \subsubsection{Apache Spark (Unified Analytics Engine)}
     \textit{Thay thế MapReduce với tốc độ cao hơn 100x (in-memory).}
@@ -863,7 +968,7 @@
     \end{itemize}
 
     % --- PHẦN 4: XỬ LÝ LUỒNG (STREAMING) ---
-    \subsection{Xử lý Luồng (Streaming Processing)}
+    \subsection{Streaming Processing}
     \textit{Xử lý dữ liệu liên tục, độ trễ thấp (Real-time).}
     
     \subsubsection{Các chiến lược xử lý (Strategies)}
@@ -891,7 +996,7 @@
     % ============================================================================
     % TIER 4: INTEGRATION & ORCHESTRATION
     % ============================================================================
-    \subsection{Giao thức IoT (IoT Protocols)}
+    \subsection{Giao thức IoT}
     
     \subsubsection{MQTT vs HTTP}
     \begin{center}
@@ -1163,7 +1268,7 @@
     
     \textit{Tổng thể:} Information Management bao gồm Data Governance (quản trị), Data Quality, Master Data Management (MDM), Security, và Lifecycle Management. Mục tiêu cuối cùng là đảm bảo dữ liệu \textbf{tin cậy, an toàn, dễ truy cập} để tạo giá trị kinh doanh.
 
-    \subsection{Thách thức Hệ Phân tán (Distributed Systems Challenges)}
+    \subsection{Distributed Systems Challenges}
     \textit{Khác với hệ thống đơn, hệ phân tán đối mặt với \textbf{partial failures} - một số phần hỏng trong khi phần khác hoạt động.}
     
     \subsubsection{8 Fallacies (Ngụy biện) của Distributed Computing}
