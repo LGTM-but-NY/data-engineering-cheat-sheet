@@ -11,6 +11,7 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage[inline]{enumitem} % to tighten list spacing
+\usepackage{fancyhdr} % for header and footer customization
 
 % --- VIETNAMESE SUPPORT PACKAGES ---
 \usepackage[utf8]{inputenc}
@@ -19,7 +20,9 @@
 % -----------------------------------
 
 % Tight margins for cheat sheet in landscape (A4 297mm x 210mm)
-\geometry{a4paper, landscape, left=8mm, right=8mm, top=8mm, bottom=8mm}
+\geometry{a4paper, landscape, left=8mm, right=8mm, top=6mm, bottom=13mm}
+
+\fancyfoot[C]{\footnotesize\thepage}
 
 \title{Tổng hợp Kiến thức Môn Kỹ thuật Dữ liệu (Data Engineering)}
 \author{Học viên Cao học KHMT Bách Khoa TP.HCM (HCMUT)}
@@ -27,6 +30,7 @@
 
 \begin{document}
 
+\thispagestyle{fancy} % Apply fancy style to title page
 \maketitle
 \footnotesize % smaller font for dense content
 % Zero / minimal spacing in itemize and enumerate lists
@@ -143,9 +147,9 @@
         \item \textbf{Bẫy Kết nối trong ER:}
         \begin{center}
             \begin{tabular}{@{} c @{}}
-                \includegraphics[width=0.8\linewidth]{./images/design_trap_fan.png} \\
+                \includegraphics[width=1\linewidth]{./images/design_trap_fan.png} \\
                 \footnotesize (Fan Trap) \\[6pt]
-                \includegraphics[width=0.8\linewidth]{./images/design_trap_chasm.png} \\
+                \includegraphics[width=1\linewidth]{./images/design_trap_chasm.png} \\
                 \footnotesize (Chasm Trap) \\
             \end{tabular}
         \end{center}
@@ -204,18 +208,18 @@
     \begin{center}
         \begin{tabular}{@{} c c @{}}
             % Hàng 1: Thực thể & Thực thể yếu
-            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_entity.png}      &
-            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_weak_entity.png}                                \\
+            \includegraphics[width=0.5\linewidth, height=1.2cm, keepaspectratio]{./images/chen_entity.png}      &
+            \includegraphics[width=0.5\linewidth, height=1.2cm, keepaspectratio]{./images/chen_weak_entity.png}                                \\
             \footnotesize (Thực thể)                                                                             & \footnotesize (Thực thể yếu) \\[2pt]
 
             % Hàng 2: Thuộc tính & Khóa
-            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_attribute.png}   &
-            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_key.png}                                        \\
+            \includegraphics[width=0.5\linewidth, height=1.2cm, keepaspectratio]{./images/chen_attribute.png}   &
+            \includegraphics[width=0.5\linewidth, height=1.2cm, keepaspectratio]{./images/chen_key.png}                                        \\
             \footnotesize (Thuộc tính)                                                                           & \footnotesize (Khóa)         \\[2pt]
 
             % Hàng 3: Đa trị & Dẫn xuất
-            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_multivalued.png} &
-            \includegraphics[width=0.45\linewidth, height=1.2cm, keepaspectratio]{./images/chen_derived.png}                                    \\
+            \includegraphics[width=0.5\linewidth, height=1.2cm, keepaspectratio]{./images/chen_multivalued.png} &
+            \includegraphics[width=0.5\linewidth, height=1.2cm, keepaspectratio]{./images/chen_derived.png}                                    \\
             \footnotesize (Đa trị)                                                                               & \footnotesize (Dẫn xuất)     \\
         \end{tabular}
     \end{center}
@@ -224,9 +228,11 @@
     \textit{Khi nào dùng:} \textbf{Quan hệ thường} cho liên kết độc lập (NhanVien \textit{làm việc cho} PhongBan, KhanhHang \textit{mua} SanPham); \textbf{Quan hệ xác định} khi thực thể yếu phụ thuộc vào thực thể chủ (NguoiPhuThuoc \textit{thuộc về} NhanVien với khóa bộ phận là tên người phụ thuộc).
     \begin{center}
         % Dùng minipage để căn chỉnh nếu ảnh có tỷ lệ khác nhau
-        \includegraphics[width=0.9\linewidth]{./images/chen_relationships_summary.png} \\
+        \includegraphics[width=0.8\linewidth]{./images/chen_relationships_summary.png} \\
         \footnotesize \textit{Bao gồm: Quan hệ (Hình thoi), Quan hệ xác định (Thoi đôi)}
     \end{center}
+
+    \columnbreak
     
     \subsubsection{Ràng buộc (Constraints)}
     \textit{Khi nào dùng:} Xác định quy tắc nghiệp vụ giữa các thực thể.
@@ -240,9 +246,8 @@
         \item \textbf{Min-Max (min, max):} Ghi cặp số trên cạnh. Ví dụ: NhanVien $(1,1)$ \textit{làm việc cho} $(0,N)$ PhongBan nghĩa là mỗi nhân viên bắt buộc làm việc cho đúng 1 phòng ban, mỗi phòng ban có thể có 0 đến nhiều nhân viên. $(0,1)$: tùy chọn, tối đa 1; $(1,N)$: bắt buộc, có thể nhiều. (An extension of Participation và Cardinality)
     \end{itemize}
 
-    \columnbreak
-
     \subsubsection{EER Chuyên biệt hóa \& Tổng quát hóa}
+    \textit{Khi nào dùng:} \textbf{Disjoint} khi lớp con không chồng lấp (NhanVien là KỸ SƯ hoặc QUẢN LÝ, không đồng thời); \textbf{Overlapping} khi có thể thuộc nhiều lớp (NGƯỜI là SINH VIÊN và/hoặc NHÂN VIÊN); \textbf{Union} khi lớp con kế thừa từ nhiều lớp cha (CHỦ SỞ HỮU có thể là NGƯỜI hoặc CÔNG TY hoặc NGÂN HÀNG). \textbf{Total} khi mọi thực thể cha phải thuộc ít nhất 1 lớp con; \textbf{Partial} khi không bắt buộc.
     \begin{center}
         \begin{tabular}{@{} c @{}}
             \includegraphics[width=1\linewidth]{./images/chen_eer_disjoint_overlap.png} \\
@@ -252,7 +257,9 @@
         \end{tabular} \\[2pt]
         \footnotesize \textit{Ký hiệu: Hình tròn (d: disjoint, o: overlapping, U: union),\linebreak Nét đôi (Total), Nét đơn (Partial).}
     \end{center}
-    \textit{Khi nào dùng:} \textbf{Disjoint} khi lớp con không chồng lấp (NhanVien là KỸ SƯ hoặc QUẢN LÝ, không đồng thời); \textbf{Overlapping} khi có thể thuộc nhiều lớp (NGƯỜI là SINH VIÊN và/hoặc NHÂN VIÊN); \textbf{Union} khi lớp con kế thừa từ nhiều lớp cha (CHỦ SỞ HỮU có thể là NGƯỜI hoặc CÔNG TY hoặc NGÂN HÀNG). \textbf{Total} khi mọi thực thể cha phải thuộc ít nhất 1 lớp con; \textbf{Partial} khi không bắt buộc.
+
+    \columnbreak
+
 
     % ===========================================================================
     % SECTION INDEXING & QUERY OPTIMIZATION
@@ -289,7 +296,6 @@
                   \item \textit{Chỉ mục Phụ:} Đường dẫn truy cập thay thế độc lập với thứ tự vật lý; thường là chỉ mục đặc hoặc dùng gián tiếp cho các khóa không duy nhất.
               \end{itemize}
     \end{itemize}
-
     % ============================================================================
     % CORE INDEX STRUCTURES
     % ============================================================================
@@ -298,68 +304,69 @@
     \subsubsection{Khác biệt Cấu trúc}
     \textit{Mặc dù thường dùng thay thế cho nhau, B-Tree và B+-Tree có sự khác biệt quan trọng về nơi lưu data pointers.}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{B-Tree:} Search key values xuất hiện \textit{chỉ một lần} trong tree. Data pointers tồn tại ở \textit{tất cả levels} (internal + leaf nodes).
-        \newline $\rightarrow$ Lookup có thể terminate tại internal node nếu tìm thấy key.
-        \item \textbf{B+-Tree:} Data pointers chỉ lưu ở \textit{leaf nodes}. Internal nodes chỉ chứa separator keys (khóa phân tách) để guide search.
-        \newline $\rightarrow$ Internal nodes chứa nhiều keys hơn $\rightarrow$ higher fan-out (hệ số rẽ nhánh cao hơn) $\rightarrow$ shorter tree height.
+        \item \textbf{B-Tree:} Search key values appear \textit{only once} in tree. Data pointers exist at \textit{all levels} (internal + leaf nodes).
+        \newline $\rightarrow$ Lookup can terminate at internal node if key is found.
+        \item \textbf{B+-Tree:} Data pointers only stored at \textit{leaf nodes}. Internal nodes only contain separator keys to guide search.
+        \newline $\rightarrow$ Internal nodes contain more keys $\rightarrow$ higher fan-out $\rightarrow$ shorter tree height.
         \newline $\rightarrow$ Leaf nodes linked together $\rightarrow$ efficient sequential access \& range scans.
-        \item \textbf{Industry Standard:} Hầu hết DBMS hiện đại dùng B+-Tree (gọi tắt là B-Tree) vì fewer disk I/Os.
+        \item \textbf{Industry Standard:} Most modern DBMS use B+-Tree (abbreviated as B-Tree) due to fewer disk I/Os.
     \end{itemize}
+
+    \columnbreak
 
     \subsubsection{General Structure \& Properties}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Balanced Tree:} Mọi path từ root đến leaf có cùng length (chiều cao đồng đều).
-        \item \textbf{Node Capacity:} Mỗi node = fixed-size disk block (thường 4KB hoặc lớn hơn).
-        \item \textbf{Fan-out:} Internal nodes chứa từ $\lceil n/2 \rceil$ đến $n$ children. High fan-out $\rightarrow$ B-Trees "fat and short".
-        \newline \textit{VD:} 3-4 levels có thể store terabytes of data.
-        \item \textbf{Leaf Nodes:} Chứa từ $\lceil (n-1)/2 \rceil$ đến $n-1$ values, sorted by search key.
-        \item \textbf{Separator Keys:} Internal node với keys $K_1, K_2, \ldots, K_{n-1}$: pointer $P_i$ trỏ đến subtree với values $X$ thỏa $K_{i-1} < X < K_i$.
+        \item \textbf{Balanced Tree:} Every path from root to leaf has same length (uniform height).
+        \item \textbf{Node Capacity:} Each node = fixed-size disk block (typically 4KB or larger).
+        \item \textbf{Fan-out:} Internal nodes contain from $\lceil n/2 \rceil$ to $n$ children. High fan-out $\rightarrow$ B-Trees "fat and short".
+        \newline \textit{Example:} 3-4 levels can store terabytes of data.
+        \item \textbf{Leaf Nodes:} Contain from $\lceil (n-1)/2 \rceil$ to $n-1$ values, sorted by search key.
+        \item \textbf{Separator Keys:} Internal node with keys $K_1, K_2, \ldots, K_{n-1}$: pointer $P_i$ points to subtree with values $X$ satisfying $K_{i-1} < X < K_i$.
     \end{itemize}
 
     \subsubsection{Algorithms (Complexity: $O(\log_N M)$)}
     
     \paragraph{Search (Lookup)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Traversal:} Bắt đầu từ root. Tại mỗi internal node, binary search tìm correct child pointer covering search key range.
-        \item \textbf{Termination:} Lặp lại cho đến leaf node. Trong B+-Tree, search leaf cho specific key và associated record pointer.
-        \item \textbf{Range Queries:} Leaf nodes linked (sibling pointers) $\rightarrow$ efficient range scan. Tìm starting key, traverse linked list.
+        \item \textbf{Traversal:} Start from root. At each internal node, binary search finds correct child pointer covering search key range.
+        \item \textbf{Termination:} Repeat until leaf node. In B+-Tree, search leaf for specific key and associated record pointer.
+        \item \textbf{Range Queries:} Leaf nodes linked (sibling pointers) $\rightarrow$ efficient range scan. Find starting key, traverse linked list.
     \end{itemize}
 
     \paragraph{Insertion}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Locate Leaf:} Tìm leaf node nơi new key thuộc về.
-        \item \textbf{Space Available:} Nếu leaf có space $\rightarrow$ insert entry in sorted order.
-        \item \textbf{Splitting (Overflow):} Nếu leaf full:
+        \item \textbf{Locate Leaf:} Find leaf node where new key belongs.
+        \item \textbf{Space Available:} If leaf has space $\rightarrow$ insert entry in sorted order.
+        \item \textbf{Splitting (Overflow):} If leaf full:
         \begin{itemize}
-            \item Split thành 2 nodes: first $\lceil n/2 \rceil$ entries ở original, rest ở new node.
-            \item Middle key promoted (copied) lên parent làm separator.
+            \item Split into 2 nodes: first $\lceil n/2 \rceil$ entries in original, rest in new node.
+            \item Middle key promoted (copied) up to parent as separator.
         \end{itemize}
-        \item \textbf{Propagation:} Nếu parent cũng full $\rightarrow$ split propagates upward. Root split $\rightarrow$ new root $\rightarrow$ tree height tăng 1.
+        \item \textbf{Propagation:} If parent also full $\rightarrow$ split propagates upward. Root split $\rightarrow$ new root $\rightarrow$ tree height increases by 1.
     \end{enumerate}
 
     \paragraph{Deletion}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Locate \& Remove:} Tìm entry trong leaf node và xóa.
-        \item \textbf{Underflow:} Nếu node $< \lceil n/2 \rceil$ full:
+        \item \textbf{Locate \& Remove:} Find entry in leaf node and delete.
+        \item \textbf{Underflow:} If node $< \lceil n/2 \rceil$ full:
         \begin{itemize}
-            \item \textit{Redistribute:} Borrow entries từ sibling node (shift keys qua parent).
-            \item \textit{Merge (Coalesce):} Nếu không thể redistribute $\rightarrow$ merge với sibling. Separator key ở parent bị deleted/demoted.
+            \item \textit{Redistribute:} Borrow entries from sibling node (shift keys through parent).
+            \item \textit{Merge (Coalesce):} If cannot redistribute $\rightarrow$ merge with sibling. Separator key in parent is deleted/demoted.
         \end{itemize}
-        \item \textbf{Propagation:} Merge có thể propagate upward, potentially giảm tree height.
+        \item \textbf{Propagation:} Merge can propagate upward, potentially reducing tree height.
     \end{enumerate}
-    \columnbreak
     \subsubsection{Implementation \& Optimizations}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Write-Ahead Log (WAL):} B-Trees overwrite pages on disk. Crash trong multi-page update (split) $\rightarrow$ corruption.
-        \newline $\rightarrow$ WAL ghi modifications trước khi update tree pages $\rightarrow$ durability \& atomicity.
-        \item \textbf{Concurrency (Latches):} Multiple threads access index đồng thời $\rightarrow$ dùng latches (lightweight locks).
+        \item \textbf{Write-Ahead Log (WAL):} B-Trees overwrite pages on disk. Crash during multi-page update (split) $\rightarrow$ corruption.
+        \newline $\rightarrow$ WAL writes modifications before updating tree pages $\rightarrow$ durability \& atomicity.
+        \item \textbf{Concurrency (Latches):} Multiple threads access index concurrently $\rightarrow$ use latches (lightweight locks).
         \newline \textit{Latch Crabbing:} Lock parent $\rightarrow$ lock child $\rightarrow$ release parent $\rightarrow$ high concurrency.
         \item \textbf{Bulk Loading:} Inserting records one-by-one $\rightarrow$ random I/O $\rightarrow$ inefficient.
         \newline $\rightarrow$ Bulk load: Sort data $\rightarrow$ build tree bottom-up (sequential writes) $\rightarrow$ create parent nodes as needed.
-        \item \textbf{Flash Storage (SSD):} Random reads nhanh, random writes đắt (erase-modify-write cycles).
-        \newline $\rightarrow$ LSM-Tree (Log-Structured Merge-Tree) preferred cho write-heavy workloads, nhưng B-Trees vẫn là general-purpose standard.
-        \item \textbf{Prefix Compression:} Internal nodes chỉ lưu prefix của key (đủ để distinguish subtrees) thay vì full key $\rightarrow$ tăng fan-out.
-        \item \textbf{Right-Only Appends:} Với auto-incrementing keys, allocate new node khi rightmost leaf full thay vì split $\rightarrow$ tránh half-empty pages.
+        \item \textbf{Flash Storage (SSD):} Random reads fast, random writes expensive (erase-modify-write cycles).
+        \newline $\rightarrow$ LSM-Tree (Log-Structured Merge-Tree) preferred for write-heavy workloads, but B-Trees remain general-purpose standard.
+        \item \textbf{Prefix Compression:} Internal nodes only store prefix of key (enough to distinguish subtrees) instead of full key $\rightarrow$ increases fan-out.
+        \item \textbf{Right-Only Appends:} With auto-incrementing keys, allocate new node when rightmost leaf full instead of split $\rightarrow$ avoids half-empty pages.
     \end{itemize}
 
     \subsubsection{Capacity Calculation Example}
@@ -367,14 +374,14 @@
 
     \paragraph{Step 1: Fan-out Calculation}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{B-Tree Internal Node:} Chứa $p$ tree pointers + $(p-1)$ keys + $(p-1)$ data pointers.
+        \item \textbf{B-Tree Internal Node:} Contains $p$ tree pointers + $(p-1)$ keys + $(p-1)$ data pointers.
         \newline $(p \times 6) + ((p-1) \times (7+9)) \le 512 \Rightarrow 22p \le 528 \Rightarrow p = 23$
 
-        \item \textbf{B+-Tree Internal Node:} Chứa $p$ tree pointers + $(p-1)$ keys (no data pointers).
+        \item \textbf{B+-Tree Internal Node:} Contains $p$ tree pointers + $(p-1)$ keys (no data pointers).
         \newline $(p \times 6) + ((p-1) \times 9) \le 512 \Rightarrow 15p \le 521 \Rightarrow p = 34$
         \newline \textit{Insight:} B+-Tree fan-out 48\% higher (34 vs 23) $\rightarrow$ shorter tree.
 
-        \item \textbf{B+-Tree Leaf Node:} Chứa $p_{leaf}$ key/data pointer pairs + 1 next pointer.
+        \item \textbf{B+-Tree Leaf Node:} Contains $p_{leaf}$ key/data pointer pairs + 1 next pointer.
         \newline $(p_{leaf} \times (7+9)) + 6 \le 512 \Rightarrow 16 \times p_{leaf} \le 506 \Rightarrow p_{leaf} = 31$
     \end{itemize}
 
@@ -448,6 +455,8 @@
         \item \textbf{Công thức tổng:} Cost = $b \times t_T + S \times t_S$ (transfer time + seek time).
     \end{itemize}
 
+    \columnbreak
+
     \subsubsection{Hàm Chi phí cho Phép Chọn (SELECT Cost Functions)}
     \textit{Phép chọn ($\sigma$) có thể dùng quét file hoặc truy cập index. Chi phí chưa tính ghi kết quả.}
     
@@ -487,6 +496,8 @@
     $\mathbf{C_{S6b} = x + (b_{I1}/2) + (r/2)}$ (giả sử half file thỏa điều kiện).
     \newline \textit{Performance Implication:} Nếu số records lớn, optimizer thích linear scan hơn secondary index.
 
+    \columnbreak
+
     \subsubsection{Selections với Comparisons (Range Queries)}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Clustering Index:} Hiệu quả - records contiguous. 
@@ -497,10 +508,10 @@
 
     \subsubsection{Complex Selections}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Conjunctive (AND):} Chọn single most restrictive access path (smallest selectivity) $\rightarrow$ check conditions còn lại trong RAM. 
-        \newline \textit{Hoặc:} Dùng nhiều secondary indices $\rightarrow$ retrieve pointers $\rightarrow$ compute \textbf{intersection}.
-        \item \textbf{Disjunctive (OR):} Nếu 1 condition cần linear scan $\rightarrow$ toàn bộ query cần linear scan. 
-        \newline \textit{Nếu indices cho tất cả:} Retrieve pointers $\rightarrow$ compute \textbf{union}.
+        \item \textbf{Conjunctive (AND):} Choose single most restrictive access path (smallest selectivity) $\rightarrow$ check remaining conditions in RAM. 
+        \newline \textit{Alternatively:} Use multiple secondary indices $\rightarrow$ retrieve pointers $\rightarrow$ compute \textbf{intersection}.
+        \item \textbf{Disjunctive (OR):} If 1 condition needs linear scan $\rightarrow$ entire query needs linear scan. 
+        \newline \textit{If indices for all:} Retrieve pointers $\rightarrow$ compute \textbf{union}.
     \end{itemize}
 
     \subsubsection{Bảng Tóm tắt Chi phí SELECT}
@@ -596,34 +607,34 @@
 
     \paragraph{J1: Nested-Loop Join Variants}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Basic Nested-Loop:} For each record in outer relation (quan hệ ngoài) $r$, scan entire inner relation (quan hệ trong) $s$.
+        \item \textbf{Basic Nested-Loop:} For each record in outer relation $r$, scan entire inner relation $s$.
         \newline \textit{Cost:} $b_r + n_r \times b_s$ block transfers + $(n_r + b_r)$ seeks.
-        \newline \textit{Problem:} Cực kỳ đắt nếu $n_r$ lớn.
+        \newline \textit{Problem:} Extremely expensive if $n_r$ is large.
         
-        \item \textbf{Block Nested-Loop:} Process block-by-block thay vì row-by-row.
+        \item \textbf{Block Nested-Loop:} Process block-by-block instead of row-by-row.
         \newline \textit{Cost (Worst):} $b_r + (b_r \times b_s)$ transfers + $2 \times b_r$ seeks.
         \newline \textit{Cost (With $n_B$ buffers):} $b_r + \lceil b_r / (n_B - 2) \rceil \times b_s$ transfers.
-        \newline \textit{Strategy:} Dùng $n_B - 2$ buffers cho outer, 1 cho inner, 1 cho output. Dùng quan hệ nhỏ hơn làm outer.
+        \newline \textit{Strategy:} Use $n_B - 2$ buffers for outer, 1 for inner, 1 for output. Use smaller relation as outer.
     \end{itemize}
 
     \paragraph{J2: Indexed Nested-Loop Join}\mbox{}\\
-    Index tồn tại trên join attribute của inner relation $s$. Thay file scans bằng index lookups (tra cứu chỉ mục).
+    Index exists on join attribute of inner relation $s$. Replace file scans with index lookups.
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{General Formula:} $b_r + (n_r \times \text{cost of selection on } s)$.
-        \newline \textit{Explanation:} Đọc outer $r$ ($b_r$) + thực hiện $n_r$ index lookups trên $s$.
-        \item \textbf{Secondary Index (Chỉ mục phụ):} $b_r + n_r \times (x + s_B + 1)$ blocks.
-        \newline \textit{$s_B$:} Average matching records. Mỗi record cần random I/O nếu non-unique.
-        \item \textbf{Primary/Clustering Index (Chỉ mục chính/phân cụm):} $b_r + n_r \times (x + 1)$ blocks.
-        \newline \textit{Assumption:} Unique keys hoặc matching records lưu contiguous (liền kề).
+        \newline \textit{Explanation:} Read outer $r$ ($b_r$) + perform $n_r$ index lookups on $s$.
+        \item \textbf{Secondary Index:} $b_r + n_r \times (x + s_B + 1)$ blocks.
+        \newline \textit{$s_B$:} Average matching records. Each record needs random I/O if non-unique.
+        \item \textbf{Primary/Clustering Index:} $b_r + n_r \times (x + 1)$ blocks.
+        \newline \textit{Assumption:} Unique keys or matching records stored contiguous.
     \end{itemize}
 
     \paragraph{J3: Sort-Merge Join}\mbox{}\\
-    Cả hai quan hệ phải được sắp xếp theo join attributes. Hiệu quả cao nếu đã pre-sorted.
+    Both relations must be sorted on join attributes. Highly efficient if already pre-sorted.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{If already sorted:} $b_r + b_s$ block transfers (đọc cả hai một lần).
+        \item \textbf{If already sorted:} $b_r + b_s$ block transfers (read both once).
         \item \textbf{If not sorted:} Cost(Sort $r$) + Cost(Sort $s$) + $b_r + b_s$.
-        \newline \textit{Sort Cost:} Thường $b \times (2 \lceil \log_{n_B-1}(b/n_B) \rceil + 1)$ cho external merge-sort.
-        \item \textbf{Best Use Case:} Dữ liệu đã sorted, hoặc khi kết quả cần sorted.
+        \newline \textit{Sort Cost:} Typically $b \times (2 \lceil \log_{n_B-1}(b/n_B) \rceil + 1)$ for external merge-sort.
+        \item \textbf{Best Use Case:} Data already sorted, or when result needs to be sorted.
     \end{itemize}
 
     \paragraph{J4: Hash Join}\mbox{}\\
@@ -637,7 +648,7 @@
     \end{itemize}
 
     \paragraph{Writing the Result}\mbox{}\\
-    Chi phí trên chỉ ước tính *processing*. Phải cộng thêm write cost (chi phí ghi) để có tổng chi phí.
+    Above costs only estimate processing. Must add write cost to get total cost.
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Write Cost:} $jc / bfr_{result}$ blocks.
         \item \textbf{Total Cost:} Processing Cost + $(js \times |R| \times |S|) / bfr_{result}$.
@@ -651,33 +662,33 @@
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{J1: Block Nested-Loop (D outer):} 
         \newline $C = 13 + \lceil 13/1 \rceil \times 2{,}000 + 2{,}500 = 13 + 26{,}000 + 2{,}500 = \mathbf{28{,}513}$ blocks.
-        \newline \textit{Explanation:} Đọc D (13) + scan E 13 lần (26,000) + ghi kết quả (2,500).
+        \newline \textit{Explanation:} Read D (13) + scan E 13 times (26,000) + write result (2,500).
 
         \item \textbf{J2a: Indexed Nested-Loop (D outer $\to$ E inner):} 
         \newline $C = 13 + 125 \times (2 + 80) + 2{,}500 = 13 + 10{,}250 + 2{,}500 = \mathbf{12{,}763}$ blocks.
-        \newline \textit{Explanation:} Đọc D (13) + 125 lookups trên E (mỗi lần: 2 index + 80 scattered records) + ghi.
+        \newline \textit{Explanation:} Read D (13) + 125 lookups on E (each: 2 index + 80 scattered records) + write.
 
         \item \textbf{J2b: Indexed Nested-Loop (E outer $\to$ D inner):} 
         \newline $C = 2{,}000 + 10{,}000 \times (1 + 1) + 2{,}500 = 2{,}000 + 20{,}000 + 2{,}500 = \mathbf{24{,}500}$ blocks.
-        \newline \textit{Explanation:} Đọc E (2,000) + 10,000 lookups trên D (mỗi lần: 1 index + 1 data block) + ghi.
+        \newline \textit{Explanation:} Read E (2,000) + 10,000 lookups on D (each: 1 index + 1 data block) + write.
 
         \item \textbf{J3: Sort-Merge (if already sorted):}
         \newline $C = 2{,}000 + 13 + 2{,}500 = \mathbf{4{,}513}$ blocks.
-        \newline \textit{Best case:} Chỉ đọc cả hai quan hệ một lần + ghi kết quả.
-        \newline \textit{If not sorted:} Cộng thêm sorting cost (thường $\approx 2b \log b$ per relation).
+        \newline \textit{Best case:} Only read both relations once + write result.
+        \newline \textit{If not sorted:} Add sorting cost (typically $\approx 2b \log b$ per relation).
 
         \item \textbf{J4: Hash Join:}
         \newline $C = 3 \times (2{,}000 + 13) + 2{,}500 = 6{,}039 + 2{,}500 = \mathbf{8{,}539}$ blocks.
-        \newline \textit{Explanation:} 3 passes qua cả hai quan hệ (partition + build + probe) + ghi kết quả.
+        \newline \textit{Explanation:} 3 passes through both relations (partition + build + probe) + write result.
     \end{itemize}
 
     \paragraph{Decision Ranking}\mbox{}\\
     J3 (if sorted) $<$ J4 $<$ J2a $<$ J2b $<$ J1.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Best:} Sort-Merge nếu đã sorted (4,513).
-        \item \textbf{Good:} Hash Join nếu chưa sorted (8,539) - không có sorting overhead.
-        \item \textbf{Moderate:} Indexed Nested-Loop với small outer (12,763).
-        \item \textbf{Avoid:} Block Nested-Loop (28,513) - chỉ dùng khi không có index/memory.
+        \item \textbf{Best:} Sort-Merge if already sorted (4,513).
+        \item \textbf{Good:} Hash Join if not sorted (8,539) - no sorting overhead.
+        \item \textbf{Moderate:} Indexed Nested-Loop with small outer (12,763).
+        \item \textbf{Avoid:} Block Nested-Loop (28,513) - only use when no index/memory.
     \end{itemize}
 
     % ============================================================================
@@ -695,67 +706,67 @@
     \end{enumerate}
     
     \subsubsection{Heuristic Optimization}
-    \textit{Mục tiêu:} Transform initial query tree thành equivalent tree hiệu quả hơn mà không cần estimate cost chi tiết.
+    \textit{Goal:} Transform initial query tree into more efficient equivalent tree without detailed cost estimation.
     
-    \paragraph{3 Quy tắc Heuristic Cốt lõi}
+    \paragraph{3 Core Heuristic Rules}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Perform Selections Early ($\sigma$ down):} Đẩy selection xuống gần leaf nodes (quan hệ gốc).
-        \newline \textit{Lý do:} Giảm số tuples (rows) trước khi join $\rightarrow$ intermediate results nhỏ hơn.
-        \item \textbf{Perform Projections Early ($\pi$ down):} Đẩy projection xuống để giảm số attributes (columns).
-        \newline \textit{Lý do:} Giảm "chiều rộng" quan hệ trung gian $\rightarrow$ tiết kiệm memory.
-        \item \textbf{Avoid Cartesian Products ($\times$):} Combine Cartesian product + selection thành Join ($\bowtie$).
-        \newline \textit{Lý do:} Cartesian product tạo intermediate relations cực lớn - rất tốn kém.
+        \item \textbf{Perform Selections Early ($\sigma$ down):} Push selection down close to leaf nodes (base relations).
+        \newline \textit{Reason:} Reduce number of tuples before join $\rightarrow$ smaller intermediate results.
+        \item \textbf{Perform Projections Early ($\pi$ down):} Push projection down to reduce number of attributes (columns).
+        \newline \textit{Reason:} Reduce "width" of intermediate relations $\rightarrow$ save memory.
+        \item \textbf{Avoid Cartesian Products ($\times$):} Combine Cartesian product + selection into Join ($\bowtie$).
+        \newline \textit{Reason:} Cartesian product creates extremely large intermediate relations - very expensive.
     \end{enumerate}
 
-    \paragraph{Transformation Rules (Quy tắc Biến đổi)}
+    \paragraph{Transformation Rules}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Cascading of Selections:} $\sigma_{c1 \land c2}(R) = \sigma_{c1}(\sigma_{c2}(R))$.
-        \newline \textit{Ứng dụng:} Break conjunctive conditions để move các parts xuống different branches.
-        \item \textbf{Commutativity (Giao hoán):} $\sigma_{c1}(R \bowtie S) = (\sigma_{c1}(R)) \bowtie S$ (nếu $c1$ chỉ liên quan $R$).
-        \newline \textit{Ứng dụng:} Push selections down past joins.
-        \item \textbf{Associativity (Kết hợp):} $(R \bowtie S) \bowtie T = R \bowtie (S \bowtie T)$.
-        \newline \textit{Ứng dụng:} Reorder join sequence để most restrictive joins (joins có selectivity cao nhất) xảy ra trước.
+        \newline \textit{Application:} Break conjunctive conditions to move parts down different branches.
+        \item \textbf{Commutativity:} $\sigma_{c1}(R \bowtie S) = (\sigma_{c1}(R)) \bowtie S$ (if $c1$ only involves $R$).
+        \newline \textit{Application:} Push selections down past joins.
+        \item \textbf{Associativity:} $(R \bowtie S) \bowtie T = R \bowtie (S \bowtie T)$.
+        \newline \textit{Application:} Reorder join sequence so most restrictive joins (highest selectivity) occur first.
     \end{itemize}
 
-    \paragraph{Heuristic Algorithm (6 bước)}
+    \paragraph{Heuristic Algorithm (6 steps)}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Break up Selections:} Dùng cascading rule để tách conjunctive select conditions.
-        \item \textbf{Move Selections Down:} Đẩy $\sigma$ xuống xa nhất có thể (dùng commutativity).
-        \item \textbf{Reorder Leaf Nodes:} Sắp xếp lại leaf nodes (relations) - quan hệ có most restrictive selection (selectivity thấp nhất) trước.
-        \item \textbf{Form Joins:} Combine Cartesian products với subsequent selections thành Join operations.
-        \item \textbf{Move Projections Down:} Break projection lists, chỉ giữ attributes cần thiết cho query result hoặc subsequent operations.
-        \item \textbf{Identify Subtrees:} Nhóm operations có thể thực thi bởi single algorithm (vd: single access method).
+        \item \textbf{Break up Selections:} Use cascading rule to split conjunctive select conditions.
+        \item \textbf{Move Selections Down:} Push $\sigma$ down as far as possible (using commutativity).
+        \item \textbf{Reorder Leaf Nodes:} Rearrange leaf nodes (relations) - relation with most restrictive selection (lowest selectivity) first.
+        \item \textbf{Form Joins:} Combine Cartesian products with subsequent selections into Join operations.
+        \item \textbf{Move Projections Down:} Break projection lists, only keep attributes needed for query result or subsequent operations.
+        \item \textbf{Identify Subtrees:} Group operations that can be executed by single algorithm (e.g., single access method).
     \end{enumerate}
 
     \paragraph{Trade-offs \& Limitations}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Not Always Optimal:} Heuristics giảm optimization cost nhưng không đảm bảo tìm optimal plan.
-        \newline \textit{VD:} "Selection early" thường tốt, nhưng nếu selection cần scan large relation mà join có efficient index, join trước có thể rẻ hơn.
-        \item \textbf{Hybrid Approaches:} Commercial optimizers kết hợp cả hai.
-        \newline \textit{System R:} Heuristics (chỉ xét left-deep trees) + cost-based (trong constraints đó).
-        \newline \textit{Oracle:} Heuristics rank access paths + cost-based chọn join methods.
+        \item \textbf{Not Always Optimal:} Heuristics reduce optimization cost but don't guarantee finding optimal plan.
+        \newline \textit{Example:} "Selection early" usually good, but if selection needs to scan large relation while join has efficient index, joining first may be cheaper.
+        \item \textbf{Hybrid Approaches:} Commercial optimizers combine both.
+        \newline \textit{System R:} Heuristics (only consider left-deep trees) + cost-based (within those constraints).
+        \newline \textit{Oracle:} Heuristics rank access paths + cost-based chooses join methods.
     \end{itemize}
 
     \subsubsection{Cost-Based Optimization}
-    Sau khi heuristic optimization, system estimate cost cho remaining candidate plans.
+    After heuristic optimization, system estimates cost for remaining candidate plans.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Chọn Access Path:} So sánh full scan, clustering index, secondary index, bitmap cho mỗi predicate (vị từ).
-        \item \textbf{Chọn Join Algorithm:} Nested-loop (index/block), hash join, sort-merge dựa trên tuple count và available memory ($n_B$).
-        \item \textbf{Chọn Join Order:} Ước lượng join selectivity $js \approx 1/\max(NDV(A), NDV(B))$; join cardinality $jc = js \times |R| \times |S|$.
-        \newline \textit{Strategy:} Dynamic programming (System R) - build optimal plan cho subqueries, combine lên.
+        \item \textbf{Choose Access Path:} Compare full scan, clustering index, secondary index, bitmap for each predicate.
+        \item \textbf{Choose Join Algorithm:} Nested-loop (index/block), hash join, sort-merge based on tuple count and available memory ($n_B$).
+        \item \textbf{Choose Join Order:} Estimate join selectivity $js \approx 1/\max(NDV(A), NDV(B))$; join cardinality $jc = js \times |R| \times |S|$.
+        \newline \textit{Strategy:} Dynamic programming (System R) - build optimal plan for subqueries, combine up.
     \end{itemize}
 
     \subsubsection{Left-Deep Trees}
-    \textit{Constraint phổ biến trong cost-based optimization để giảm search space.}
+    \textit{Common constraint in cost-based optimization to reduce search space.}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Đặc điểm:} Right child (con phải) luôn là base table (bảng cơ sở), không phải intermediate result.
-        \item \textbf{Lợi ích:} 
+        \item \textbf{Characteristic:} Right child is always base table, not intermediate result.
+        \item \textbf{Benefits:} 
         \begin{itemize}
-            \item Cho phép index lookups trên right child.
-            \item Giảm exponential search space (chỉ $n!$ thay vì $O(4^n)$ bushy trees).
-            \item Enable pipelining - không cần materialize mọi intermediate results.
+            \item Allows index lookups on right child.
+            \item Reduces exponential search space (only $n!$ instead of $O(4^n)$ bushy trees).
+            \item Enables pipelining - no need to materialize all intermediate results.
         \end{itemize}
-        \item \textbf{Nhược điểm:} Có thể bỏ lỡ optimal bushy tree plans, nhưng trade-off chấp nhận được cho performance.
+        \item \textbf{Drawback:} May miss optimal bushy tree plans, but trade-off is acceptable for performance.
     \end{itemize}
 
     % ============================================================================
@@ -834,6 +845,8 @@
         \newline $\rightarrow$ \textit{Nhược:} Mất khả năng Range Query (phải quét tất cả).
     \end{itemize}
 
+    \columnbreak
+
     \subsection{Định dạng Lưu trữ (File Formats)}
     \textit{Lựa chọn định dạng ảnh hưởng trực tiếp đến hiệu năng đọc/ghi.}
     
@@ -893,6 +906,8 @@
             \item \textit{Reduce:} Tổng hợp. Xử lý danh sách Value của mỗi Key.
         \end{itemize}
     \end{enumerate}
+
+    \columnbreak
 
     \subsection{Công nghệ NoSQL (Storage Tech)}
     \textit{Các mô hình NoSQL cho use case khác nhau.}
@@ -1069,9 +1084,9 @@
     \subsubsection{MQTT vs HTTP Comparison}
     \begin{center}
         \renewcommand{\arraystretch}{1.2}
-        \begin{tabular}{@{} l | p{0.40\linewidth} | p{0.40\linewidth} @{}}
+        \begin{tabular}{p{0.2\linewidth} | p{0.3\linewidth} | p{0.40\linewidth} @{}}
             \toprule
-            \textbf{Aspect} & \textbf{HTTP (HyperText Transfer)} & \textbf{MQTT (Message Queuing)} \\
+            \textbf{Aspect} & \textbf{HTTP} & \textbf{MQTT} \\
             \midrule
             \textbf{Model} & Request-Response\newline (Client-Server) & Publish-Subscribe\newline (qua Broker) \\
             \addlinespace[2pt]
@@ -1145,6 +1160,7 @@
         \item \textbf{ELT (Extract-Load-Transform):} Load raw vào kho \textit{trước}, transform sau. Schema-on-read. Tận dụng sức mạnh Cloud DW (BigQuery, Snowflake). (Hiện đại).
     \end{itemize}
 
+    \columnbreak
     % ============================================================================
     % TIER 5: ANALYTICS & WAREHOUSING
     % ============================================================================
@@ -1210,8 +1226,8 @@
             \textbf{1} & \textbf{Overwrite:} Ghi đè giá trị mới lên cũ. & 
             Không cần lịch sử. Sửa lỗi chính tả. \\
             \hline
-            \textbf{2} & \textbf{Add Row:} Thêm dòng mới + \textit{Effective Date} + \textit{Current\_Flag}. & 
-            \textbf{Chuẩn mực nhất}. Theo dõi toàn bộ lịch sử biến động. \\
+            \textbf{2} & \textbf{Add Row:} Add new row + \textit{Effective Date} + \textit{Current\_Flag}. & 
+            \textbf{Most standard}. Track complete history of changes. \\
             \hline
             \textbf{3} & \textbf{Add Column:} Thêm cột \textit{Previous\_Value}. & 
             Chỉ cần biết giá trị liền trước. (Ít dùng). \\
@@ -1219,19 +1235,21 @@
             \textbf{4} & \textbf{Add History Table:} Tách bảng lịch sử riêng (Mini-Dimension). & 
             Tối ưu khi bảng chính quá lớn và chỉ một nhóm thuộc tính thay đổi nhanh. \\
             \hline
-            \textbf{5} & \textbf{Hybrid (4 + 1):} Mini-dimension + tham chiếu "Current" ở bảng chính. & 
-            Tối ưu truy vấn khi cần cả lịch sử chi tiết và giá trị hiện tại nhanh chóng. \\
+            \textbf{5} & \textbf{Hybrid (4 + 1):} Mini-dimension + "Current" reference in main table. & 
+            Optimize queries when need both detailed history and current value quickly. \\
             \hline
-            \textbf{6} & \textbf{Hybrid (1 + 2 + 3):} Type 2 row + cột chứa giá trị hiện tại (Type 1). & 
-            \textit{"Pure Type 6"}: Giúp truy vấn lịch sử nhưng vẫn group by theo giá trị hiện tại dễ dàng. \\
+            \textbf{6} & \textbf{Hybrid (1 + 2 + 3):} Type 2 row + column containing current value (Type 1). & 
+            \textit{"Pure Type 6"}: Helps query history while still easily group by current value. \\
             \hline
-            \textbf{7} & \textbf{Hybrid (Dual Keys):} Fact table chứa cả \textit{Surrogate Key} (lịch sử) và \textit{Natural Key} (hiện tại). & 
-            Linh hoạt nhất: Join theo Surrogate để xem lịch sử, join theo Natural để xem hiện tại. \\
+            \textbf{7} & \textbf{Hybrid (Dual Keys):} Fact table contains both \textit{Surrogate Key} (history) and \textit{Natural Key} (current). & 
+            Most flexible: Join by Surrogate to view history, join by Natural to view current. \\
             \bottomrule
         \end{tabular}
             \textit{Các kỹ thuật xử lý dữ liệu thay đổi theo thời gian (0 $\to$ 7).}
 
     \end{center}
+
+    \columnbreak
 
     % ============================================================================
     % TIER 6: DATA MANAGEMENT & OPERATIONAL
@@ -1246,9 +1264,9 @@
         \item \textbf{Data Mapping:} Khác biệt về cấu trúc schema giữa các nguồn.
         \newline \textit{VD: Bảng `Employee' (Full\_Name, DOB) vs `Emp' (First\_Name, Last\_Name, Birth\_Date).}
         
-        \item \textbf{Data Conflicts:} Xung đột về kiểu dữ liệu, giá trị, định dạng, đơn vị, độ chính xác.
-        \newline \textit{Kiểu:} String vs Integer cho mã nhân viên. \textit{Định dạng:} DD/MM/YYYY vs MM/DD/YYYY. 
-        \newline \textit{Đơn vị:} USD vs VND, km vs miles. \textit{Độ chính xác:} 2 vs 4 chữ số thập phân.
+        \item \textbf{Data Conflicts:} Conflicts in data type, value, format, unit, precision.
+        \newline \textit{Type:} String vs Integer for employee code. \textit{Format:} DD/MM/YYYY vs MM/DD/YYYY. 
+        \newline \textit{Unit:} USD vs VND, km vs miles. \textit{Precision:} 2 vs 4 decimal places.
         
         \item \textbf{Data Redundancy:} Dữ liệu trùng lặp từ nhiều nguồn cần khử trùng (Deduplication).
         \newline \textit{VD: Cùng khách hàng xuất hiện trong CRM và ERP với ID khác nhau.}
@@ -1257,22 +1275,24 @@
         \newline \textit{VD: `Nguyen Van A' (DB1) và `A Nguyen' (DB2), `IBM' vs `International Business Machines'.}
         \newline \textit{Kỹ thuật:} Fuzzy matching, similarity scores (Levenshtein distance), Master Data Management (MDM).
         
-        \item \textbf{Constraints Violation:} Vi phạm ràng buộc khi tích hợp dữ liệu.
-        \newline \textit{Primary Key:} Trùng lặp khóa chính khi merge. \textit{Foreign Key:} Tham chiếu không tồn tại.
-        \newline \textit{Semantic:} Giá trị không hợp lệ (tuổi âm, ngày trong tương lai).
+        \item \textbf{Constraints Violation:} Constraint violations during data integration.
+        \newline \textit{Primary Key:} Duplicate primary keys during merge. \textit{Foreign Key:} References don't exist.
+        \newline \textit{Semantic:} Invalid values (negative age, future dates).
         
-        \item \textbf{Data Quality Issues:} Các vấn đề chất lượng dữ liệu trong quá trình tích hợp.
-        \newline \textit{Accuracy:} Sai lệch so với thực tế. \textit{Completeness:} Thiếu trường bắt buộc (NULL).
-        \newline \textit{Uniqueness:} Trùng lặp. \textit{Timeliness:} Dữ liệu cũ/lỗi thời. \textit{Consistency:} Mâu thuẫn giữa các nguồn.
+        \item \textbf{Data Quality Issues:} Data quality problems during integration process.
+        \newline \textit{Accuracy:} Deviates from reality. \textit{Completeness:} Missing required fields (NULL).
+        \newline \textit{Uniqueness:} Duplicates. \textit{Timeliness:} Stale/outdated data. \textit{Consistency:} Conflicts between sources.
         
         \item \textbf{Communication Heterogeneity:} Khác biệt về giao diện và giao thức truyền thông.
         \newline \textit{VD: REST API vs SOAP, HTTP vs FTP, Batch files vs Real-time streams, GraphQL vs SQL.}
     \end{itemize}
 
-    \subsubsection{Chiều Chất lượng Dữ liệu (Data Quality Dimensions)}
+    \columnbreak
+
+    \subsubsection{Data Quality Dimensions}
     \textit{Các tiêu chí đánh giá chất lượng dữ liệu trong hệ thống thông tin.}
     
-    \paragraph{6 Chiều Cốt lõi (Core Dimensions)}
+    \paragraph{6 Core Dimensions}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
         \item \textbf{Accuracy (Chính xác):} Mức độ dữ liệu phản ánh đúng đối tượng/sự kiện thực tế.
         \newline \textit{Định nghĩa:} Sự không chính xác có nghĩa là hệ thống biểu diễn một trạng thái thế giới thực khác với trạng thái đáng lẽ phải được biểu diễn.
@@ -1280,14 +1300,14 @@
         
         \item \textbf{Completeness (Đầy đủ):} Tỷ lệ dữ liệu được lưu trữ so với khả năng 100\% hoàn chỉnh.
         \newline \textit{Định nghĩa:} Khả năng của hệ thống biểu diễn mọi trạng thái có nghĩa của hệ thống thế giới thực.
-        \newline \textit{VD:} NULL values, missing fields, incomplete records (thiếu email, số điện thoại).
+        \newline \textit{VD:} NULL values, missing fields, incomplete records (missing email, phone number).
         
         \item \textbf{Consistency (Nhất quán):} Sự vắng mặt của sự khác biệt khi so sánh hai hoặc nhiều biểu diễn của cùng một thứ.
         \newline \textit{Định nghĩa:} Sự không nhất quán có nghĩa là ánh xạ biểu diễn là một-nhiều (one-to-many).
         \newline \textit{VD:} Tổng doanh thu trong bảng Orders $\neq$ tổng trong Report, tên KH khác nhau giữa CRM và ERP.
         
         \item \textbf{Validity (Hợp lệ):} Dữ liệu hợp lệ nếu tuân thủ cú pháp của định nghĩa (format, type, range).
-        \newline \textit{VD:} Email đúng format (có @), tuổi trong khoảng [0, 150], enum đúng giá trị cho phép.
+        \newline \textit{VD:} Email correct format (has @), age in range [0, 150], enum has allowed values.
         
         \item \textbf{Timeliness (Kịp thời):} Mức độ dữ liệu phản ánh thực tế từ mốc thời gian yêu cầu.
         \newline \textit{Định nghĩa:} Độ trễ giữa thay đổi trạng thái thế giới thực và sửa đổi tương ứng trong hệ thống.
@@ -1297,37 +1317,37 @@
         \newline \textit{VD:} Không có duplicate records, một khách hàng chỉ có một ID duy nhất.
     \end{enumerate}
     
-    \paragraph{Các Chiều Mở rộng (Extended Dimensions)}
+    \paragraph{Extended Dimensions}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Interpretability (Khả năng Diễn giải):} Liên quan đến tài liệu và metadata có sẵn để diễn giải chính xác ý nghĩa và thuộc tính của nguồn dữ liệu.
         \newline \textit{VD:} Data dictionary, schema documentation, column descriptions, business glossary.
         
         \item \textbf{Accessibility (Khả năng Truy cập):} Đo lường khả năng người dùng truy cập dữ liệu từ văn hóa, trạng thái/chức năng vật lý và công nghệ có sẵn của họ.
-        \newline \textit{VD:} API có rate limit, quyền truy cập dựa trên role (RBAC), hỗ trợ đa ngôn ngữ.
+        \newline \textit{VD:} API with rate limit, role-based access (RBAC), multi-language support.
         
         \item \textbf{Usability (Khả dụng):} Đo lường hiệu quả, hiệu suất, sự hài lòng mà người dùng cụ thể cảm nhận và sử dụng dữ liệu.
         \newline \textit{VD:} Dashboard dễ hiểu, query response time nhanh, format phù hợp với use case.
         
-        \item \textbf{Trustworthiness (Độ Tin cậy):} Đo lường mức độ đáng tin cậy của tổ chức trong việc cung cấp nguồn dữ liệu.
-        \newline \textit{VD:} Data lineage rõ ràng, audit logs đầy đủ, SLA đảm bảo, data provenance.
+        \item \textbf{Trustworthiness:} Đo lường mức độ đáng tin cậy của tổ chức trong việc cung cấp nguồn dữ liệu.
+        \newline \textit{VD:} Clear data lineage, complete audit logs, guaranteed SLA, data provenance.
     \end{itemize}
 
-    \subsubsection{Quản lý Thông tin (Information Management)}
+    \subsubsection{Quản lý Thông tin}
     \textit{Quản lý dữ liệu như một tài sản chiến lược của doanh nghiệp.}
     
     \paragraph{6 Khía cạnh Quản lý Thông tin}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
         \item \textbf{Information Collection (Thu thập):} Xác định và thu thập dữ liệu từ các nguồn khác nhau.
         \newline \textit{Hoạt động:} Data ingestion, ETL pipelines, API integration, web scraping, sensors/IoT.
-        \newline \textit{VD:} Crawl web data, stream từ Kafka, batch import từ CSV, CDC từ transactional DB.
+        \newline \textit{VD:} Crawl web data, stream from Kafka, batch import from CSV, CDC from transactional DB.
         
         \item \textbf{Information Organization (Tổ chức):} Cấu trúc hóa và phân loại dữ liệu để dễ quản lý và truy xuất.
         \newline \textit{Hoạt động:} Schema design, data modeling (Star/Snowflake), taxonomy, metadata management.
-        \newline \textit{VD:} Thiết kế DW dimensions/facts, tạo data catalog, tag dữ liệu theo domain.
+        \newline \textit{VD:} Design DW dimensions/facts, create data catalog, tag data by domain.
         
         \item \textbf{Information Storage (Lưu trữ):} Chọn và triển khai hệ thống lưu trữ phù hợp với đặc điểm dữ liệu.
-        \newline \textit{Hoạt động:} Chọn DBMS (RDBMS, NoSQL, DW), partitioning, replication, backup strategy.
-        \newline \textit{VD:} OLTP trên PostgreSQL, OLAP trên Snowflake, unstructured data trên S3/Data Lake.
+        \newline \textit{Hoạt động:} Choose DBMS (RDBMS, NoSQL, DW), partitioning, replication, backup strategy.
+        \newline \textit{VD:} OLTP on PostgreSQL, OLAP on Snowflake, unstructured data on S3/Data Lake.
         
         \item \textbf{Information Manipulation (Thao tác):} Thực hiện các thao tác CRUD và chuyển đổi dữ liệu.
         \newline \textit{Hoạt động:} INSERT/UPDATE/DELETE, data transformation, cleansing, enrichment, aggregation.
@@ -1343,6 +1363,8 @@
     \end{enumerate}
     
     \textit{Tổng thể:} Information Management bao gồm Data Governance (quản trị), Data Quality, Master Data Management (MDM), Security, và Lifecycle Management. Mục tiêu cuối cùng là đảm bảo dữ liệu \textbf{tin cậy, an toàn, dễ truy cập} để tạo giá trị kinh doanh.
+
+    \columnbreak
 
     \subsection{Distributed Systems Challenges}
     \textit{Khác với hệ thống đơn, hệ phân tán đối mặt với \textbf{partial failures} - một số phần hỏng trong khi phần khác hoạt động.}
@@ -1364,47 +1386,47 @@
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Network Unreliability:}
         \begin{itemize}
-            \item \textit{Timeouts:} Không có bounded time $\rightarrow$ phải dùng timeout. Ngắn quá: false positive. Dài quá: delay detection.
-            \item \textit{Network Partition (Netsplit):} Nhóm nodes bị cô lập $\rightarrow$ "Split brain" (2 leaders cùng chấp nhận ghi xung đột).
+            \item \textit{Timeouts:} No bounded time $\rightarrow$ must use timeout. Too short: false positive. Too long: delayed detection.
+            \item \textit{Network Partition (Netsplit):} Group of nodes isolated $\rightarrow$ "Split brain" (2 leaders both accept conflicting writes).
         \end{itemize}
         \item \textbf{Time Unreliability:} "Time is an illusion" - không có global clock.
         \begin{itemize}
-            \item \textit{Clock Drift:} Đồng hồ quartz drift do nhiệt độ. Ngay cả NTP sync vẫn có sai lệch.
-            \item \textit{Process Pauses:} GC hoặc VM suspension $\rightarrow$ node pause lâu hơn lease timeout $\rightarrow$ bị khai tử nhưng vẫn nghĩ mình sống $\rightarrow$ data corruption.
-            \item \textit{Ordering Issues:} Last Write Wins (LWW) dùng timestamp nguy hiểm - clock không sync $\rightarrow$ ghi đè giá trị mới bằng cũ.
+            \item \textit{Clock Drift:} Quartz clock drifts due to temperature. Even NTP sync has discrepancies.
+            \item \textit{Process Pauses:} GC or VM suspension $\rightarrow$ node pauses longer than lease timeout $\rightarrow$ declared dead but still thinks it's alive $\rightarrow$ data corruption.
+            \item \textit{Ordering Issues:} Last Write Wins (LWW) using timestamp dangerous - clocks not synced $\rightarrow$ overwrites new value with old.
         \end{itemize}
     \end{itemize}
     
     \subsubsection{Consistency \& Consensus Challenges}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{CAP Theorem:} Chỉ đạt 2/3: \textbf{C}onsistency, \textbf{A}vailability, \textbf{P}artition Tolerance. Partition không tránh được $\rightarrow$ chọn CP hoặc AP.
+        \item \textbf{CAP Theorem:} Can only achieve 2/3: \textbf{C}onsistency, \textbf{A}vailability, \textbf{P}artition Tolerance. Partitions unavoidable $\rightarrow$ choose CP or AP.
         \newline $\rightarrow$ \textit{NoSQL thường chọn AP (Sẵn sàng + Chịu lỗi) thay vì CP.}
-        \item \textbf{FLP Impossibility:} Hệ async không thể đảm bảo consensus termination nếu có 1 node crash $\rightarrow$ phải dùng timeout.
+        \item \textbf{FLP Impossibility:} Async system cannot guarantee consensus termination if 1 node crashes $\rightarrow$ must use timeout.
         \item \textbf{Two Generals' Problem:} Không thể đạt common knowledge (chắc chắn đồng ý) qua kênh unreliable - ACK cuối cùng có thể bị mất.
         \item \textbf{BASE:} \textbf{B}asically \textbf{A}vailable, \textbf{S}oft state, \textbf{E}ventual consistency (Nhất quán cuối cùng - chấp nhận dữ liệu cũ tạm thời).
     \end{itemize}
     
     \subsubsection{Failure Models}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Crash Faults:} Process dừng hẳn, không bao giờ quay lại (đơn giản nhất).
-        \item \textbf{Omission Faults:} Process bỏ qua bước hoặc không gửi/nhận message (buffer overflow, congestion).
-        \item \textbf{Byzantine Faults:} Process hành xử tùy ý/độc hại, gửi message sai (khó nhất, blockchain).
+        \item \textbf{Crash Faults:} Process stops completely, never returns (simplest).
+        \item \textbf{Omission Faults:} Process skips steps or doesn't send/receive messages (buffer overflow, congestion).
+        \item \textbf{Byzantine Faults:} Process behaves arbitrarily/maliciously, sends wrong messages (hardest, blockchain).
     \end{itemize}
     
     \subsubsection{Managing "Truth" in Distributed Systems}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Truth by Majority:} Không node nào tin được view của chính mình. \textit{Sự thật = Quorum quyết định.}
         \newline \textit{VD:} Node tưởng mình là leader, nhưng quorum khai tử (do GC pause) $\rightarrow$ node đó "đã chết".
-        \item \textbf{Fencing Tokens:} Số monotonic để storage từ chối ghi từ node cầm lock đã hết hạn (zombie nodes).
+        \item \textbf{Fencing Tokens:} Monotonic number for storage to reject writes from nodes holding expired locks (zombie nodes).
     \end{itemize}
     
     \subsubsection{Thách thức Xử lý Dữ liệu Phân tán}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Data Skew (Lệch dữ liệu):} Một partition chứa quá nhiều dữ liệu.
-        \newline $\rightarrow$ \textit{Hậu quả:} Straggler problem - job đợi node chậm nhất.
-        \newline $\rightarrow$ \textit{Giải pháp:} Salting (thêm prefix ngẫu nhiên) để chia nhỏ hot key.
-        \item \textbf{Shuffle:} Chuyển dữ liệu giữa nodes qua mạng (Map $\to$ Reduce).
-        \newline $\rightarrow$ \textit{Tối ưu:} Broadcast Join (chép bảng nhỏ đến tất cả node) để tránh shuffle bảng lớn.
+        \item \textbf{Data Skew (Lệch dữ liệu):} One partition contains too much data.
+        \newline $\rightarrow$ \textit{Consequence:} Straggler problem - job waits for slowest node.
+        \newline $\rightarrow$ \textit{Solution:} Salting (add random prefix) to split hot key.
+        \item \textbf{Shuffle:} Transfer data between nodes over network (Map $\to$ Reduce).
+        \newline $\rightarrow$ \textit{Optimization:} Broadcast Join (copy small table to all nodes) to avoid shuffling large table.
     \end{itemize}
 \end{multicols}
 \end{document}
