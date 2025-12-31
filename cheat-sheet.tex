@@ -521,27 +521,122 @@
     \end{itemize}
 
     % ============================================================================
-    % PART 6: ADVANCED TOPICS
+    % PART: Big Data & Data Engineering
     % ============================================================================
     \section{Big Data \& Data Engineering}
 
-    % --- PHẦN 1: KHÁI NIỆM CỐT LÕI ---
-    \subsection{Khái niệm Cốt lõi (Core Concepts)}
+    % ============================================================================
+    % TIER 1: FOUNDATIONAL CONCEPTS
+    % ============================================================================
+    \subsection{Đặc trưng Big Data (The Vs)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{5V Big Data:} 
+        \item \textbf{5V Cốt lõi (Core):}
         \begin{itemize}
-            \item \textbf{Volume:} Dung lượng lớn (TB $\to$ PB).
-            \item \textbf{Velocity:} Tốc độ sinh/xử lý nhanh (Streaming).
-            \item \textbf{Variety:} Đa dạng (Cấu trúc, bán cấu trúc JSON, phi cấu trúc).
-            \item \textbf{Veracity:} Độ tin cậy/nhiễu của dữ liệu.
+            \item \textbf{Volume:} Dung lượng khổng lồ (TB, PB, ZB).
+            \item \textbf{Velocity:} Tốc độ sinh ra \& xử lý (Batch $\to$ Streaming).
+            \item \textbf{Variety:} Đa dạng định dạng (Structured, JSON, Video, Log).
+            \item \textbf{Veracity:} Độ tin cậy, tính xác thực (Messy/Noisy data).
             \item \textbf{Value:} Giá trị chuyển hóa thành lợi ích kinh doanh.
         \end{itemize}
+        
+        \item \textbf{Các V Mở rộng (Extended):}
+        \begin{itemize}
+            \item \textbf{Variability:} Tính biến thiên (Ý nghĩa dữ liệu thay đổi theo ngữ cảnh/thời gian).
+            \item \textbf{Validity:} Tính hợp lệ (Dữ liệu có đúng định dạng/chuẩn để dùng không).
+            \item \textbf{Vulnerability:} Tính bảo mật (Dễ bị tấn công/rò rỉ).
+            \item \textbf{Volatility:} Độ bay hơi (Thời gian lưu trữ trước khi xóa/lưu trữ lâu dài).
+            \item \textbf{Visualization:} Khả năng trực quan hóa (Để con người hiểu được).
+        \end{itemize}
+    \end{itemize}
+    \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{CAP Theorem:} Chỉ đạt được 2/3: \textbf{C}onsistency, \textbf{A}vailability, \textbf{P}artition Tolerance.
         \newline $\rightarrow$ \textit{NoSQL thường chọn AP (Sẵn sàng + Chịu lỗi) thay vì CP.}
         \item \textbf{BASE:} \textbf{B}asically \textbf{A}vailable, \textbf{S}oft state, \textbf{E}ventual consistency (Nhất quán cuối cùng - chấp nhận dữ liệu cũ tạm thời).
     \end{itemize}
 
-    % --- PHẦN 2: HỆ SINH THÁI HADOOP ---
+    \subsection{Paradigm: Batch vs Streaming}
+    \textit{Hai mô hình xử lý dữ liệu cơ bản trong Big Data.}
+    \begin{center}
+        \renewcommand{\arraystretch}{1.2}
+        \begin{tabular}{@{} p{0.15\linewidth} | p{0.38\linewidth} | p{0.38\linewidth} @{}}
+            \toprule
+            & \textbf{Batch Processing} & \textbf{Streaming Processing} \\
+            \midrule
+            \textbf{Đặc trưng} & Xử lý dữ liệu tĩnh, lượng lớn theo lô. & Xử lý dữ liệu động, liên tục theo thời gian thực. \\
+            \textbf{Độ trễ} & Cao (minutes - hours). & Thấp (seconds - milliseconds). \\
+            \textbf{Công cụ} & Hadoop MapReduce, Apache Spark (Batch mode). & Apache Flink, Spark Streaming, Kafka Streams. \\
+            \textbf{Use Case} & ETL, báo cáo cuối ngày, ML training. & Real-time analytics, fraud detection, monitoring. \\
+            \textbf{Ưu điểm} & Xử lý hiệu quả khối lượng lớn, đơn giản. & Phản hồi nhanh, phát hiện sự kiện ngay lập tức. \\
+            \textbf{Nhược điểm} & Không real-time, lãng phí khi data nhỏ. & Phức tạp, khó debug, cần xử lý out-of-order. \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \textbf{Kiến trúc Lai (Hybrid):}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Lambda Architecture:} Batch layer (chính xác) + Speed layer (real-time) + Serving layer. Phức tạp, duy trì 2 code base.
+        \item \textbf{Kappa Architecture:} Chỉ dùng Streaming (đơn giản hóa). Mọi dữ liệu qua stream processor, replay từ Kafka khi cần.
+    \end{itemize}
+
+    \subsection{Phân mảnh \& Sao chép (Partitioning \& Replication)}
+    
+    \subsubsection{Sao chép (Replication)}
+    \textit{Mục đích: High Availability (HA) và giảm độ trễ đọc.}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Single-Leader (Master-Slave):} Mọi ghi vào Leader, Leader chép sang Followers. \textit{Dễ nhất quán, nhưng Leader là nút cổ chai.}
+        \item \textbf{Multi-Leader:} Nhiều node chấp nhận ghi. \textit{Tốt cho đa trung tâm dữ liệu, nhưng khó xử lý xung đột.}
+        \item \textbf{Leaderless (Dynamo-style):} Ghi/Đọc gửi tới nhiều node. Dùng cơ chế \textbf{Quorum} để xác nhận:
+        \newline $w + r > n$ (Write nodes + Read nodes > Total replicas) $\rightarrow$ Đảm bảo đọc thấy dữ liệu mới nhất.
+    \end{itemize}
+
+    \subsubsection{Phân mảnh (Partitioning/Sharding)}
+    \textit{Mục đích: Scalability (Mở rộng dung lượng/băng thông).}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Key Range Partitioning:} Chia theo khoảng khóa (A-C, D-F). 
+        \newline $\rightarrow$ \textit{Ưu:} Query theo khoảng (Range scan) hiệu quả. 
+        \newline $\rightarrow$ \textit{Nhược:} Dễ bị \textit{Hotspot} (nếu user dồn vào vần A).
+        \item \textbf{Hash Partitioning:} Băm khóa để chia đều ($hash(key) \% N$).
+        \newline $\rightarrow$ \textit{Ưu:} Phân phối đều, tránh Hotspot.
+        \newline $\rightarrow$ \textit{Nhược:} Mất khả năng Range Query (phải quét tất cả).
+    \end{itemize}
+
+    \subsection{Định dạng Lưu trữ (File Formats)}
+    \textit{Lựa chọn định dạng ảnh hưởng trực tiếp đến hiệu năng đọc/ghi.}
+    
+    \subsubsection{Row-based vs. Column-based}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Row-oriented (CSV, Avro):}
+        \begin{itemize}
+            \item Lưu trữ tuần tự từng dòng.
+            \item \textit{Ưu điểm:} Ghi nhanh (append), tốt khi truy xuất toàn bộ thông tin của 1 entity (OLTP).
+            \item \textit{Nhược điểm:} Chậm khi tính toán tổng hợp (SUM, AVG) vì phải đọc cả dữ liệu không cần thiết.
+        \end{itemize}
+        \item \textbf{Column-oriented (Parquet, ORC):}
+        \begin{itemize}
+            \item Lưu trữ riêng biệt từng cột.
+            \item \textit{Ưu điểm:} Nén cực tốt (do dữ liệu cùng kiểu), tối ưu cho OLAP (chỉ đọc cột cần thiết).
+            \item \textit{Nhược điểm:} Ghi chậm, update tốn kém.
+        \end{itemize}
+    \end{itemize}
+
+    \subsubsection{So sánh Avro, Parquet, ORC}
+    \begin{center}
+    \renewcommand{\arraystretch}{1.1}
+    \begin{tabular}{@{} l l l @{}}
+        \toprule
+        \textbf{Đặc điểm} & \textbf{Avro} & \textbf{Parquet} \\
+        \midrule
+        \textbf{Mô hình} & Row-based & Column-based \\
+        \textbf{Schema} & JSON (lưu trong file) & Binary (footer) \\
+        \textbf{Tối ưu cho} & Ghi nhiều (Write heavy) & Đọc nhiều (Read heavy) \\
+        \textbf{Schema Evo} & Rất tốt (Thêm/bớt field) & Hạn chế \\
+        \textbf{Ecosystem} & Kafka, Hadoop & Spark, Impala, Presto \\
+        \bottomrule
+    \end{tabular}
+    \end{center}
+
+    % ============================================================================
+    % TIER 2: STORAGE LAYER
+    % ============================================================================
     \subsection{Hệ sinh thái Hadoop (Hadoop Ecosystem)}
     \textit{Khung làm việc mã nguồn mở cho lưu trữ và xử lý phân tán.}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
@@ -556,20 +651,77 @@
             \item Phân phối tài nguyên (RAM, CPU) cho các ứng dụng.
             \item Cho phép chạy nhiều engine (Spark, MapReduce) trên cùng 1 cụm.
         \end{itemize}
-        \item \textbf{MapReduce (Processing):} Mô hình xử lý Batch.
+        \item \textbf{MapReduce (Processing):} Mô hình xử lý Batch - chia để trị trên cụm phân tán.
         \begin{itemize}
-            \item \textit{Map:} Xử lý song song cục bộ.
-            \item \textit{Reduce:} Tổng hợp kết quả.
+            \item \textit{Map:} Chia nhỏ \& Gán nhãn. Input $\rightarrow$ Split $\rightarrow$ \texttt{<Key, Value>}.
+            \item \textit{Shuffle:} Xáo trộn \& Gom nhóm. Chuyển dữ liệu qua mạng, gom cùng Key.
+            \item \textit{Reduce:} Tổng hợp. Xử lý danh sách Value của mỗi Key.
         \end{itemize}
     \end{enumerate}
 
     % --- PHẦN 3: CÔNG NGHỆ LƯU TRỮ NOSQL ---
     \subsection{Công nghệ NoSQL (Storage Tech)}
+    \textit{Các mô hình NoSQL cho use case khác nhau.}
+
+    \paragraph{MongoDB (Document Store)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Document (MongoDB):} Schema-on-read (JSON/BSON). Linh hoạt, tốt cho CMS, Mobile apps. Query: \texttt{find()}.
-        \item \textbf{Key-Value (Redis):} In-memory, cực nhanh ($<1$ms). Dùng cho Caching, Session, Queue. Persist dạng Snapshot/AOF.
-        \item \textbf{Wide-Column (Cassandra/HBase):} Ghi cực nhanh (LSM Tree). Tốt cho Time-series, Log, IoT. Query theo RowKey.
-        \item \textbf{Graph (Neo4j):} Tối ưu cho quan hệ phức tạp (Mạng xã hội, Gợi ý, Fraud detection). Query: Cypher.
+        \item \textbf{Mô hình:} Schema-on-read, lưu trữ JSON/BSON documents. Collections thay vì tables.
+        \item \textbf{Ưu điểm:} Linh hoạt schema (mỗi doc có cấu trúc khác nhau), dễ scale horizontal (sharding), query mạnh (aggregation pipeline).
+        \item \textbf{Architecture:} Replica Sets (HA), Sharding (scale-out), WiredTiger storage engine.
+        \item \textbf{Use Case:} CMS, Mobile apps, Catalog, Real-time analytics. \textit{VD: Forbes, eBay, Uber.}
+        \item \textbf{Trade-offs:} Không ACID cross-document (trước v4.0), chiếm RAM nhiều.
+    \end{itemize}
+
+    \paragraph{Redis (Key-Value Store)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Mô hình:} In-memory key-value, data structures (String, Hash, List, Set, Sorted Set).
+        \item \textbf{Ưu điểm:} Cực nhanh ($<1$ms latency), atomic operations, support pub/sub, Lua scripting.
+        \item \textbf{Persistence:} RDB (snapshot) hoặc AOF (append-only log). Có thể dùng cả 2.
+        \item \textbf{Use Case:} Caching (session, query result), Message Queue (Celery), Leaderboard, Rate limiting. \textit{VD: Twitter, GitHub, Stack Overflow.}
+        \item \textbf{Trade-offs:} Giới hạn RAM, single-threaded (1 core), không có query phức tạp.
+    \end{itemize}
+
+    \paragraph{Cassandra (Wide-Column Store)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Mô hình:} Wide-column, mỗi row có thể có số cột khác nhau. Organize theo Column Family.
+        \item \textbf{Ưu điểm:} Ghi cực nhanh (LSM Tree), linear scalability, masterless (P2P), multi-datacenter replication.
+        \item \textbf{Architecture:} Consistent hashing (ring), tunable consistency (quorum), compaction strategies.
+        \item \textbf{Use Case:} Time-series data, IoT sensor logs, Event logging, Messaging. \textit{VD: Netflix, Apple, Instagram.}
+        \item \textbf{Trade-offs:} Đọc chậm hơn (nhiều SSTable), không join, modeling phức tạp (query-first design).
+    \end{itemize}
+
+    \paragraph{Neo4j (Graph Database)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Mô hình:} Nodes (entities) + Relationships (edges) + Properties. Native graph storage.
+        \item \textbf{Ưu điểm:} Traversal cực nhanh (follow pointers), query trực quan (Cypher), ACID transactions.
+        \item \textbf{Architecture:} Index-free adjacency (mỗi node chứa pointer đến neighbors).
+        \item \textbf{Use Case:} Social networks, Recommendation engines, Fraud detection, Knowledge graphs. \textit{VD: LinkedIn, Walmart, eBay.}
+        \item \textbf{Trade-offs:} Scale khó hơn NoSQL khác, không tốt cho bulk data processing.
+    \end{itemize}
+
+    % ============================================================================
+    % TIER 3: PROCESSING LAYER
+    % ============================================================================
+    \subsection{Xử lý Batch (Batch Processing)}
+
+    \subsubsection{Apache Spark (Unified Analytics Engine)}
+    \textit{Thay thế MapReduce với tốc độ cao hơn 100x (in-memory).}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Core Concept:} RDD (Resilient Distributed Dataset) - immutable, partitioned, parallel.
+        \begin{itemize}
+            \item \textit{Transformations:} Lazy (map, filter, join) - tạo DAG.
+            \item \textit{Actions:} Eager (collect, count, save) - trigger execution.
+        \end{itemize}
+        \item \textbf{Components:}
+        \begin{itemize}
+            \item \textit{Spark SQL:} Query structured data (DataFrame/Dataset API).
+            \item \textit{Spark Streaming:} Micro-batch streaming (DStream).
+            \item \textit{MLlib:} Machine learning library (classification, clustering, etc.).
+            \item \textit{GraphX:} Graph processing (PageRank, connected components).
+        \end{itemize}
+        \item \textbf{Ưu điểm:} In-memory caching, lazy evaluation, DAG optimization, unified API (batch + streaming).
+        \item \textbf{Nhược điểm:} Tốn RAM, không true streaming (micro-batch), overhead cho job nhỏ.
+        \item \textbf{Use Case:} ETL, ML training, interactive analytics, log processing. \textit{VD: Netflix, Uber, Airbnb.}
     \end{itemize}
 
     % --- PHẦN 4: XỬ LÝ LUỒNG (STREAMING) ---
@@ -598,40 +750,75 @@
         \end{itemize}
     \end{itemize}
 
+    % ============================================================================
+    % TIER 4: INTEGRATION & ORCHESTRATION
+    % ============================================================================
+    \subsection{Giao thức IoT (IoT Protocols)}
+    
+    \subsubsection{MQTT vs HTTP}
+    \begin{center}
+        \renewcommand{\arraystretch}{1.1}
+        \begin{tabular}{@{} >{\raggedright\arraybackslash}p{0.48\linewidth} | >{\raggedright\arraybackslash}p{0.48\linewidth} @{}}
+            \toprule
+            \textbf{HTTP (HyperText Transfer)} & \textbf{MQTT (Message Queuing)} \\
+            \midrule
+            \textbf{Mô hình:} Request - Response (Client-Server). & \textbf{Mô hình:} Publish - Subscribe (qua Broker). \\
+            \textbf{Kết nối:} Ngắn, đóng sau khi xong. & \textbf{Kết nối:} Dài, \textit{Keep-alive}, nhẹ. \\
+            \textbf{Header:} Lớn, cồng kềnh (Metadata). & \textbf{Header:} Rất nhỏ (2 byte), tiết kiệm băng thông. \\
+            \textbf{Use Case:} Web, API, truyền tải lớn. & \textbf{Use Case:} IoT, mạng chập chờn, pin yếu. \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+
     % --- PHẦN 5: PIPELINES & ORCHESTRATION ---
     \subsection{Pipelines \& Orchestration}
     
     \subsubsection{Apache Kafka vs Airflow}
-\begin{center}
-    \renewcommand{\arraystretch}{1.2} % Adjust row height for readability
-    \begin{tabular}{@{} >{\raggedright\arraybackslash}p{0.48\linewidth} >{\raggedright\arraybackslash}p{0.48\linewidth} @{}}
-        \toprule
-        \textbf{Apache Kafka} & \textbf{Apache Airflow} \\
-        \midrule
-        
-        \textbf{Loại:} Event Streaming Platform (Message Broker). & 
-        \textbf{Loại:} Workflow Orchestration (Quản lý quy trình). \\
-        \addlinespace[4pt] % Extra space between sections
-        
-        \textbf{Đặc trưng:}
-        \begin{itemize}[leftmargin=10pt, nosep, label=\tiny$\bullet$]
-            \item Log bền vững (Durable log).
-            \item Decoupling (Tách rời).
-            \item Replayable, High throughput.
-        \end{itemize} & 
-        \textbf{Đặc trưng:}
-        \begin{itemize}[leftmargin=10pt, nosep, label=\tiny$\bullet$]
-            \item Code-as-infra (Python DAGs).
-            \item Quản lý dependency phức tạp.
-            \item Backfill (chạy lại quá khứ).
-        \end{itemize} \\
-        \addlinespace[4pt]
-        
-        \textbf{Vai trò:} "Xương sống" vận chuyển dữ liệu \textit{Real-time}. & 
-        \textbf{Vai trò:} "Nhạc trưởng" điều phối Job (\textit{Batch/ETL}). \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+    \begin{center}
+        \renewcommand{\arraystretch}{1.2} % Adjust row height for readability
+        \begin{tabular}{@{} >{\raggedright\arraybackslash}p{0.48\linewidth} >{\raggedright\arraybackslash}p{0.48\linewidth} @{}}
+            \toprule
+            \textbf{Apache Kafka} & \textbf{Apache Airflow} \\
+            \midrule
+            
+            \textbf{Loại:} Event Streaming Platform (Message Broker). & 
+            \textbf{Loại:} Workflow Orchestration (Quản lý quy trình). \\
+            \addlinespace[4pt] % Extra space between sections
+            
+            \textbf{Đặc trưng:}
+            \begin{itemize}[leftmargin=10pt, nosep, label=\tiny$\bullet$]
+                \item Log bền vững (Durable log).
+                \item Decoupling (Tách rời).
+                \item Replayable, High throughput.
+            \end{itemize} & 
+            \textbf{Đặc trưng:}
+            \begin{itemize}[leftmargin=10pt, nosep, label=\tiny$\bullet$]
+                \item Code-as-infra (Python DAGs).
+                \item Quản lý dependency phức tạp.
+                \item Backfill (chạy lại quá khứ).
+            \end{itemize} \\
+            \addlinespace[4pt]
+            
+            \textbf{Vai trò:} "Xương sống" vận chuyển dữ liệu \textit{Real-time}. & 
+            \textbf{Vai trò:} "Nhạc trưởng" điều phối Job (\textit{Batch/ETL}). \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+
+    \subsubsection{CDC (Change Data Capture)}
+    \textit{Theo dõi và đồng bộ thay đổi từ database nguồn sang đích.}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Mục đích:} Real-time data replication, sync giữa OLTP và OLAP, event-driven architecture.
+        \item \textbf{Cơ chế:}
+        \begin{itemize}
+            \item \textit{Log-based CDC:} Đọc database transaction log (binlog MySQL, WAL PostgreSQL). \textbf{Tốt nhất} - không ảnh hưởng source.
+            \item \textit{Trigger-based:} Trigger trên INSERT/UPDATE/DELETE. Ảnh hưởng performance.
+            \item \textit{Timestamp/Version-based:} Poll dựa trên \texttt{updated\_at} column. Thiếu DELETE events.
+        \end{itemize}
+        \item \textbf{Tools:} Debezium (Kafka Connect), AWS DMS, Oracle GoldenGate, Airbyte.
+        \item \textbf{Use Case:} Sync OLTP $\to$ DW, Microservices data sharing, Cache invalidation, Audit logs.
+        \item \textbf{Pattern:} Source DB $\to$ CDC Tool $\to$ Kafka $\to$ Sink (DW/Cache/Search).
+    \end{itemize}
 
     \subsubsection{ETL vs ELT}
     \begin{itemize}[leftmargin=*, label={--}]
@@ -639,13 +826,55 @@
         \item \textbf{ELT (Extract-Load-Transform):} Load raw vào kho \textit{trước}, transform sau. Schema-on-read. Tận dụng sức mạnh Cloud DW (BigQuery, Snowflake). (Hiện đại).
     \end{itemize}
 
-    % --- PHẦN 6: DATA WAREHOUSING ---
+    % ============================================================================
+    % TIER 5: ANALYTICS & WAREHOUSING
+    % ============================================================================
     \subsection{Kho Dữ liệu (Data Warehousing)}
+
+    \subsubsection{OLTP vs OLAP}
+    \begin{center}
+        \renewcommand{\arraystretch}{1.2}
+        \begin{tabular}{@{} p{0.15\linewidth} | p{0.38\linewidth} | p{0.38\linewidth} @{}}
+            \toprule
+            & \textbf{OLTP (Transactional)} & \textbf{OLAP (Analytical)} \\
+            \midrule
+            \textbf{Mục tiêu} & Vận hành hàng ngày (Operational). & Ra quyết định (Decision support). \\
+            \textbf{Dữ liệu} & Hiện hành, chi tiết, cập nhật liên tục. & Lịch sử, tổng hợp, đa chiều. \\
+            \textbf{Truy vấn} & Đơn giản, trả về ít dòng (Lookup). & Phức tạp, join nhiều, quét bảng lớn. \\
+            \textbf{Thiết kế} & Chuẩn hóa cao (3NF) để tránh dị thường. & Phi chuẩn hóa (Star/Snowflake) để đọc nhanh. \\
+            \textbf{User} & NV, App, Khách hàng. & Manager, Data Analyst. \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+
+    \subsubsection{4 Đặc trưng Chính (Inmon)}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Hướng chủ đề (Subject-oriented):} Tổ chức theo chủ đề chính (Khách hàng, Sản phẩm) thay vì theo ứng dụng (App Bán hàng, App Kho).
+        \item \textbf{Tích hợp (Integrated):} Dữ liệu từ nhiều nguồn được làm sạch, đồng nhất (đơn vị, format, encoding) trước khi nạp.
+        \item \textbf{Bất biến (Non-volatile):} Dữ liệu đã vào DW thì (thường) không bị sửa/xóa, chỉ đọc.
+        \item \textbf{Biến thiên theo thời gian (Time-variant):} Mọi dữ liệu đều gắn với mốc thời gian để phân tích xu hướng (Historical data).
+    \end{enumerate}
+
+    \subsubsection{Thách thức Xây dựng DW}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Data Quality:} "Garbage In, Garbage Out". Dữ liệu nguồn bẩn làm sai lệch báo cáo.
+        \item \textbf{ETL Complexity:} Tích hợp các hệ thống cũ (Legacy) rất phức tạp.
+        \item \textbf{Performance:} Truy vấn phân tích tốn tài nguyên, cần tối ưu index/partition.
+        \item \textbf{User Acceptance:} Người dùng không hiểu hoặc không tin tưởng dữ liệu.
+        \item \textbf{Cost:} Chi phí lưu trữ và duy trì hạ tầng cao.
+    \end{itemize}
     
     \subsubsection{Mô hình hóa (Modeling)}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Star Schema:} Fact ở giữa, Dimension xung quanh. Phi chuẩn hóa dimension. \textit{Hiệu năng cao, dễ query.}
         \item \textbf{Snowflake Schema:} Chuẩn hóa dimension (tách nhỏ). \textit{Tiết kiệm không gian, join phức tạp.}
+    \end{itemize}
+
+    \subsubsection{DW vs DL vs Lakehouse}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Data Warehouse:} Dữ liệu có cấu trúc, cho BI/Reporting.
+        \item \textbf{Data Lake:} Dữ liệu thô (Raw), đa dạng, giá rẻ, cho ML/DS.
+        \item \textbf{Lakehouse:} Kết hợp (Lưu trữ rẻ của Lake + Quản lý/ACID của Warehouse).
     \end{itemize}
 
     \subsubsection{SCD (Slowly Changing Dimensions)}
@@ -656,11 +885,80 @@
         \item \textbf{Type 3 (Add Column):} Thêm cột "Previous Value". \textit{Chỉ lưu được 1 giá trị cũ.}
     \end{itemize}
 
-    \subsubsection{DW vs DL vs Lakehouse}
+    \begin{center}
+        \renewcommand{\arraystretch}{1.2}
+        \begin{tabular}{@{} c | p{0.32\linewidth} | p{0.5\linewidth} @{}}
+            \toprule
+            \textbf{Type} & \textbf{Chiến lược} & \textbf{Đặc điểm \& Use Case} \\
+            \midrule
+            \textbf{0} & \textbf{Retain Original:} Giữ nguyên, không bao giờ sửa. & 
+            Dữ liệu gốc là chân lý. (VD: Ngày sinh). \\
+            \hline
+            \textbf{1} & \textbf{Overwrite:} Ghi đè giá trị mới lên cũ. & 
+            Không cần lịch sử. Sửa lỗi chính tả. \\
+            \hline
+            \textbf{2} & \textbf{Add Row:} Thêm dòng mới + \textit{Effective Date} + \textit{Current\_Flag}. & 
+            \textbf{Chuẩn mực nhất}. Theo dõi toàn bộ lịch sử biến động. \\
+            \hline
+            \textbf{3} & \textbf{Add Column:} Thêm cột \textit{Previous\_Value}. & 
+            Chỉ cần biết giá trị liền trước. (Ít dùng). \\
+            \hline
+            \textbf{4} & \textbf{Add History Table:} Tách bảng lịch sử riêng (Mini-Dimension). & 
+            Tối ưu khi bảng chính quá lớn và chỉ một nhóm thuộc tính thay đổi nhanh. \\
+            \hline
+            \textbf{5} & \textbf{Hybrid (4 + 1):} Mini-dimension + tham chiếu "Current" ở bảng chính. & 
+            Tối ưu truy vấn khi cần cả lịch sử chi tiết và giá trị hiện tại nhanh chóng. \\
+            \hline
+            \textbf{6} & \textbf{Hybrid (1 + 2 + 3):} Type 2 row + cột chứa giá trị hiện tại (Type 1). & 
+            \textit{"Pure Type 6"}: Giúp truy vấn lịch sử nhưng vẫn group by theo giá trị hiện tại dễ dàng. \\
+            \hline
+            \textbf{7} & \textbf{Hybrid (Dual Keys):} Fact table chứa cả \textit{Surrogate Key} (lịch sử) và \textit{Natural Key} (hiện tại). & 
+            Linh hoạt nhất: Join theo Surrogate để xem lịch sử, join theo Natural để xem hiện tại. \\
+            \bottomrule
+        \end{tabular}
+            \textit{Các kỹ thuật xử lý dữ liệu thay đổi theo thời gian (0 $\to$ 7).}
+
+    \end{center}
+
+    % ============================================================================
+    % TIER 6: DATA MANAGEMENT & OPERATIONAL
+    % ============================================================================
+    \subsection{Quản lý Dữ liệu}
+
+    \subsubsection{Vấn đề Tích hợp (Data Integration Issues)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Data Warehouse:} Dữ liệu có cấu trúc, cho BI/Reporting.
-        \item \textbf{Data Lake:} Dữ liệu thô (Raw), đa dạng, giá rẻ, cho ML/DS.
-        \item \textbf{Lakehouse:} Kết hợp (Lưu trữ rẻ của Lake + Quản lý/ACID của Warehouse).
+        \item \textbf{Heterogeneous data sources:} Khác biệt về DBMSs và files.
+        \item \textbf{Data Conflicts:} Khác kiểu dữ liệu (String vs Int, Date format).
+        \item \textbf{Data Mapping:} Khác biệt về schema (vd: `Full Name' vs `First Name' + `Last Name').
+        \item \textbf{Entity Resolution:} Xác định 2 bản ghi từ 2 nguồn là cùng 1 thực thể (vd: `Nguyen V. A' và `A Nguyen').
+        \item \textbf{Data redundancy:} Dữ liệu trùng lặp cần khử trùng (Deduplication).
+    \end{itemize}
+
+    \subsubsection{6 Chiều Chất lượng Dữ liệu (Data Quality)}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Completeness (Đầy đủ):} Không bị thiếu (Null/Missing values).
+        \item \textbf{Accuracy (Chính xác):} Phản ánh đúng thực tế.
+        \item \textbf{Consistency (Nhất quán):} Dữ liệu thống nhất giữa các bảng/hệ thống.
+        \item \textbf{Validity (Hợp lệ):} Đúng định dạng, nằm trong miền giá trị cho phép.
+        \item \textbf{Timeliness (Kịp thời):} Dữ liệu có sẵn khi cần (độ trễ thấp).
+        \item \textbf{Uniqueness (Duy nhất):} Không trùng lặp.
+    \end{enumerate}
+
+    \subsubsection{Quản lý Thông tin (Information Management)}
+    \textit{Là việc quản lý dữ liệu như một tài sản doanh nghiệp.}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item Bao gồm: Data Governance (Quản trị), Data Quality, Master Data Management (MDM), Security.
+        \item Mục tiêu: Đảm bảo dữ liệu tin cậy, an toàn, dễ truy cập để tạo giá trị.
+    \end{itemize}
+
+    \subsection{Thách thức Xử lý Phân tán (Distributed Challenges)}
+    
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Data Skew (Lệch dữ liệu):} Tình trạng một partition chứa quá nhiều dữ liệu so với các partition khác.
+        \newline $\rightarrow$ \textit{Hậu quả:} "Straggler problem" - Cả job phải đợi node chậm nhất hoàn thành.
+        \newline $\rightarrow$ \textit{Giải pháp:} Salting (thêm tiền tố ngẫu nhiên vào khóa) để chia nhỏ key hot.
+        \item \textbf{Shuffle:} Quá trình chuyển dữ liệu giữa các node qua mạng (Map $\to$ Reduce).
+        \newline $\rightarrow$ \textit{Tối ưu:} Dùng \textbf{Broadcast Join} (chép bảng nhỏ đến tất cả node chứa bảng lớn) để tránh shuffle bảng lớn.
     \end{itemize}
 \end{multicols}
 \end{document}
