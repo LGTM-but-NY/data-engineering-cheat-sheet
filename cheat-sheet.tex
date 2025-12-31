@@ -142,10 +142,11 @@
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Bẫy Kết nối trong ER:}
         \begin{center}
-            \begin{tabular}{@{} c c @{}}
-                \includegraphics[width=0.45\linewidth]{./images/design_trap_fan.png} & 
-                \includegraphics[width=0.45\linewidth]{./images/design_trap_chasm.png} \\
-                \footnotesize (Fan Trap) & \footnotesize (Chasm Trap) \\
+            \begin{tabular}{@{} c @{}}
+                \includegraphics[width=0.8\linewidth]{./images/design_trap_fan.png} \\
+                \footnotesize (Fan Trap) \\[6pt]
+                \includegraphics[width=0.8\linewidth]{./images/design_trap_chasm.png} \\
+                \footnotesize (Chasm Trap) \\
             \end{tabular}
         \end{center}
         \begin{itemize}
@@ -172,7 +173,7 @@
         \item \textbf{Cấu trúc Chỉ mục:} Chỉ mục có thứ tự (B+-Trees) và chỉ mục băm; chỉ mục \textbf{chính/phân cụm} (quy định thứ tự vật lý; tối đa một trên mỗi tập tin) so với chỉ mục \textbf{phụ}.
         \item \textbf{Tối ưu hóa Truy vấn:} Dựa trên chi phí (thống kê) và các quy tắc kinh nghiệm (đẩy phép chọn/chiếu xuống sớm) để chọn kế hoạch hiệu quả.
     \end{itemize}
-    \subsection{Các bước vẽ ERD (Steps to Create ERD)}
+    \subsection{Các bước vẽ ERD}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
         \item \textbf{Xác định Thực thể (Entities):} 
         \newline Tìm các \textit{danh từ} (Nouns) quan trọng trong yêu cầu (Vd: Employee, Student). Tránh nhầm lẫn thuộc tính là thực thể.
@@ -191,14 +192,14 @@
         
         \item \textbf{Xác định Ràng buộc tham gia (Participation):} 
         \newline Có bắt buộc không? (Total - Nét đôi) hay Tùy chọn? (Partial - Nét đơn).
-        \newline \textit{Hỏi: "Thực thể A có thể tồn tại mà không cần B không?"}
+        \newline \textit{Hỏi: `Thực thể A có thể tồn tại mà không cần B không?'}
         
         \item \textbf{Vẽ phác thảo \& Tinh chỉnh:} 
         \newline Vẽ sơ đồ, loại bỏ các thuộc tính dư thừa. Chuyển quan hệ M:N thành thực thể liên kết nếu cần thiết.
     \end{enumerate}
     \subsection{Chen Notation: ER \& EER}
     % Bảng cho Thực thể & Thuộc tính - Tiết kiệm không gian hơn liệt kê
-    \subsubsection{Thực thể \& Thuộc tính (Entities \& Attributes)}
+    \subsubsection{Entities \& Attributes}
     \textit{Khi nào dùng:} \textbf{Thực thể} cho đối tượng độc lập (NhanVien, SanPham, KhanhHang); \textbf{Thực thể yếu} cho đối tượng phụ thuộc (NguoiPhuThuoccủa nhân viên, ChiTietDonHang); \textbf{Khóa} là định danh duy nhất (MSNV, CCCD); \textbf{Đa trị} cho thuộc tính nhiều giá trị (số điện thoại, email); \textbf{Dẫn xuất} cho giá trị tính toán (tuổi từ ngày sinh, tổng tiền).
     \begin{center}
         \begin{tabular}{@{} c c @{}}
@@ -219,7 +220,7 @@
         \end{tabular}
     \end{center}
 
-    \subsubsection{Mối kết hợp (Relationships)}
+    \subsubsection{Relationships}
     \textit{Khi nào dùng:} \textbf{Quan hệ thường} cho liên kết độc lập (NhanVien \textit{làm việc cho} PhongBan, KhanhHang \textit{mua} SanPham); \textbf{Quan hệ xác định} khi thực thể yếu phụ thuộc vào thực thể chủ (NguoiPhuThuoc \textit{thuộc về} NhanVien với khóa bộ phận là tên người phụ thuộc).
     \begin{center}
         % Dùng minipage để căn chỉnh nếu ảnh có tỷ lệ khác nhau
@@ -239,8 +240,9 @@
         \item \textbf{Min-Max (min, max):} Ghi cặp số trên cạnh. Ví dụ: NhanVien $(1,1)$ \textit{làm việc cho} $(0,N)$ PhongBan nghĩa là mỗi nhân viên bắt buộc làm việc cho đúng 1 phòng ban, mỗi phòng ban có thể có 0 đến nhiều nhân viên. $(0,1)$: tùy chọn, tối đa 1; $(1,N)$: bắt buộc, có thể nhiều. (An extension of Participation và Cardinality)
     \end{itemize}
 
+    \columnbreak
+
     \subsubsection{EER Chuyên biệt hóa \& Tổng quát hóa}
-    \textit{Khi nào dùng:} \textbf{Disjoint} khi lớp con không chồng lấp (NhanVien là KỸ SƯ hoặc QUẢN LÝ, không đồng thời); \textbf{Overlapping} khi có thể thuộc nhiều lớp (NGƯỜI là SINH VIÊN và/hoặc NHÂN VIÊN); \textbf{Union} khi lớp con kế thừa từ nhiều lớp cha (CHỦ SỞ HỮU có thể là NGƯỜI hoặc CÔNG TY hoặc NGÂN HÀNG). \textbf{Total} khi mọi thực thể cha phải thuộc ít nhất 1 lớp con; \textbf{Partial} khi không bắt buộc.
     \begin{center}
         \begin{tabular}{@{} c @{}}
             \includegraphics[width=1\linewidth]{./images/chen_eer_disjoint_overlap.png} \\
@@ -250,6 +252,7 @@
         \end{tabular} \\[2pt]
         \footnotesize \textit{Ký hiệu: Hình tròn (d: disjoint, o: overlapping, U: union),\linebreak Nét đôi (Total), Nét đơn (Partial).}
     \end{center}
+    \textit{Khi nào dùng:} \textbf{Disjoint} khi lớp con không chồng lấp (NhanVien là KỸ SƯ hoặc QUẢN LÝ, không đồng thời); \textbf{Overlapping} khi có thể thuộc nhiều lớp (NGƯỜI là SINH VIÊN và/hoặc NHÂN VIÊN); \textbf{Union} khi lớp con kế thừa từ nhiều lớp cha (CHỦ SỞ HỮU có thể là NGƯỜI hoặc CÔNG TY hoặc NGÂN HÀNG). \textbf{Total} khi mọi thực thể cha phải thuộc ít nhất 1 lớp con; \textbf{Partial} khi không bắt buộc.
 
     % ===========================================================================
     % SECTION INDEXING & QUERY OPTIMIZATION
@@ -292,7 +295,7 @@
     % ============================================================================
     \subsection{B-Trees \& B+-Trees}
 
-    \subsubsection{Structural Differences (Khác biệt Cấu trúc)}
+    \subsubsection{Khác biệt Cấu trúc}
     \textit{Mặc dù thường dùng thay thế cho nhau, B-Tree và B+-Tree có sự khác biệt quan trọng về nơi lưu data pointers.}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{B-Tree:} Search key values xuất hiện \textit{chỉ một lần} trong tree. Data pointers tồn tại ở \textit{tất cả levels} (internal + leaf nodes).
@@ -755,20 +758,6 @@
         \item \textbf{Nhược điểm:} Có thể bỏ lỡ optimal bushy tree plans, nhưng trade-off chấp nhận được cho performance.
     \end{itemize}
 
-    \subsection{Kỹ thuật Chuyên biệt}
-
-    \subsubsection{Cấu trúc Tối ưu Ghi}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{LSM-Tree:} Bộ đệm trong RAM (memtable) + các mức đĩa đã sắp xếp; ghi tuần tự; nén định kỳ; Bloom filter để bỏ qua các mức.
-        \item \textbf{Buffer Tree:} Biến thể B-tree với bộ đệm ghi tại mỗi nút; gom nhóm các thay đổi xuống cây; độ trễ đọc tốt hơn LSM.
-    \end{itemize}
-
-    \subsubsection{Truy cập Không gian \& Đa khóa}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Đa khóa:} Chỉ mục phức hợp cho truy vấn tiền tố; chỉ mục bao phủ (covering index) tránh tra cứu bảng.
-        \item \textbf{Không gian:} R-tree (hình chữ nhật bao), kd-tree, quadtree cho dữ liệu địa lý/khoảng; hỗ trợ truy vấn vùng + lân cận gần nhất.
-    \end{itemize}
-    \columnbreak
     % ============================================================================
     % SECTION: Big Data & Data Engineering
     % ============================================================================
@@ -797,6 +786,8 @@
             \item \textbf{Visualization:} Khả năng trực quan hóa (Để con người hiểu được).
         \end{itemize}
     \end{itemize}
+
+    \columnbreak
 
     \subsection{Paradigm: Batch vs Streaming}
     \textit{Hai mô hình xử lý dữ liệu cơ bản trong Big Data.}
@@ -942,6 +933,7 @@
         \item \textbf{Trade-offs:} Scale khó hơn NoSQL khác, không tốt cho bulk data processing.
     \end{itemize}
 
+    \columnbreak
     % ============================================================================
     % TIER 3: PROCESSING LAYER
     % ============================================================================
@@ -993,25 +985,109 @@
         \end{itemize}
     \end{itemize}
 
+    \columnbreak
+
     % ============================================================================
     % TIER 4: INTEGRATION & ORCHESTRATION
     % ============================================================================
-    \subsection{Giao thức IoT}
+    \subsection{Giao thức IoT (IoT Protocols)}
+    \textit{Context:} Internet of Things - kết nối sensors, devices, machinery vào internet $\rightarrow$ số devices $>$ số người trên internet $\rightarrow$ massive streaming data generation.
     
-    \subsubsection{MQTT vs HTTP}
+    \subsubsection{MQTT (Message Queue Telemetry Transport)}
+    \textit{Open standard (OASIS, ISO/IEC 20922) for Machine-to-Machine (M2M) communication.}
+    
+    \paragraph{Design Philosophy}\mbox{}\\
+    Được thiết kế cho \textbf{constrained devices (thiết bị hạn chế)} trong môi trường mạng khó khăn:
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Low bandwidth (băng thông thấp):} Minimized data packets (gói dữ liệu tối thiểu).
+        \item \textbf{High latency (độ trễ cao):} Tối ưu cho mạng chậm.
+        \item \textbf{Unreliable networks (mạng không ổn định):} Xử lý mất kết nối, chập chờn.
+        \item \textbf{Low power usage:} Tiết kiệm pin cho IoT devices.
+        \item \textbf{Real-time processing:} Hỗ trợ xử lý real-time cho streaming data.
+    \end{itemize}
+
+    \paragraph{Architecture: Publish-Subscribe Model}\mbox{}\\
+    Khác với client-server truyền thống (client connect trực tiếp client), MQTT dùng \textbf{pub-sub model}.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Broker:} Central component nhận published messages và deliver đến subscribers phù hợp.
+        \newline \textit{Flow:} Client gửi \texttt{CONNECT} $\rightarrow$ Broker trả \texttt{CONNACK}.
+        \item \textbf{Publisher:} Client publish message đến broker với specific topic.
+        \item \textbf{Subscriber:} Client listen incoming messages trên particular topics.
+        \item \textbf{Advantage:} Decoupling (tách rời) - publisher không cần biết subscriber, scale dễ dàng.
+    \end{itemize}
+
+    \paragraph{Topics (Routing Mechanism)}\mbox{}\\
+    \textbf{Structure:} Hierarchical strings với topic levels phân cách bởi \texttt{/}.
     \begin{center}
-        \renewcommand{\arraystretch}{1.1}
-        \begin{tabular}{@{} >{\raggedright\arraybackslash}p{0.48\linewidth} | >{\raggedright\arraybackslash}p{0.48\linewidth} @{}}
+        \renewcommand{\arraystretch}{1.15}
+        \begin{tabular}{@{} p{0.15\linewidth} | l | p{0.50\linewidth} @{}}
             \toprule
-            \textbf{HTTP (HyperText Transfer)} & \textbf{MQTT (Message Queuing)} \\
+            \textbf{Type} & \textbf{Pattern} & \textbf{Matches \& Description} \\
             \midrule
-            \textbf{Mô hình:} Request - Response (Client-Server). & \textbf{Mô hình:} Publish - Subscribe (qua Broker). \\
-            \textbf{Kết nối:} Ngắn, đóng sau khi xong. & \textbf{Kết nối:} Dài, \textit{Keep-alive}, nhẹ. \\
-            \textbf{Header:} Lớn, cồng kềnh (Metadata). & \textbf{Header:} Rất nhỏ (2 byte), tiết kiệm băng thông. \\
-            \textbf{Use Case:} Web, API, truyền tải lớn. & \textbf{Use Case:} IoT, mạng chập chờn, pin yếu. \\
+            \textbf{Exact} & \texttt{area1/humidity} & Chỉ match chính xác topic này. \textit{Use:} Specific sensor. \\
+            \addlinespace[2pt]
+            \textbf{Single-level} & \texttt{area1/+} & \texttt{+} matches \textit{1} level bất kỳ.\newline $\checkmark$ \texttt{area1/humidity}, \texttt{area1/light}\newline $\times$ \texttt{area1/sensors/temp} \\
+            \addlinespace[2pt]
+            \textbf{Multi-level} & \texttt{area1/\#} & \texttt{\#} matches \textit{tất cả} levels.\newline $\checkmark$ \texttt{area1/humidity}, \texttt{area1/sensors/temp}\newline $\checkmark$ \texttt{area1/zone2/light} \\
+            \addlinespace[2pt]
+            \textbf{Root wildcard} & \texttt{\#} & Matches \textit{everything} in broker.\newline (Use with caution - high load) \\
             \bottomrule
         \end{tabular}
     \end{center}
+    \textit{Smart Farming Example:} Publisher sends \texttt{area1/humidity:65\%} $\rightarrow$ Subscribers với patterns \texttt{area1/humidity}, \texttt{area1/+}, hoặc \texttt{area1/\#} đều nhận được.
+
+    \columnbreak
+
+    \paragraph{Quality of Service (QoS) Levels}\mbox{}\\
+    Để xử lý network reliability khác nhau, MQTT định nghĩa 3 QoS levels:
+    \begin{center}
+        \renewcommand{\arraystretch}{1.15}
+        \begin{tabular}{@{} c | l | p{0.55\linewidth} @{}}
+            \toprule
+            \textbf{Level} & \textbf{Guarantee} & \textbf{Mechanism \& Use Case} \\
+            \midrule
+            \textbf{0} & At most once & Delivered once, no confirmation. Fast, có thể mất message. \textit{Use:} Sensor readings không critical. \\
+            \textbf{1} & At least once & Delivered ít nhất 1 lần, requires confirmation (ACK). Có thể duplicate. \textit{Use:} Important data. \\
+            \textbf{2} & Exactly once & Four-step handshake. Chậm nhất nhưng không duplicate. \textit{Use:} Financial transactions, critical commands. \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \textit{Note:} Actual QoS = min(Publisher QoS, Subscriber QoS).
+
+    \paragraph{Practical Application: Smart Farming}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Sensors (Publishers):}
+        \begin{itemize}
+            \item \textit{DHT11:} Temperature \& air humidity.
+            \item \textit{BH1750:} Luminosity (độ sáng).
+            \item \textit{DHT22:} Soil moisture (độ ẩm đất).
+        \end{itemize}
+        \item \textbf{Flow:} Sensors publish data đến broker với topics như \texttt{area1/moisture} $\rightarrow$ Management system subscribes topics $\rightarrow$ Real-time monitoring \& decision making.
+        \item \textbf{Benefits:} Cost-effective, scalable, knowledge base creation cho farming management.
+    \end{itemize}
+    
+    \subsubsection{MQTT vs HTTP Comparison}
+    \begin{center}
+        \renewcommand{\arraystretch}{1.2}
+        \begin{tabular}{@{} l | p{0.40\linewidth} | p{0.40\linewidth} @{}}
+            \toprule
+            \textbf{Aspect} & \textbf{HTTP (HyperText Transfer)} & \textbf{MQTT (Message Queuing)} \\
+            \midrule
+            \textbf{Model} & Request-Response\newline (Client-Server) & Publish-Subscribe\newline (qua Broker) \\
+            \addlinespace[2pt]
+            \textbf{Connection} & Short-lived\newline (đóng sau request) & Persistent\newline (Keep-alive, lightweight) \\
+            \addlinespace[2pt]
+            \textbf{Header Size} & Large (KB range)\newline Cồng kềnh metadata & Very small (2 bytes)\newline Tiết kiệm bandwidth \\
+            \addlinespace[2pt]
+            \textbf{Power} & High consumption & Low power\newline (tối ưu battery devices) \\
+            \addlinespace[2pt]
+            \textbf{Network} & Reliable networks & Unreliable networks\newline (chập chờn, high latency) \\
+            \addlinespace[2pt]
+            \textbf{Use Cases} & • Web browsing\newline • REST APIs\newline • Large file transfers & • IoT sensors\newline • M2M communication\newline • Constrained devices \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \textit{Key Insight:} HTTP designed cho human-to-machine (web), MQTT designed cho machine-to-machine (IoT).
 
     % --- PHẦN 5: PIPELINES & ORCHESTRATION ---
     \subsection{Pipelines \& Orchestration}
