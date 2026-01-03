@@ -65,7 +65,17 @@
         \item \textbf{Ràng buộc Toàn vẹn:} Ràng buộc miền giá trị (nguyên tố, có kiểu), ràng buộc khóa (siêu khóa/khóa ứng viên/khóa chính), toàn vẹn thực thể (khóa chính không NULL), toàn vẹn tham chiếu (giá trị khóa ngoại phải xuất hiện trong khóa chính được tham chiếu).
     \end{itemize}
 
-    \subsubsection{Lý thuyết Chuẩn hóa (Normalization Theory)}
+    \paragraph{ER-to-Relational Mapping Rules}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Strong Entity:} Tạo bảng. PK = Entity PK.
+        \item \textbf{Weak Entity:} Tạo bảng. PK = (Owner PK + Partial Key). FK to Owner.
+        \item \textbf{1:N Relationship:} Đưa PK của bên "1" làm FK vào bảng bên "N".
+        \item \textbf{M:N Relationship:} Tạo \textbf{bảng trung gian}. PK = (PK\_A + PK\_B). Cả hai đều là FK.
+        \item \textbf{Multivalued Attribute:} Tạo \textbf{bảng mới}. PK = (Entity PK + Attribute Value).
+        \item \textbf{N-ary (Ternary) Relationship:} Tạo \textbf{bảng mới}. PK = (PK\_A + PK\_B + PK\_C). Tất cả đều là FK.
+    \end{itemize}
+
+    \subsubsection{Lý thuyết Chuẩn hóa}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Mục tiêu:} Giảm thiểu dư thừa, tránh dị thường (Thêm, Xóa, Sửa).
         \item \textbf{Phụ thuộc Hàm (FD):} $X \rightarrow Y$ (Nếu $t_1[X]=t_2[X]$ thì $t_1[Y]=t_2[Y]$).
@@ -260,6 +270,27 @@
 
     \columnbreak
 
+    \subsubsection{Ternary Relationships \& EER Counting}
+    \paragraph{Mối kết hợp Tam nguyên (Ternary Relationships)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Định nghĩa:} Mối kết hợp giữa 3 thực thể (A, B, C) cùng lúc.
+        \item \textbf{Quy tắc đọc bản số (Look-Across):} Ký hiệu bản số gần thực thể C cho biết số instances của C liên kết với \textit{một cặp} (A, B).
+        \newline \textit{VD:} Supplier-Project-Device: Bản số gần Device (ví dụ: N) nghĩa là một cặp (Supplier, Project) có thể cung cấp nhiều Device.
+    \end{itemize}
+    
+    \paragraph{EER Counting Rules (Đếm thực thể)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Disjoint (d):} Các lớp con không giao nhau.
+        \newline $|Superclass| = |Subclass_1| + |Subclass_2| + ... + |Subclass_n|$
+        \item \textbf{Overlapping (o):} Các lớp con có thể giao nhau.
+        \newline $|Superclass| < |Subclass_1| + |Subclass_2| + ...$ (do có phần giao)
+        \newline Áp dụng công thức: $|A \cup B| = |A| + |B| - |A \cap B|$
+        \item \textbf{Union (U):} Lớp con là tập con của hợp các lớp cha.
+        \newline $|Subclass| \leq |Parent_1 \cup Parent_2 \cup ...|$
+    \end{itemize}
+
+    \columnbreak
+
     % ===========================================================================
     % SECTION QUERY PROCESSING & OPTIMIZATION
     % ===========================================================================
@@ -378,6 +409,13 @@
         \newline \textit{Oracle:} Heuristics rank access paths + cost-based chooses join methods.
     \end{itemize}
 
+    \paragraph{Subquery vs Join Optimization}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Subquery Unnesting:} Optimizers generally convert \textbf{Nested Subqueries} (especially correlated) into \textbf{Joins}.
+        \item \textbf{Preference Order:} \texttt{JOIN} > \texttt{Correlated Subquery} > \texttt{Cartesian Product} (worst).
+        \item \textbf{Why?} Joins allow optimizer to choose efficient algorithms (Hash/Merge Join), whereas correlated subqueries force "Nested Loop" behavior (inner query runs once per outer row).
+    \end{itemize}
+
     % ----------------------------------------------------------------------------
     % COST-BASED OPTIMIZATION FOUNDATIONS
     % ----------------------------------------------------------------------------
@@ -448,6 +486,27 @@
                 \item \textit{Chỉ mục Chính/Phân cụm:} Khóa tìm kiếm quyết định thứ tự vật lý của tập tin (tối đa một per bảng); thường là chỉ mục thưa.
                 \item \textit{Chỉ mục Phụ:} Đường dẫn truy cập thay thế độc lập với thứ tự vật lý; thường là chỉ mục đặc hoặc dùng gián tiếp cho các khóa không duy nhất.
             \end{itemize}
+    \end{itemize}
+
+    \paragraph{Multi-level Index Properties}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Root Constraint:} Mức cao nhất (root) của B-Tree/B+-Tree \textbf{luôn} chiếm \textbf{đúng 1} disk block.
+        \item \textbf{Tree Height:} Cây chỉ tăng chiều cao khi root node bị split.
+    \end{itemize}
+
+
+    \subsubsection{Công thức Số lượng Index Entries}
+    \textit{Xác định số hàng trong file chỉ mục (không phải chi phí truy cập).}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Primary Index (Sparse):} Số Index Entries = Số \textbf{Blocks} trong Data File.
+        \newline $\text{Entries} = b = \lceil r / bfr \rceil$
+        \newline \textit{Lý do:} Mỗi block có 1 entry (anchor record/block anchor).
+        \item \textbf{Clustering Index (Sparse):} Số Index Entries = Số \textbf{Distinct Values} của clustering field.
+        \newline $\text{Entries} = \text{NDV (Number of Distinct Values)}$
+        \newline \textit{Lý do:} Mỗi giá trị duy nhất có 1 entry trỏ đến block đầu tiên chứa giá trị đó.
+        \item \textbf{Secondary Index (Dense):} Số Index Entries = Số \textbf{Records} trong Data File.
+        \newline $\text{Entries} = r$
+        \newline \textit{Lý do:} Mỗi record có 1 entry (dense index).
     \end{itemize}
 
     \subsubsection{B-Trees \& B+-Trees}
@@ -559,6 +618,11 @@
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Composite Indexes:} Multi-column keys (e.g., (City, LastName)); support leftmost prefix queries (City), (City, LastName); order columns by selectivity.
         \item \textbf{Function-Based Indexes:} Indexes on expressions (e.g., \texttt{LOWER(email)}); queries must use the exact function to utilize the index.
+        \begin{itemize}
+            \item \textit{Problem:} Standard index on \texttt{Name} is \textbf{useless} for \texttt{WHERE lower(Name) = '...'}.
+            \item \textit{Solution:} \texttt{CREATE INDEX idx\_lower ON Employee (lower(Name));}
+            \item \textit{Key Concept:} The index stores the \textit{result} of the function, allowing the DB to search directly on the computed values.
+        \end{itemize}
     \end{itemize}
 
     \subsubsection{Chỉ mục Băm \& Bitmap}
@@ -1177,6 +1241,17 @@
         \item \textbf{Use Case:} ETL, ML training, interactive analytics, log processing. \textit{VD: Netflix, Uber, Airbnb.}
     \end{itemize}
 
+    \subsubsection{Big Data Warehousing / SQL-on-Hadoop}
+    \textit{Các công cụ SQL Analytics cho Big Data - phân biệt với NoSQL operational stores.}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Apache Hive:} SQL-on-Hadoop, metadata layer trên HDFS. Batch-oriented, high latency.
+        \item \textbf{Google BigQuery:} Serverless, columnar storage (Dremel), auto-scaling, pay-per-query.
+        \item \textbf{AWS Redshift:} Managed columnar DW, massively parallel processing (MPP).
+        \item \textbf{Snowflake:} Cloud-native DW, tách biệt storage/compute, near-zero admin.
+        \item \textbf{Presto/Trino:} Distributed SQL query engine, federated queries across data sources.
+    \end{itemize}
+    \textit{Phân biệt:} Các công cụ trên dùng cho \textbf{Analytics/OLAP}, khác với NoSQL (MongoDB, Cassandra) dùng cho \textbf{Operational/OLTP}.
+
     % --- PHẦN 4: XỬ LÝ LUỒNG (STREAMING) ---
     \subsection{Streaming Processing}
     \textit{Xử lý dữ liệu liên tục, độ trễ thấp (Real-time).}
@@ -1360,6 +1435,15 @@
         \item \textbf{ELT (Extract-Load-Transform):} Load raw vào kho \textit{trước}, transform sau. Schema-on-read. Tận dụng sức mạnh Cloud DW (BigQuery, Snowflake). (Hiện đại).
     \end{itemize}
 
+    \paragraph{Common ETL Logic Patterns}
+    \textit{Các pattern phổ biến khi thiết kế ETL flow (cho luận văn/essay).}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Soft Deletes:} Nếu source có cờ \texttt{is\_deleted}, lọc bỏ trong Extract, hoặc load vào DW với \texttt{Status = 'Inactive'} trong dimension (không xóa row khỏi Fact table).
+        \item \textbf{Date Derivation:} Luôn mở rộng cột \texttt{Date} đơn giản thành \textbf{Date Dimension} đầy đủ (Day, Week, Month, Quarter, Year, HolidayFlag).
+        \item \textbf{Calculated Measures:} Tính toán như \texttt{Revenue = Price * Quantity} trong giai đoạn \textbf{Transform}, lưu vào Fact table để aggregation nhanh.
+        \item \textbf{SCD for Price Changes:} Khi \texttt{Item\_price} thay đổi, dùng \textbf{Type 2 SCD} trong dimension hoặc snapshot fact table để lưu lịch sử giá.
+    \end{itemize}
+
     \columnbreak
     % ============================================================================
     % TIER 5: ANALYTICS & WAREHOUSING
@@ -1382,6 +1466,21 @@
         \end{tabular}
     \end{center}
 
+    \paragraph{OLAP Data Cube Operations}
+    \textit{Thao tác trên khối dữ liệu đa chiều (Dimensions: Product, Time, Location, ...).}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Slice:} Cố định 1 dimension, xem ma trận 2D còn lại.
+        \newline \textit{VD:} Slice Year=2024 $\rightarrow$ Xem doanh thu theo (City, Product) cho năm 2024.
+        \item \textbf{Dice:} Chọn sub-cube với nhiều điều kiện trên nhiều dimensions.
+        \newline \textit{VD:} Dice (Year $\in$ [2023,2024], City $\in$ [HCM, HN]) $\rightarrow$ Sub-cube 2x2.
+        \item \textbf{Roll-up (Drill-up):} Tổng hợp lên mức cao hơn (chi tiết $\to$ tổng quát).
+        \newline \textit{VD:} Roll-up từ City $\to$ Region $\to$ Country.
+        \item \textbf{Drill-down:} Phân rã xuống mức chi tiết hơn (tổng quát $\to$ chi tiết).
+        \newline \textit{VD:} Drill-down từ Year $\to$ Quarter $\to$ Month $\to$ Day.
+        \item \textbf{Pivot (Rotate):} Xoay trục để thay đổi góc nhìn.
+        \newline \textit{VD:} Đổi trục X từ Product sang Time.
+    \end{itemize}
+
     \subsubsection{4 Đặc trưng Chính (Inmon)}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
         \item \textbf{Hướng chủ đề (Subject-oriented):} Tổ chức theo chủ đề chính (Khách hàng, Sản phẩm) thay vì theo ứng dụng (App Bán hàng, App Kho).
@@ -1403,6 +1502,50 @@
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Star Schema:} Fact ở giữa, Dimension xung quanh. Phi chuẩn hóa dimension. \textit{Hiệu năng cao, dễ query.}
         \item \textbf{Snowflake Schema:} Chuẩn hóa dimension (tách nhỏ). \textit{Tiết kiệm không gian, join phức tạp.}
+    \end{itemize}
+
+    \paragraph{Fact Table Additivity}
+    \textit{Phân loại measures theo khả năng aggregation.}
+    \begin{center}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{@{} l | p{0.25\linewidth} | l | p{0.25\linewidth} @{}}
+        \toprule
+        \textbf{Type} & \textbf{Definition} & \textbf{Example} & \textbf{Rule} \\
+        \midrule
+        \textbf{Additive} & Có thể SUM qua \textbf{tất cả} dimensions. & Sales\_Amount, Quantity & SUM over Time? Yes. SUM over Store? Yes. \\
+        \textbf{Semi-Additive} & Có thể SUM qua \textbf{một số} dimensions, \textbf{không} Time. & Account\_Balance, Inventory\_Level & SUM over Store? Yes. SUM over Time? \textbf{No}. \\
+        \textbf{Non-Additive} & \textbf{Không} thể SUM qua bất kỳ dimension nào. & Unit\_Price, Margin\_Rate & Phải dùng AVG, MIN, MAX. \\
+        \bottomrule
+    \end{tabular}
+    \end{center}
+
+    \subsubsection{Kimball's 4-Step Dimensional Modeling}
+    \textit{Phương pháp thiết kế DW theo Kimball (bottom-up, theo chủ đề nghiệp vụ).}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Select the Business Process:} Chọn quy trình nghiệp vụ cần phân tích.
+        \newline \textit{VD:} Orders, Billing, Inventory, Shipments.
+        \item \textbf{Declare the Grain:} Xác định mức chi tiết của mỗi row trong fact table.
+        \newline \textit{VD:} One row per order line item, one row per transaction.
+        \newline \textbf{Lưu ý:} Phải xác định grain \textbf{TRƯỚC} khi chọn dimensions/facts.
+        \item \textbf{Identify the Dimensions:} Xác định các chiều phân tích (Who, What, Where, When).
+        \newline \textit{VD:} dim\_customer, dim\_product, dim\_store, dim\_date.
+        \item \textbf{Identify the Facts:} Xác định các measures/metrics (Số liệu đo lường).
+        \newline \textit{VD:} quantity\_sold, revenue, discount\_amount, cost.
+    \end{enumerate}
+
+    \subsubsection{Schema Evolution Trade-offs}
+    \textit{Khi yêu cầu thay đổi, có 2 chiến lược phổ biến để mở rộng schema DW.}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Strategy 1: Extend Star Schema (Add Columns to Dimension)}
+        \begin{itemize}
+            \item \textit{Pros:} Queries đơn giản hơn (không join mới), backward compatible.
+            \item \textit{Cons:} Dimension table trở nên rất rộng (wide/fat dimension), tiềm ẩn redundancy và anomalies.
+        \end{itemize}
+        \item \textbf{Strategy 2: Convert to Snowflake (Normalize New Attributes)}
+        \begin{itemize}
+            \item \textit{Pros:} Tiết kiệm storage, cấu trúc rõ ràng hơn cho dữ liệu phân cấp (VD: Region $\to$ City).
+            \item \textit{Cons:} Breaking Change - queries cũ cần sửa (thêm join mới), ETL phức tạp hơn (quản lý keys giữa các bảng normalized).
+        \end{itemize}
     \end{itemize}
 
     \subsubsection{DW vs DL vs Lakehouse}
@@ -1628,5 +1771,22 @@
         \item \textbf{Shuffle:} Transfer data between nodes over network (Map $\to$ Reduce).
         \newline $\rightarrow$ \textit{Optimization:} Broadcast Join (copy small table to all nodes) to avoid shuffling large table.
     \end{itemize}
+
+    \section{Appendix: Quick Exam Q\&A}
+    \textit{Các câu hỏi lý thuyết "bẫy" thường gặp trong đề thi.}
+    \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, nosep]
+        \item[Q: Chọn công nghệ/DBMS ở giai đoạn nào?] 
+        \newline $\rightarrow$ \textbf{Trước/Bắt đầu Thiết kế Logic.} (Vì logic design phụ thuộc vào mô hình dữ liệu của DBMS đã chọn: Quan hệ, NoSQL...).
+        \item[Q: Mục tiêu của lược đồ Trong (Internal)?]
+        \newline $\rightarrow$ Định nghĩa cấu trúc lưu trữ vật lý và đường dẫn truy cập (mức vật lý).
+        \item[Q: Data Warehouse hướng chủ đề (Subject-oriented) là gì?]
+        \newline $\rightarrow$ Dữ liệu tổ chức theo thực thể nghiệp vụ (Sales, Customer) thay vì theo chức năng App.
+        \item[Q: Khi nào xác định Measures (Facts)?]
+        \newline $\rightarrow$ Bước 4 trong Kimball (sau khi chọn Process, Grain, Dimensions).
+        \item[Q: Điểm yếu lớn nhất của kiến trúc Lambda?]
+        \newline $\rightarrow$ Phải duy trì và code trên 2 code base khác nhau (Batch \& Speed layer).
+        \item[Q: Tại sao Secondary Index thường là Dense?]
+        \newline $\rightarrow$ Vì thứ tự vật lý của data file không trùng với index key, nên mỗi record cần 1 entry riêng.
+    \end{description}
 \end{multicols}
 \end{document}
