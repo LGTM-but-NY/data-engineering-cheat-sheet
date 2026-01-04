@@ -295,16 +295,16 @@
     % ===========================================================================
     \section{Xử lý \& Tối ưu hóa Truy vấn}
 
-    \textit{Query processing refers to the range of activities involved in extracting data from a database. Because SQL is declarative (specifying \textbf{what} to retrieve, not \textbf{how}), the DBMS must determine the most efficient execution strategy.}
+    \textit{Quy trình từ câu lệnh SQL $\rightarrow$ Kết quả. Trọng tâm: Tính toán chi phí I/O (số block truy cập) để chọn chiến lược tối ưu.}
 
-    % ============================================================================
-    % OVERVIEW - THREE PHASES
-    % ============================================================================
-    \subsection{Three Main Phases}
+    % ----------------------------------------------------------------------------
+    % 1. CÁC GIAI ĐOẠN CHÍNH
+    % ----------------------------------------------------------------------------
+    \subsection{Ba Giai đoạn Chính (Overview)}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Parsing \& Translation:} Translate high-level SQL query into internal relational-algebra representation. Verify syntax and semantics.
-        \item \textbf{Optimization:} Generate multiple equivalent execution plans. Estimate cost for each plan using statistics. Choose plan with minimum cost.
-        \item \textbf{Evaluation:} Execute chosen plan using query-execution engine. Apply evaluation primitives (algorithms for relational operations).
+        \item \textbf{Parsing \& Translation:} Kiểm tra cú pháp/ngữ nghĩa $\rightarrow$ Tạo cây đại số quan hệ (Canonical Tree).
+        \item \textbf{Optimization (Quan trọng nhất):} Sử dụng thống kê (Catalog) để ước lượng chi phí $\rightarrow$ Chọn Execution Plan rẻ nhất (ít I/O nhất).
+        \item \textbf{Evaluation:} Thực thi kế hoạch (dùng Pipelining hoặc Materialization).
     \end{enumerate}
 
     % ============================================================================
@@ -361,22 +361,18 @@
     \end{itemize}
 
     % ----------------------------------------------------------------------------
-    % HEURISTIC OPTIMIZATION
+    % 2. HEURISTIC OPTIMIZATION (TỐI ƯU HÓA DỰA TRÊN LUẬT)
     % ----------------------------------------------------------------------------
-    \subsubsection{Heuristic Optimization}
-    \textit{Goal:} Transform initial canonical query tree into more efficient equivalent tree using algebraic equivalence rules, without detailed cost estimation. This reduces search space for cost-based optimizer.
+    \subsubsection{Tối ưu hóa Heuristic (Dựa trên luật)}
+    \textit{Mục tiêu: Thu gọn kích thước dữ liệu trung gian càng sớm càng tốt.}
 
-    \paragraph{3 Core Heuristic Rules}
+    \paragraph{Các Quy tắc Cốt lõi (Phải nhớ)}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Perform Selections Early ($\sigma$ down):} Push selection down close to leaf nodes (base relations).
-        \newline \textit{Reason:} Reduce number of tuples before join $\rightarrow$ smaller intermediate results $\rightarrow$ less I/O.
-        \newline \textit{Benefit:} If selection reduces 1M rows to 1K rows, subsequent join processes 1K instead of 1M.
-        \item \textbf{Perform Projections Early ($\pi$ down):} Push projection down to reduce number of attributes (columns).
-        \newline \textit{Reason:} Reduce "width" of intermediate relations $\rightarrow$ fewer bytes per tuple $\rightarrow$ save memory \& I/O.
-        \newline \textit{Caution:} Keep attributes needed by subsequent operations (join keys, selection predicates, final output).
-        \item \textbf{Avoid Cartesian Products ($\times$):} Combine Cartesian product + selection into Join ($\bowtie$).
-        \newline \textit{Reason:} Cartesian product creates $|R| \times |S|$ tuples - extremely large intermediate relations.
-        \newline \textit{Example:} 1000-row $\times$ 1000-row = 1M intermediate tuples. With join condition, result may be only 10K tuples.
+        \item \textbf{Perform Selections Early ($\sigma$ down):} Đẩy phép CHỌN xuống thấp nhất có thể.
+        \newline \textit{Lý do:} Giảm số dòng ($r$) trước khi thực hiện Join (phép toán tốn kém nhất).
+        \item \textbf{Perform Projections Early ($\pi$ down):} Đẩy phép CHIẾU xuống thấp nhất.
+        \newline \textit{Lý do:} Giảm kích thước mỗi dòng (tuple size), tăng $bfr$ (blocking factor).
+        \item \textbf{Tránh tích Đề-các ($\times$):} Luôn kết hợp $\times$ với $\sigma$ để thành Join ($\bowtie$).
     \end{enumerate}
 
     \paragraph{Transformation Rules}
@@ -468,31 +464,31 @@
         \item \textbf{Đánh đổi:} Đọc nhanh hơn so với ghi chậm hơn (chi phí bảo trì chỉ mục khi INSERT/UPDATE/DELETE).
     \end{itemize}
 
-    \subsubsection{Phân loại Chỉ mục}
+    \subsubsection{Phân loại \& Chiến lược Lưu trữ}
+
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Theo Cấu trúc:}
-            \begin{itemize}
-                \item \textit{Có thứ tự (Ordered):} Các mục được sắp xếp (vd: B+-tree); hỗ trợ truy vấn khoảng.
-                \item \textit{Băm (Hash):} Khóa được băm vào bucket; chỉ nhanh khi tìm kiếm chính xác (dấu bằng).
-            \end{itemize}
-        \item \textbf{Theo Mật độ:}
-            \begin{itemize}
-                \item \textit{Đặc (Dense):} Một mục chỉ mục cho mỗi giá trị khóa tìm kiếm riêng biệt.
-                \item \textit{Thưa (Sparse):} Một mục chỉ mục cho mỗi khối (hoặc mỗi giá trị phân cụm); nhỏ hơn, chi phí bảo trì thấp hơn.
-            \end{itemize}
-        \item \textbf{Theo Thứ tự Vật lý:}
-            \begin{itemize}
-                \item \textit{Chỉ mục Chính/Phân cụm:} Khóa tìm kiếm quyết định thứ tự vật lý của tập tin (tối đa một per bảng); thường là chỉ mục thưa.
-                \item \textit{Chỉ mục Phụ:} Đường dẫn truy cập thay thế độc lập với thứ tự vật lý; thường là chỉ mục đặc hoặc dùng gián tiếp cho các khóa không duy nhất.
-            \end{itemize}
+        \item \textbf{Dense Index (Chỉ mục Đặc):} 
+        \begin{itemize}
+            \item Có một index entry cho \textbf{mỗi record} trong data file.
+            \item \textbf{Sử dụng khi:} File dữ liệu \textbf{không} được sắp xếp theo trường đánh index (Secondary Index).
+            \item \textbf{Size:} Số Index Entries $n_i = r$ (số dòng dữ liệu).
+        \end{itemize}
+        \item \textbf{Sparse Index (Chỉ mục Thưa):}
+        \begin{itemize}
+            \item Chỉ có index entry đại diện cho \textbf{mỗi block} (hoặc mỗi nhóm).
+            \item \textbf{Sử dụng khi:} File dữ liệu \textbf{đã được sắp xếp} theo trường đánh index (Primary/Clustering Index).
+            \item \textbf{Size:} Số Index Entries $n_i = b$ (số block dữ liệu).
+            \item \textit{Ví dụ (Câu 13 - F1.1):} 70.000 records, bfr=17, sắp xếp theo SSN. Index trên SSN là Sparse.
+            \newline $\Rightarrow$ Số entries = $70.000 / 17 \approx 4.118$.
+        \end{itemize}
     \end{itemize}
 
-    \paragraph{Multi-level Index Properties}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Root Constraint:} Mức cao nhất (root) của B-Tree/B+-Tree \textbf{luôn} chiếm \textbf{đúng 1} disk block.
-        \item \textbf{Tree Height:} Cây chỉ tăng chiều cao khi root node bị split.
-    \end{itemize}
-
+    \subsubsection{Các loại Chỉ mục Cơ bản}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Primary Index:} Trên trường \textbf{Khóa (Unique)} + File \textbf{đã sắp xếp}. (Thường là Sparse).
+        \item \textbf{Clustering Index:} Trên trường \textbf{Không Khóa (Non-Unique)} + File \textbf{đã sắp xếp}. (Sparse - 1 entry cho mỗi giá trị riêng biệt).
+        \item \textbf{Secondary Index:} Trên bất kỳ trường nào + File \textbf{không sắp xếp} (hoặc sắp xếp theo trường khác). (Luôn là Dense).
+    \end{enumerate}
 
     \subsubsection{Công thức Số lượng Index Entries}
     \textit{Xác định số hàng trong file chỉ mục (không phải chi phí truy cập).}
@@ -507,96 +503,85 @@
         \newline $\text{Entries} = r$
         \newline \textit{Lý do:} Mỗi record có 1 entry (dense index).
     \end{itemize}
-
+    % ----------------------------------------------------------------------------
+    % B-TREES & B+-TREES (TRỌNG TÂM THI)
+    % ----------------------------------------------------------------------------
     \subsubsection{B-Trees \& B+-Trees}
 
-    \paragraph{Khác biệt Cấu trúc}
-    \textit{Mặc dù thường dùng thay thế cho nhau, B-Tree và B+-Tree có sự khác biệt quan trọng về nơi lưu data pointers.}
+
+    \paragraph{So sánh}\mbox{}\\
+    \textit{Câu hỏi thường gặp: Tại sao B+-Tree là chuẩn công nghiệp thay vì B-Tree?}
+    \begin{center}
+        \renewcommand{\arraystretch}{1.2}
+        \begin{tabular}{|p{0.45\linewidth}|p{0.45\linewidth}|}
+            \hline
+            \textbf{B-Tree} & \textbf{B+-Tree} (Chuẩn DBMS) \\
+            \hline
+            \textbf{Data Pointers:} Lưu ở \textbf{tất cả} các node (Internal + Leaf). & \textbf{Data Pointers:} Chỉ lưu ở \textbf{Leaf Node}. Internal node chỉ chứa key để điều hướng. \\
+            \hline
+            \textbf{Search:} Có thể dừng ở Internal node nếu tìm thấy key. & \textbf{Search:} Luôn phải đi xuống tận Leaf node để lấy dữ liệu. \\
+            \hline
+            \textbf{Fan-out:} Thấp hơn (do tốn không gian lưu Data ptr). Cây cao hơn $\rightarrow$ Nhiều I/O hơn. & \textbf{Fan-out:} \textbf{Cao hơn} (Internal node nhẹ). Cây thấp hơn ($h$ nhỏ) $\rightarrow$ Ít I/O hơn. \\
+            \hline
+            \textbf{Range Query:} Khó khăn (phải duyệt cây kiểu trung thứ tự - In-order traversal). & \textbf{Range Query:} \textbf{Rất nhanh} (các Leaf node liên kết với nhau thành Linked List). \\
+            \hline
+        \end{tabular}
+    \end{center}
+
+    \paragraph{Các tính chất cốt lõi}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{B-Tree:} Search key values appear \textit{only once} in tree. Data pointers exist at \textit{all levels} (internal + leaf nodes).
-        \newline $\rightarrow$ Lookup can terminate at internal node if key is found.
-        \item \textbf{B+-Tree:} Data pointers only stored at \textit{leaf nodes}. Internal nodes only contain separator keys to guide search.
-        \newline $\rightarrow$ Internal nodes contain more keys $\rightarrow$ higher fan-out $\rightarrow$ shorter tree height.
-        \newline $\rightarrow$ Leaf nodes linked together $\rightarrow$ efficient sequential access \& range scans.
-        \item \textbf{Industry Standard:} Most modern DBMS use B+-Tree (abbreviated as B-Tree) due to fewer disk I/Os.
+        \item \textbf{Balanced Tree:} Mọi đường đi từ gốc đến lá đều có độ dài bằng nhau ($h$).
+        \item \textbf{Root Constraint:} Node gốc luôn chiếm \textbf{đúng 1} disk block.
+        \item \textbf{Node Capacity:} Mỗi node là 1 disk block (thường là 4KB).
+        \item \textbf{Fill Factor:} Các node (trừ root) phải đầy ít nhất 50\% ($\lceil p/2 \rceil$). Nếu ít hơn $\rightarrow$ Underflow (Gộp node).
     \end{itemize}
 
-    \paragraph{General Structure \& Properties}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Balanced Tree:} Every path from root to leaf has same length (uniform height).
-        \item \textbf{Node Capacity:} Each node = fixed-size disk block (typically 4KB or larger).
-        \item \textbf{Fan-out:} Internal nodes contain from $\lceil n/2 \rceil$ to $n$ children. High fan-out $\rightarrow$ B-Trees "fat and short".
-        \newline \textit{Example:} 3-4 levels can store terabytes of data.
-        \item \textbf{Leaf Nodes:} Contain from $\lceil (n-1)/2 \rceil$ to $n-1$ values, sorted by search key.
-        \item \textbf{Separator Keys:} Internal node with keys $K_1, K_2, \ldots, K_{n-1}$: pointer $P_i$ points to subtree with values $X$ satisfying $K_{i-1} < X < K_i$.
+    \paragraph{Công thức tính Fan-out (Order $p$) [Cần nhớ để tính]}
+    \textit{Ký hiệu: Block size $B$, Tree Pointer $P$, Key size $V$, Data Pointer $P_r$.}
+
+
+    \begin{itemize}[leftmargin=*, label={$\bullet$}]
+        \item \textbf{B+-Tree Internal Node (Tìm $p$):}
+        \newline Node chứa $p$ con trỏ cây và $(p-1)$ khóa. (Không chứa data pointer).
+        \newline \textbf{Công thức:} $p \times P + (p-1) \times V \le B$
+        
+        \item \textbf{B+-Tree Leaf Node (Tìm $p_{leaf}$):}
+        \newline Node chứa $p_{leaf}$ cặp (Data Pointer + Key) và 1 Next Pointer.
+        \newline \textbf{Công thức:} $p_{leaf} \times (P_r + V) + P \le B$
+        
+        \item \textit{Lưu ý cho B-Tree thường:} Internal node B-Tree có chứa Data Pointer, công thức sẽ là: $p \times P + (p-1) \times (V + P_r) \le B$.
     \end{itemize}
 
-    \paragraph{Algorithms (Complexity: $O(\log_N M)$)}
+    \paragraph{Ví dụ Tính toán Sức chứa (Capacity Example)}\mbox{}\\
+    \textit{Đề bài:} Block size $B=512$ bytes; Key size $V=9$; Data pointer $P_r=7$; Tree pointer $P=6$.
 
-    \textit{Search (Lookup):}
+    \textit{Bước 1: Tính Fan-out (Order $p$)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Traversal:} Start from root. At each internal node, binary search finds correct child pointer covering search key range.
-        \item \textbf{Termination:} Repeat until leaf node. In B+-Tree, search leaf for specific key and associated record pointer.
-        \item \textbf{Range Queries:} Leaf nodes linked (sibling pointers) $\rightarrow$ efficient range scan. Find starting key, traverse linked list.
+        \item \textbf{Nút trong B-Tree (B-Tree Internal):} Chứa cả Data Pointer.
+        \newline $(p \times 6) + ((p-1) \times (7+9)) \le 512 \Rightarrow 22p \le 528 \Rightarrow \mathbf{p = 23}$.
+
+        \item \textbf{Nút trong B+-Tree (B+-Tree Internal):} Chỉ chứa Key.
+        \newline $(p \times 6) + ((p-1) \times 9) \le 512 \Rightarrow 15p \le 521 \Rightarrow \mathbf{p = 34}$.
+        \newline \textit{Kết luận:} B+-Tree có fan-out cao hơn 48\% $\rightarrow$ cây ngắn hơn.
+
+        \item \textbf{Nút lá B+-Tree (Leaf):}
+        \newline $(p_{leaf} \times (7+9)) + 6 \le 512 \Rightarrow 16 \times p_{leaf} \le 506 \Rightarrow \mathbf{p_{leaf} = 31}$.
     \end{itemize}
 
-    \textit{Insertion:}
-    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Locate Leaf:} Find leaf node where new key belongs.
-        \item \textbf{Space Available:} If leaf has space $\rightarrow$ insert entry in sorted order.
-        \item \textbf{Splitting (Overflow):} If leaf full:
-        \begin{itemize}
-            \item Split into 2 nodes: first $\lceil n/2 \rceil$ entries in original, rest in new node.
-            \item Middle key promoted (copied) up to parent as separator.
-        \end{itemize}
-        \item \textbf{Propagation:} If parent also full $\rightarrow$ split propagates upward. Root split $\rightarrow$ new root $\rightarrow$ tree height increases by 1.
-    \end{enumerate}
-
-    \textit{Deletion:}
-    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Locate \& Remove:} Find entry in leaf node and delete.
-        \item \textbf{Underflow:} If node $< \lceil n/2 \rceil$ full:
-        \begin{itemize}
-            \item \textit{Redistribute:} Borrow entries from sibling node (shift keys through parent).
-            \item \textit{Merge (Coalesce):} If cannot redistribute $\rightarrow$ merge with sibling. Separator key in parent is deleted/demoted.
-        \end{itemize}
-        \item \textbf{Propagation:} Merge can propagate upward, potentially reducing tree height.
-    \end{enumerate}
-
-    \paragraph{Capacity Calculation Example}\mbox{}\\
-    \textit{Parameters:} Block size $B=512$ bytes; key size $V=9$ bytes; data pointer $\Pr=7$ bytes; tree pointer $P=6$ bytes.
-
-    \textit{Step 1: Fan-out Calculation}
+    \textit{Bước 2: Ước lượng Tổng sức chứa (Giả sử cây cao 3 mức, đầy 69\%)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{B-Tree Internal Node:} Contains $p$ tree pointers + $(p-1)$ keys + $(p-1)$ data pointers.
-        \newline $(p \times 6) + ((p-1) \times (7+9)) \le 512 \Rightarrow 22p \le 528 \Rightarrow p = 23$
-
-        \item \textbf{B+-Tree Internal Node:} Contains $p$ tree pointers + $(p-1)$ keys (no data pointers).
-        \newline $(p \times 6) + ((p-1) \times 9) \le 512 \Rightarrow 15p \le 521 \Rightarrow p = 34$
-        \newline \textit{Insight:} B+-Tree fan-out 48\% higher (34 vs 23) $\rightarrow$ shorter tree.
-
-        \item \textbf{B+-Tree Leaf Node:} Contains $p_{leaf}$ key/data pointer pairs + 1 next pointer.
-        \newline $(p_{leaf} \times (7+9)) + 6 \le 512 \Rightarrow 16 \times p_{leaf} \le 506 \Rightarrow p_{leaf} = 31$
+        \item \textbf{B-Tree:} Tổng entry $\approx \mathbf{4.095}$. (Do $p$ nhỏ).
+        \item \textbf{B+-Tree:} Tổng entry $\approx \mathbf{255.507}$. (Do $p$ lớn, số lượng lá tăng theo lũy thừa).
+        \newline $\rightarrow$ \textbf{Hiệu quả:} B+-Tree lưu được gấp ~60 lần dữ liệu với cùng chiều cao cây.
     \end{itemize}
 
-    \textit{Step 2: Estimate Total Capacity (69\% Full)}
+    \paragraph{Thao tác Cập nhật (Update Operations)}\mbox{}\\
+    \textit{Cơ chế duy trì tính cân bằng của cây.}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{B-Tree (3 levels):} Average fan-out $fo = 23 \times 0.69 \approx 16$.
-            \begin{itemize}
-                \item Level 0 (root): 15 entries, 16 pointers
-                \item Level 1: $16 \times 15 = 240$ entries
-                \item Level 2: $256 \times 15 = 3{,}840$ entries
-                \item \textbf{Total:} $15 + 240 + 3{,}840 \approx \mathbf{4{,}095}$ entries
-            \end{itemize}
-
-        \item \textbf{B+-Tree (3 levels):} Internal nodes $fo = 34 \times 0.69 \approx 23$; Leaf capacity $= 31 \times 0.69 \approx 21$.
-            \begin{itemize}
-                \item Level 0: 22 entries, 23 pointers
-                \item Level 1: $23 \times 22 = 506$ entries, 529 pointers
-                \item Leaf level: $12{,}167 \times 21 \approx \mathbf{255{,}507}$ data pointers
-            \end{itemize}
-
-        \item \textbf{Observation:} B+-Tree holds $\sim 4\times$ more entries at the same height due to lighter internal nodes.
+        \item \textbf{Splitting (Khi Insert):} Nếu node bị đầy ($> B$), tách thành 2 node. Key ở giữa (middle key) được đẩy lên (promote) node cha.
+        \newline $\rightarrow$ Có thể làm tăng chiều cao cây ($h+1$) nếu lan truyền đến Root.
+        \item \textbf{Merging (Khi Delete):} Nếu node bị rỗng ($< 50\%$), mượn key từ anh em hoặc gộp 2 node lại.
+        \newline $\rightarrow$ Có thể làm giảm chiều cao cây ($h-1$).
     \end{itemize}
 
     \paragraph{Implementation \& Optimizations}
@@ -647,13 +632,15 @@
         \item \textbf{Ưu điểm:} Gọn nhẹ (1 triệu dòng = 125 KB mỗi bitmap); thao tác bitwise nhanh; hiệu quả cho bộ lọc nhiều điều kiện; hỗ trợ COUNT qua đếm bit.
     \end{itemize}
 
-    \subsubsection{Heuristics chọn Index (Q12, 13 - F1.1)}
+    \paragraph{Chiến lược chọn Index (Heuristics)}
     \begin{itemize}[leftmargin=*, nosep]
-        \item \textbf{Equality (=):} Hash Index (tốt nhất) > B+-tree.
-        \item \textbf{Range ($>, <$, BETWEEN):} B+-tree (bắt buộc) > Clustering (tốt) > Secondary. Hash vô dụng.
-        \item \textbf{Update Heavy:} Index làm chậm thao tác ghi (Insert/Update/Delete) vì phải cập nhật cả Index tree.
-        \item \textbf{Small File:} Linear Scan thường tốt hơn Index (do overhead I/O của index).
+        \item \textbf{Truy vấn khoảng ($>, <$, BETWEEN):} Bắt buộc dùng \textbf{B+ Tree}. (Hash index vô dụng).
+        \item \textbf{Truy vấn chính xác ($=$):} \textbf{Hash Index} tốt nhất ($O(1)$), sau đó đến B+ Tree.
+        \item \textbf{Update nhiều:} Hạn chế tạo quá nhiều Index (vì tốn chi phí cập nhật cây).
+        \item \textbf{Thuộc tính độ chọn lọc thấp (Giới tính, True/False):} Dùng \textbf{Bitmap Index}.
     \end{itemize}
+
+    \columnbreak
 
     % ----------------------------------------------------------------------------
     % SELECTION COST FUNCTIONS
@@ -1845,7 +1832,30 @@
         \newline \textit{Bẫy:} Nếu Dimension được chuẩn hóa $\to$ đó là \textbf{Snowflake Schema}.
         
         \item[Q: Chọn DBMS ở giai đoạn nào?] $\rightarrow$ \textbf{Trước/Bắt đầu Thiết kế Logic} (vì logic design phụ thuộc mô hình DBMS).
+        
+        \item[Q: Lược đồ ý niệm (Conceptual Schema) đặc điểm?] $\rightarrow$ \textbf{Độc lập công nghệ}, dễ đọc hiểu, dùng cho cả SQL và NoSQL.
+        \newline \textit{Bẫy:} "Khó đọc, cần tài liệu mô tả" là SAI.
+        
+        \item[Q: Category (Union) khác Specialization/Generalization?] $\rightarrow$ Category \textbf{KHÔNG kế thừa tất cả} thuộc tính từ các superclass. Chỉ \textbf{đại diện} cho một trong các superclass.
+        \newline \textit{VD:} Person UNION Company $\to$ Owner (chỉ là Person HOẶC Company, không phải cả hai).
+        
+        \item[Q: Ánh xạ (E)ERD sang Relational đảm bảo gì?] $\rightarrow$ Đảm bảo: \textbf{Primary Key, Foreign Key, Participation, Cardinality}.
+        \newline \textit{Lưu ý:} Tất cả ràng buộc từ ERD được chuyển sang SQL constraints.
+        
+        \item[Q: Weak Entity được ánh xạ thế nào?] $\rightarrow$ Tạo bảng riêng với \textbf{composite PK = (Owner FK + Partial Key)}.
+        \newline \textit{Bẫy:} Nghĩ weak entity không cần bảng riêng.
+        
+        \item[Q: Kiểu thực thể Shared Subclass?] $\rightarrow$ Kế thừa \textbf{TẤT CẢ} thuộc tính và mối liên kết từ \textbf{NHIỀU} superclass.
+        \newline \textit{VD:} Student\_Employee kế thừa từ cả Student VÀ Employee.
+
+        \item[Q: Lỗi kỳ dị dữ liệu (Anomaly) gồm?] $\rightarrow$ \textbf{Insertion, Update, Deletion Anomaly}.
+        \newline \textit{VD:} Không thể thêm Department mới nếu chưa có Employee (Insertion).
+        
+        \item[Q: Tìm Candidate Key?] $\rightarrow$ Tập thuộc tính nhỏ nhất xác định tất cả thuộc tính khác (không thể bỏ bớt).
+        \newline \textit{Công thức:} Tính closure $X^+$, nếu $X^+ = $ All Attributes $\to$ X là superkey.
     \end{description}
+
+    \columnbreak
 
     \subsection{Chỉ mục (Indexing \& Physical Design)}
     \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, itemsep=4pt]
@@ -1864,6 +1874,33 @@
         \newline \textit{TH 3 blocks:} \textbf{Clustered Index} (Data nằm ngay tại Leaf).
         \newline \textit{TH 4 blocks:} \textbf{Unclustered/Secondary Index} (Leaf chứa Pointer $\to$ tốn thêm 1 I/O để đọc Data Block).
         \newline \textit{Mẹo:} Nếu đề không nói rõ, thường giả định là \textbf{Secondary Index} (Unclustered) $\to$ chọn \textbf{4}.
+        
+        \item[Q: Primary Index số entry?] $\rightarrow$ Bằng \textbf{số blocks} của data file (1 entry/block đầu tiên).
+        \newline \textit{Công thức:} $\lceil \frac{\text{Số Records}}{\text{bfr (blocking factor)}} \rceil$.
+        
+        \item[Q: Secondary Index trên Key Field là Dense hay Sparse?] $\rightarrow$ Luôn \textbf{DENSE} (mỗi record 1 entry).
+        \newline \textit{Bẫy:} "Có thể sparse" là SAI. Secondary trên key phải dense.
+        
+        \item[Q: Multilevel Index dùng cho loại nào?] $\rightarrow$ Có thể dùng cho \textbf{TẤT CẢ} (Primary, Clustering, Secondary).
+        \newline \textit{Mục đích:} Giảm số block accesses khi index quá lớn.
+        
+        \item[Q: Hash Index tốt cho query nào?] $\rightarrow$ \textbf{Equality (=)} tuyệt vời. \textbf{Range (<, >, BETWEEN)} tệ (phải full scan).
+        \newline \textit{Khi nào dùng:} WHERE code = 10 $\to$ Hash. WHERE code > 10 $\to$ B+-Tree.
+        
+        \item[Q: Bitmap Index tốt khi nào?] $\rightarrow$ Trường có \textbf{cardinality thấp} (ít giá trị distinct).
+        \newline \textit{VD:} Gender (M/F), Status (Active/Inactive). \textit{Tệ cho:} SSN, Email.
+        
+        \item[Q: Index trên \texttt{lower(Name)}?] $\rightarrow$ Tạo \textbf{Function-Based Index}: \texttt{CREATE INDEX idx ON T(lower(Name))}.
+        \newline \textit{Lưu ý:} Index thường \texttt{(Name)} không dùng được cho \texttt{WHERE lower(Name)=...}.
+        
+        \item[Q: Composite Index (A, B) hỗ trợ query nào?] $\rightarrow$ \textbf{WHERE A=... [AND B=...]} OK. \textbf{WHERE B=...} KHÔNG dùng được.
+        \newline \textit{Nguyên tắc:} Phải có điều kiện trên \textbf{cột đầu tiên} mới dùng được index.
+        
+        \item[Q: Unspanned vs Spanned storage?] $\rightarrow$ \textbf{Unspanned:} 1 record không nằm trên >1 block (dễ quản lý, lãng phí không gian).
+        \newline \textbf{Spanned:} Record có thể nằm trên nhiều block (tiết kiệm không gian, phức tạp hơn).
+        
+        \item[Q: Thiết kế Physical cần chú ý gì?] $\rightarrow$ Kiểu dữ liệu, kích thước, ràng buộc, index, partitioning.
+        \newline \textit{Bẫy:} "Dùng String cho Date" $\to$ SAI (nên dùng DATE type để validate).
     \end{description}
 
     \subsection{Big Data \& Data Warehousing}
@@ -1880,6 +1917,86 @@
         
         \item[Q: Fact Table chứa gì?] $\rightarrow$ FK trỏ Dimensions + \textbf{Measures (số đo)}.
         \newline \textit{Bẫy:} Nghĩ Fact chứa thông tin mô tả. Fact thường toàn số và ID.
+        
+        \item[Q: Mục đích Data Warehouse theo Inmon?] $\rightarrow$ \textbf{Hỗ trợ ra quyết định} (Decision Support).
+        \newline \textit{4 đặc điểm:} Subject-oriented, Integrated, Time-variant, Non-volatile.
+        
+        \item[Q: Subject-oriented nghĩa là gì?] $\rightarrow$ Dữ liệu xoay quanh \textbf{chủ đề nghiệp vụ} (khách hàng, sản phẩm, doanh thu) chứ không phải giao dịch.
+        
+        \item[Q: ETL vs ELT khác nhau?] $\rightarrow$ \textbf{ETL:} Transform trước khi Load (truyền thống, data nhỏ/vừa).
+        \newline \textbf{ELT:} Load rồi Transform tại đích (Big Data, cloud, dữ liệu phức tạp).
+        
+        \item[Q: Star Schema vs Snowflake Schema?] $\rightarrow$ \textbf{Star:} Dimension denormalized (ít JOIN, dễ query).
+        \newline \textbf{Snowflake:} Dimension normalized (ít redundancy, nhiều JOIN).
+        \newline \textit{Lưu ý:} \textbf{Fact table LUÔN normalized} trong cả hai.
+        
+        \item[Q: Fact vs Dimension relationship?] $\rightarrow$ \textbf{One-to-Many} (1 Dimension $\to$ N Facts).
+        \newline \textit{VD:} 1 Product có thể bán nhiều lần (nhiều dòng trong Fact).
+        
+        \item[Q: Additive, Semi-Additive, Non-Additive Measure?] $\rightarrow$ \textbf{Additive:} Cộng được trên mọi dimension (Revenue, Quantity).
+        \newline \textbf{Semi-Additive:} Cộng được trên 1 số dimension (Balance - không cộng theo time).
+        \newline \textbf{Non-Additive:} Không cộng được (Ratio, Average, Price).
+        
+        \item[Q: Grain (độ mịn dữ liệu) là gì?] $\rightarrow$ \textbf{Mức chi tiết thấp nhất} của 1 dòng trong Fact.
+        \newline \textit{VD:} Grain = "Mỗi dòng là 1 giao dịch bán hàng của 1 khách tại 1 thời điểm".
+        
+        \item[Q: Hierarchy trong Dimension?] $\rightarrow$ Cấu trúc phân cấp để drill-down/roll-up.
+        \newline \textit{VD:} Date: Day $\to$ Week $\to$ Month $\to$ Quarter $\to$ Year.
+        
+        \item[Q: Data Warehouse vs Data Mart?] $\rightarrow$ \textbf{DW:} Toàn doanh nghiệp, nhiều subject.
+        \newline \textbf{Data Mart:} 1 bộ phận/chủ đề cụ thể (Sales DM, HR DM).
+        
+        \item[Q: Data Lake đặc điểm?] $\rightarrow$ Lưu \textbf{raw data}, mọi cấu trúc, \textbf{schema-on-read}.
+        \newline \textit{Khác DW:} DW cần transform trước (schema-on-write).
+        
+        \item[Q: Data Lakehouse là gì?] $\rightarrow$ Kết hợp \textbf{flexibility của Lake + structure của Warehouse}.
+        \newline \textit{Đặc điểm:} Quản lý metadata/index thống nhất, hỗ trợ cả structured và unstructured.
+        
+        \item[Q: OLTP vs OLAP?] $\rightarrow$ \textbf{OLTP:} Giao dịch hàng ngày (INSERT/UPDATE nhiều), dữ liệu hiện tại.
+        \newline \textbf{OLAP:} Phân tích (SELECT phức tạp), dữ liệu lịch sử, read-heavy.
+    \end{description}
+
+    \subsection{Big Data Technologies}
+    \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, itemsep=4pt]
+        \item[Q: 5V của Big Data?] $\rightarrow$ \textbf{Volume, Velocity, Variety, Veracity, Value}.
+        \newline \textit{Ghi nhớ:} Lượng lớn, Nhanh, Đa dạng, Chất lượng, Giá trị.
+        
+        \item[Q: HDFS hoạt động thế nào?] $\rightarrow$ \textbf{NameNode:} Lưu metadata.
+        \newline \textbf{DataNode:} Lưu data blocks (replication mặc định = 3).
+        \newline \textit{Fault tolerance:} Nếu 1 node chết, dùng replica ở node khác.
+        
+        \item[Q: MapReduce hoạt động?] $\rightarrow$ \textbf{Map:} (key, value) $\to$ intermediate (key, list of values).
+        \newline \textbf{Shuffle:} Group by key. \textbf{Reduce:} Aggregate từng group.
+        \newline \textit{Lưu ý:} Dữ liệu trung gian ghi xuống \textbf{disk}.
+        
+        \item[Q: Spark khác Hadoop MapReduce?] $\rightarrow$ Spark dùng \textbf{RDD in-memory} (nhanh hơn 10-100x).
+        \newline MapReduce ghi disk mỗi stage. Spark có thể chain operations.
+        
+        \item[Q: RDD trong Spark là gì?] $\rightarrow$ \textbf{Resilient Distributed Dataset} - tập dữ liệu phân tán, immutable, fault-tolerant.
+        \newline \textit{Fault recovery:} Dùng \textbf{lineage} (ghi lại cách tính) để recompute.
+        
+        \item[Q: Batch vs Stream Processing?] $\rightarrow$ \textbf{Batch:} Xử lý lô lớn định kỳ (hourly/daily).
+        \newline \textbf{Stream:} Xử lý real-time/near real-time (seconds).
+        \newline \textit{VD Stream:} Fraud detection, IoT sensors, stock trading.
+        
+        \item[Q: Spark Streaming vs Kafka Streams?] $\rightarrow$ \textbf{Spark Streaming:} Micro-batch (giả lập stream).
+        \newline \textbf{Kafka Streams:} True streaming (event-by-event).
+        
+        \item[Q: Checkpoint trong Spark Streaming?] $\rightarrow$ Lưu \textbf{RDD + metadata} xuống HDFS để recover khi lỗi.
+        
+        \item[Q: Apache Hive là gì?] $\rightarrow$ \textbf{SQL-on-Hadoop}. Viết SQL, Hive compile thành MapReduce/Spark jobs.
+        \newline \textit{Use case:} DW trên HDFS.
+        
+        \item[Q: CAP Theorem?] $\rightarrow$ Chỉ chọn được \textbf{2 trong 3}: Consistency, Availability, Partition Tolerance.
+        \newline \textit{VD:} MongoDB (CP), Cassandra (AP).
+        
+        \item[Q: NoSQL models?] $\rightarrow$ \textbf{Key-Value} (Redis), \textbf{Document} (MongoDB), \textbf{Column} (Cassandra), \textbf{Graph} (Neo4j).
+        
+        \item[Q: BASE vs ACID?] $\rightarrow$ \textbf{BASE:} Basically Available, Soft state, Eventually consistent (NoSQL).
+        \newline \textbf{ACID:} Atomicity, Consistency, Isolation, Durability (SQL).
+        
+        \item[Q: Master-Master vs Master-Slave?] $\rightarrow$ \textbf{M-M:} Cả hai đều write được (high availability).
+        \newline \textbf{M-S:} Master write, Slave read-only (simpler, consistency).
     \end{description}
 
     \subsection{Query Optimization}
@@ -1889,6 +2006,43 @@
         
         \item[Q: Mục tiêu tối thượng của Query Optimization?] $\rightarrow$ Chọn plan có \textbf{chi phí ước tính thấp nhất} (Cost-based).
         \newline \textit{Bẫy:} "Tìm plan tốt nhất tuyệt đối". Thực tế là "đủ tốt" trong thời gian cho phép.
+        
+        \item[Q: Query Rewriting là gì?] $\rightarrow$ Biến đổi query thành dạng tương đương nhưng hiệu quả hơn.
+        \newline \textit{VD:} \texttt{WHERE A=1 AND (B=2 OR B=3)} $\to$ \texttt{WHERE A=1 AND B IN (2,3)}.
+        
+        \item[Q: Subquery vs JOIN nào nhanh hơn?] $\rightarrow$ Thường \textbf{JOIN nhanh hơn} (optimizer có nhiều lựa chọn).
+        \newline \textit{Lưu ý:} Correlated subquery (chạy N lần) rất chậm.
+        
+        \item[Q: Selectivity là gì?] $\rightarrow$ \textbf{Tỷ lệ dòng thỏa điều kiện} = $\frac{\text{matching rows}}{\text{total rows}}$.
+        \newline \textit{Ứng dụng:} Ước tính kích thước kết quả trung gian, quyết định thứ tự JOIN.
+        
+        \item[Q: Index được dùng khi nào?] $\rightarrow$ Khi \textbf{selectivity thấp} (trả về ít dòng). Nếu trả về >15-20\% $\to$ Full Scan nhanh hơn.
+        
+        \item[Q: Partition Pruning là gì?] $\rightarrow$ Chỉ scan các partition liên quan, bỏ qua partition không thỏa điều kiện.
+        \newline \textit{VD:} \texttt{WHERE date >= '2024-01-01'} $\to$ chỉ scan partition Q1-2024.
+    \end{description}
+
+    \subsection{Các Khái Niệm Khác}
+    \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, itemsep=4pt]
+        \item[Q: Slowly Changing Dimension (SCD)?] $\rightarrow$ Xử lý dimension thay đổi theo thời gian.
+        \newline \textbf{Type 1:} Overwrite (mất lịch sử).
+        \newline \textbf{Type 2:} Thêm dòng mới (valid\_from, valid\_to, is\_active).
+        \newline \textbf{Type 3:} Thêm cột lưu giá trị cũ.
+        
+        \item[Q: Factless Fact Table?] $\rightarrow$ Fact \textbf{không có measure}, chỉ ghi nhận sự kiện xảy ra.
+        \newline \textit{VD:} Student-Class enrollment (chỉ cần biết ai học lớp nào, không có số đo).
+        
+        \item[Q: Surrogate Key là gì?] $\rightarrow$ Khóa \textbf{nhân tạo} (auto-increment, UUID) thay natural key.
+        \newline \textit{Lợi ích:} Ổn định, đơn giản, hỗ trợ SCD Type 2.
+        
+        \item[Q: Junk Dimension?] $\rightarrow$ Gom các \textbf{low-cardinality flags/indicators} vào 1 dimension.
+        \newline \textit{VD:} PaymentMethod, OrderType, ShipStatus $\to$ 1 bảng JunkDim.
+        
+        \item[Q: Degenerate Dimension?] $\rightarrow$ Dimension chỉ có \textbf{1 thuộc tính} (thường là ID), không tạo bảng riêng, để luôn trong Fact.
+        \newline \textit{VD:} OrderID, InvoiceNumber trong Fact.
+        
+        \item[Q: Conformed Dimension?] $\rightarrow$ Dimension \textbf{dùng chung} cho nhiều Fact (đảm bảo consistency).
+        \newline \textit{VD:} DateDim dùng cho SalesFact, InventoryFact, ShippingFact.
     \end{description}
 
 \end{multicols}
