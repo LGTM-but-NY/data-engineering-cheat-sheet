@@ -1,3 +1,4 @@
+%! TEX program = pdflatex
 \documentclass[landscape]{article}
 \sloppy
 \usepackage{amsmath}
@@ -149,8 +150,6 @@
         \item \textbf{Storage Cost:} Lưu trữ dữ liệu trùng lặp tốn bộ nhớ hơn.
     \end{itemize}
     \textit{Khi nào dùng:} OLAP/DW (đọc nhiều), NoSQL (thiếu join), microservices (tách biệt). \textit{Tránh:} OLTP cần ACID chặt.
-
-    \columnbreak
 
     \subsubsection{Bẫy Thiết kế CSDL (Design Traps)}
     \begin{itemize}[leftmargin=*, label={--}]
@@ -437,7 +436,7 @@
         \item $b$ (hoặc $b_r$): Tổng số blocks trong file.
         \item $r$ (hoặc $n_r$): Tổng số records (tuples) trong relation.
         \item $s$ (hoặc $s_A$): \textbf{Selection cardinality} - số records trung bình thỏa điều kiện.
-        \item $bfr$: Blocking factor (số records trên mỗi block).
+        \item $bfr$: Blocking factor (số records trên mỗi block).\\ $bfr = \lfloor Block Size (bytes) / Record Size (bytes) \rfloor$.
         \item $x$ (hoặc $h_i$): Số levels trong index (chiều cao B+-tree).
         \item $t_S$: Average time cho disk seek.
         \item $t_T$: Average time để transfer một block.
@@ -564,7 +563,7 @@
         \item \textbf{Propagation:} Merge can propagate upward, potentially reducing tree height.
     \end{enumerate}
 
-    \paragraph{Capacity Calculation Example}
+    \paragraph{Capacity Calculation Example}\mbox{}\\
     \textit{Parameters:} Block size $B=512$ bytes; key size $V=9$ bytes; data pointer $\Pr=7$ bytes; tree pointer $P=6$ bytes.
 
     \textit{Step 1: Fan-out Calculation}
@@ -707,8 +706,6 @@
         \item \textbf{Disjunctive (OR):} If 1 condition needs linear scan $\rightarrow$ entire query needs linear scan. 
         \newline \textit{If indices for all:} Retrieve pointers $\rightarrow$ compute \textbf{union}.
     \end{itemize}
-
-    \columnbreak
 
     \paragraph{Bảng Tóm tắt Chi phí SELECT}
     \begin{center}
@@ -1036,6 +1033,8 @@
         \footnotesize \textit{(SQL Execution Order)}
     \end{center}
 
+    \columnbreak
+
     % ============================================================================
     % SECTION: Big Data & Data Engineering
     % ============================================================================
@@ -1065,8 +1064,6 @@
         \end{itemize}
     \end{itemize}
 
-    \columnbreak
-
     \subsection{Paradigm: Batch vs Streaming}
     \textit{Hai mô hình xử lý dữ liệu cơ bản trong Big Data.}
     \begin{center}
@@ -1090,6 +1087,8 @@
         \item \textbf{Kappa Architecture:} Chỉ dùng Streaming (đơn giản hóa). Mọi dữ liệu qua stream processor, replay từ Kafka khi cần.
     \end{itemize}
 
+    \columnbreak
+
     \subsection{Partitioning \& Replication}
     
     \subsubsection{Sao chép (Replication)}
@@ -1111,8 +1110,6 @@
         \newline $\rightarrow$ \textit{Ưu:} Phân phối đều, tránh Hotspot.
         \newline $\rightarrow$ \textit{Nhược:} Mất khả năng Range Query (phải quét tất cả).
     \end{itemize}
-
-    \columnbreak
 
     \subsection{Định dạng Lưu trữ (File Formats)}
     \textit{Lựa chọn định dạng ảnh hưởng trực tiếp đến hiệu năng đọc/ghi.}
@@ -1174,8 +1171,6 @@
         \end{itemize}
     \end{enumerate}
 
-    \columnbreak
-
     \subsection{Công nghệ NoSQL (Storage Tech)}
     \textit{Các mô hình NoSQL cho use case khác nhau.}
 
@@ -1215,7 +1210,6 @@
         \item \textbf{Trade-offs:} Scale khó hơn NoSQL khác, không tốt cho bulk data processing.
     \end{itemize}
 
-    \columnbreak
     % ============================================================================
     % TIER 3: PROCESSING LAYER
     % ============================================================================
@@ -1278,8 +1272,6 @@
         \end{itemize}
     \end{itemize}
 
-    \columnbreak
-
     % ============================================================================
     % TIER 4: INTEGRATION & ORCHESTRATION
     % ============================================================================
@@ -1325,8 +1317,6 @@
         \end{tabular}
     \end{center}
     \textit{Smart Farming Example:} Publisher sends \texttt{area1/humidity:65\%} $\rightarrow$ Subscribers với patterns \texttt{area1/humidity}, \texttt{area1/+}, hoặc \texttt{area1/\#} đều nhận được.
-
-    \columnbreak
 
     \paragraph{Quality of Service (QoS) Levels}\mbox{}\\
     Để xử lý network reliability khác nhau, MQTT định nghĩa 3 QoS levels:
@@ -1435,7 +1425,7 @@
         \item \textbf{ELT (Extract-Load-Transform):} Load raw vào kho \textit{trước}, transform sau. Schema-on-read. Tận dụng sức mạnh Cloud DW (BigQuery, Snowflake). (Hiện đại).
     \end{itemize}
 
-    \paragraph{Common ETL Logic Patterns}
+    \paragraph{Common ETL Logic Patterns}\mbox{}\\
     \textit{Các pattern phổ biến khi thiết kế ETL flow (cho luận văn/essay).}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Soft Deletes:} Nếu source có cờ \texttt{is\_deleted}, lọc bỏ trong Extract, hoặc load vào DW với \texttt{Status = 'Inactive'} trong dimension (không xóa row khỏi Fact table).
@@ -1444,7 +1434,6 @@
         \item \textbf{SCD for Price Changes:} Khi \texttt{Item\_price} thay đổi, dùng \textbf{Type 2 SCD} trong dimension hoặc snapshot fact table để lưu lịch sử giá.
     \end{itemize}
 
-    \columnbreak
     % ============================================================================
     % TIER 5: ANALYTICS & WAREHOUSING
     % ============================================================================
@@ -1482,6 +1471,7 @@
     \end{itemize}
 
     \subsubsection{4 Đặc trưng Chính (Inmon)}
+    \textit{Top-down, mục đích hỗ trợ ra quyết định cho quản lý}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
         \item \textbf{Hướng chủ đề (Subject-oriented):} Tổ chức theo chủ đề chính (Khách hàng, Sản phẩm) thay vì theo ứng dụng (App Bán hàng, App Kho).
         \item \textbf{Tích hợp (Integrated):} Dữ liệu từ nhiều nguồn được làm sạch, đồng nhất (đơn vị, format, encoding) trước khi nạp.
@@ -1504,17 +1494,18 @@
         \item \textbf{Snowflake Schema:} Chuẩn hóa dimension (tách nhỏ). \textit{Tiết kiệm không gian, join phức tạp.}
     \end{itemize}
 
-    \paragraph{Fact Table Additivity}
+    \paragraph{Fact Table Additivity}\mbox{}\\
     \textit{Phân loại measures theo khả năng aggregation.}
     \begin{center}
-    \renewcommand{\arraystretch}{1.15}
-    \begin{tabular}{@{} l | p{0.25\linewidth} | l | p{0.25\linewidth} @{}}
+    \scriptsize
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{@{} p{0.12\linewidth} | p{0.24\linewidth} | p{0.24\linewidth} | p{0.24\linewidth} @{}}
         \toprule
         \textbf{Type} & \textbf{Definition} & \textbf{Example} & \textbf{Rule} \\
         \midrule
-        \textbf{Additive} & Có thể SUM qua \textbf{tất cả} dimensions. & Sales\_Amount, Quantity & SUM over Time? Yes. SUM over Store? Yes. \\
-        \textbf{Semi-Additive} & Có thể SUM qua \textbf{một số} dimensions, \textbf{không} Time. & Account\_Balance, Inventory\_Level & SUM over Store? Yes. SUM over Time? \textbf{No}. \\
-        \textbf{Non-Additive} & \textbf{Không} thể SUM qua bất kỳ dimension nào. & Unit\_Price, Margin\_Rate & Phải dùng AVG, MIN, MAX. \\
+        \textbf{Additive} & SUM qua \textbf{tất cả} dimensions. & Sales\_Amount, Quantity & SUM over Time? Yes. \\
+        \textbf{Semi-Add} & SUM qua \textbf{một số} dims, \textbf{trừ} Time. & Account\_Balance, Inventory & SUM over Time? \textbf{No}. \\
+        \textbf{Non-Add} & \textbf{Không} thể SUM qua bất kỳ dim. & Unit\_Price, Margin\_Rate & Dùng AVG, MIN, MAX. \\
         \bottomrule
     \end{tabular}
     \end{center}
@@ -1554,6 +1545,8 @@
         \item \textbf{Data Lake:} Dữ liệu thô (Raw), đa dạng, giá rẻ, cho ML/DS.
         \item \textbf{Lakehouse:} Kết hợp (Lưu trữ rẻ của Lake + Quản lý/ACID của Warehouse).
     \end{itemize}
+
+    \columnbreak
 
     \subsubsection{SCD (Slowly Changing Dimensions)}
     \textit{Tại sao cần?} Để đảm bảo báo cáo lịch sử chính xác. Nếu KH chuyển từ HCM ra HN năm 2024, doanh số năm 2020 vẫn phải tính cho HCM.
@@ -1772,21 +1765,119 @@
         \newline $\rightarrow$ \textit{Optimization:} Broadcast Join (copy small table to all nodes) to avoid shuffling large table.
     \end{itemize}
 
-    \section{Appendix: Quick Exam Q\&A}
-    \textit{Các câu hỏi lý thuyết "bẫy" thường gặp trong đề thi.}
-    \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, nosep]
-        \item[Q: Chọn công nghệ/DBMS ở giai đoạn nào?] 
-        \newline $\rightarrow$ \textbf{Trước/Bắt đầu Thiết kế Logic.} (Vì logic design phụ thuộc vào mô hình dữ liệu của DBMS đã chọn: Quan hệ, NoSQL...).
-        \item[Q: Mục tiêu của lược đồ Trong (Internal)?]
-        \newline $\rightarrow$ Định nghĩa cấu trúc lưu trữ vật lý và đường dẫn truy cập (mức vật lý).
-        \item[Q: Data Warehouse hướng chủ đề (Subject-oriented) là gì?]
-        \newline $\rightarrow$ Dữ liệu tổ chức theo thực thể nghiệp vụ (Sales, Customer) thay vì theo chức năng App.
-        \item[Q: Khi nào xác định Measures (Facts)?]
-        \newline $\rightarrow$ Bước 4 trong Kimball (sau khi chọn Process, Grain, Dimensions).
-        \item[Q: Điểm yếu lớn nhất của kiến trúc Lambda?]
-        \newline $\rightarrow$ Phải duy trì và code trên 2 code base khác nhau (Batch \& Speed layer).
-        \item[Q: Tại sao Secondary Index thường là Dense?]
-        \newline $\rightarrow$ Vì thứ tự vật lý của data file không trùng với index key, nên mỗi record cần 1 entry riêng.
+    \section{Appendix: Tự luận}
+    \textit{4 dạng bài chính \& cách trình bày}
+
+    \subsection{Thiết kế Kho Dữ Liệu (Star Schema)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Bước 1: Fact Table (Bảng Sự kiện)}
+        \begin{itemize}
+            \item \textit{Tên:} Phản ánh quy trình (VD: \texttt{Sales\_Fact}).
+            \item \textit{PK:} Composite Key từ các FK (VD: \texttt{TimeID, StoreID, ProductID}).
+            \item \textit{Measures:} Cột số liệu (Revenue, Qty). \textit{Lưu ý:} \texttt{Price} thường ở Dim, \texttt{Revenue} ở Fact.
+        \end{itemize}
+        \item \textbf{Bước 2: Dimension Tables (Bảng Chiều)}
+        \begin{itemize}
+            \item \textit{Time Dim:} Luôn có. Hierarchy: Day $\to$ Month $\to$ Quarter $\to$ Year.
+            \item \textit{Other Dims:} Product, Customer, Store. Cấu trúc: \texttt{Surrogate Key} (PK), \texttt{Business Key} (Source ID), Attributes.
+        \end{itemize}
+        \item \textbf{Mẹo trình bày:}
+        \newline $\rightarrow$ \textbf{Vẽ hình:} Star Schema (Fact ở giữa, Dims xung quanh).
+        \newline $\rightarrow$ \textbf{Liệt kê Text:} Viết rõ schema dạng text để giám khảo dễ chấm.
+        \newline \textit{VD:} \texttt{Dim\_Time(TimeID, Day, Month, Year)}
+    \end{itemize}
+
+    \subsection{Kiến trúc \& Công nghệ}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Kiến trúc:} Đề xuất mô hình \textbf{3-Tier} (Source $\to$ Staging $\to$ DW $\to$ Data Mart) hoặc \textbf{Lambda} (Batch + Speed) cho Big Data.
+        \item \textbf{Integration Flow:}
+        \begin{itemize}
+            \item \textbf{ETL:} Nếu cần làm sạch kỹ, data nhạy cảm.
+            \item \textbf{ELT:} Nếu đích là Cloud DW (BigQuery) hoặc Hadoop (tận dụng sức mạnh xử lý đích).
+        \end{itemize}
+        \item \textbf{Tech Stack (Phân loại rõ):}
+        \begin{itemize}
+            \item \textit{Ingestion:} Kafka (Streaming), Airflow (Orchestrator).
+            \item \textit{Processing:} Spark (Processing), MapReduce.
+            \item \textit{Storage:} HDFS / S3 (Data Lake), MongoDB (NoSQL).
+            \item \textit{Serving/DW:} Hive, BigQuery, Snowflake.
+        \end{itemize}
+    \end{itemize}
+
+    \subsection{SQL \& ETL Logic}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Extract:} Dùng \texttt{SELECT DISTINCT} cho Dimension.
+        \item \textbf{Transform:} Dùng hàm time (\texttt{Month()}, \texttt{Year()}) tạo Time Dim.
+        \item \textbf{SCD Type 2:} Nếu đề hỏi về "lưu lịch sử thay đổi" \newline $\rightarrow$ Thêm cột \texttt{Effective\_Date}, \texttt{Expiry\_Date}, \texttt{Current\_Flag}.
+    \end{itemize}
+
+    \subsection{Lý thuyết Big Data}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{CAP vs ACID:} So sánh Consisteny (Replicas vs Constraints).
+        \item \textbf{MapReduce Trace:} Vẽ bảng Input/Output từng pha: Map $\to$ Shuffle (Sort/Group) $\to$ Reduce.
+    \end{itemize}
+
+
+    \section{Appendix: Trắc Nghiệm}
+
+    \subsection{Thiết kế CSDL (ERD \& Normalization)}
+    \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, itemsep=4pt]
+        \item[Q: Đặc tính BẮT BUỘC khi phân rã lược đồ?] $\rightarrow$ \textbf{Bảo toàn thông tin (Lossless Join).}
+        \newline \textit{Bẫy:} "Bảo toàn phụ thuộc" chỉ là \textit{mong muốn}, không bắt buộc.
+        
+        \item[Q: Fan Trap xảy ra khi nào?] $\rightarrow$ Một thực thể liên kết 1:N với 2 thực thể khác tạo ra đường dẫn mơ hồ.
+        \newline \textit{VD:} NhanVien $(N) \leftarrow (1)$ PhongBan $(1) \to (N)$ DuAn. Không biết NV nào làm DA nào.
+        \newline \textit{Bẫy:} Nhầm với \textbf{Chasm Trap} (thiếu đường dẫn do partial participation).
+        
+        \item[Q: Dimension trong Star Schema có chuẩn hóa không?] $\rightarrow$ \textbf{KHÔNG.} Dimension thường denormalized để giảm JOIN.
+        \newline \textit{Bẫy:} Nếu Dimension được chuẩn hóa $\to$ đó là \textbf{Snowflake Schema}.
+        
+        \item[Q: Chọn DBMS ở giai đoạn nào?] $\rightarrow$ \textbf{Trước/Bắt đầu Thiết kế Logic} (vì logic design phụ thuộc mô hình DBMS).
     \end{description}
+
+    \subsection{Chỉ mục (Indexing \& Physical Design)}
+    \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, itemsep=4pt]
+        \item[Q: Số lượng Index Entries của Clustering Index?] $\rightarrow$ Bằng số \textbf{Distinct Values} của trường đánh index.
+        \newline \textit{Bẫy:} Nhầm thành "Số Records" (Secondary) hoặc "Số Blocks" (Primary).
+        
+        \item[Q: Root của B-Tree chiếm bao nhiêu block?] $\rightarrow$ Chính xác \textbf{1 Disk Block}.
+        \newline \textit{Bẫy:} Khi root đầy $\to$ split và tăng height, nhưng root mới vẫn chỉ 1 block.
+        
+        \item[Q: Tại sao B+-Tree tốt cho Range Query?] $\rightarrow$ Vì leaf nodes được liên kết (Linked List). Chỉ cần tìm điểm đầu và quét ngang.
+        \newline \textit{Bẫy:} Chọn "Vì chiều cao thấp hơn". Đúng nhưng không phải lý do chính.
+        
+        \item[Q: \texttt{IS NOT NULL} có dùng Index không?] $\rightarrow$ Thường \textbf{KHÔNG}. B-Tree tiêu chuẩn không index NULL $\to$ Full Table Scan.
+
+        \item[Q: Chi phí truy cập B+-Tree: 3 hay 4 blocks? (Height=3)] $\rightarrow$ \textbf{4 Blocks} (Nếu Unclustered).
+        \newline \textit{TH 3 blocks:} \textbf{Clustered Index} (Data nằm ngay tại Leaf).
+        \newline \textit{TH 4 blocks:} \textbf{Unclustered/Secondary Index} (Leaf chứa Pointer $\to$ tốn thêm 1 I/O để đọc Data Block).
+        \newline \textit{Mẹo:} Nếu đề không nói rõ, thường giả định là \textbf{Secondary Index} (Unclustered) $\to$ chọn \textbf{4}.
+    \end{description}
+
+    \subsection{Big Data \& Data Warehousing}
+    \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, itemsep=4pt]
+        \item[Q: "C" trong CAP vs "C" trong ACID khác nhau thế nào?] $\rightarrow$ \textbf{CAP-C:} Consistency of Replicas (mọi node cùng nhìn thấy dữ liệu).
+        \newline $\rightarrow$ \textbf{ACID-C:} Data thỏa ràng buộc toàn vẹn (Constraints).
+        \newline \textit{Bẫy:} Đánh đồng hai chữ "Consistency".
+        
+        \item[Q: MapReduce lưu dữ liệu trung gian ở đâu?] $\rightarrow$ Ghi xuống \textbf{Đĩa cứng (Disk)} của local node.
+        \newline \textit{Bẫy:} Nhầm với \textbf{Spark}, Spark cache trên \textbf{RAM} (nhanh hơn).
+        
+        \item[Q: Thứ tự đúng của Kimball 4-Step?] $\rightarrow$ (1) Business Process $\to$ (2) \textbf{Grain} $\to$ (3) Dimensions $\to$ (4) Facts.
+        \newline \textit{Bẫy:} Xác định Dimensions/Facts trước \textbf{Grain} $\to$ toàn bộ thiết kế sai.
+        
+        \item[Q: Fact Table chứa gì?] $\rightarrow$ FK trỏ Dimensions + \textbf{Measures (số đo)}.
+        \newline \textit{Bẫy:} Nghĩ Fact chứa thông tin mô tả. Fact thường toàn số và ID.
+    \end{description}
+
+    \subsection{Query Optimization}
+    \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, itemsep=4pt]
+        \item[Q: Tại sao Optimizer chuyển CROSS JOIN thành JOIN?] $\rightarrow$ Để tránh tạo ra $|R| \times |S|$ dòng trung gian (rất tốn kém).
+        \newline \textit{Bẫy:} Nghĩa DB "không hỗ trợ" Cross Join. DB hỗ trợ nhưng Optimizer tránh.
+        
+        \item[Q: Mục tiêu tối thượng của Query Optimization?] $\rightarrow$ Chọn plan có \textbf{chi phí ước tính thấp nhất} (Cost-based).
+        \newline \textit{Bẫy:} "Tìm plan tốt nhất tuyệt đối". Thực tế là "đủ tốt" trong thời gian cho phép.
+    \end{description}
+
 \end{multicols}
 \end{document}
