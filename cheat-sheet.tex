@@ -366,7 +366,7 @@
     \subsubsection{Tối ưu hóa Heuristic (Dựa trên luật)}
     \textit{Mục tiêu: Thu gọn kích thước dữ liệu trung gian càng sớm càng tốt.}
 
-    \paragraph{Các Quy tắc Cốt lõi (Phải nhớ)}
+    \paragraph{Các Quy tắc Cốt lõi}
     \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
         \item \textbf{Perform Selections Early ($\sigma$ down):} Đẩy phép CHỌN xuống thấp nhất có thể.
         \newline \textit{Lý do:} Giảm số dòng ($r$) trước khi thực hiện Join (phép toán tốn kém nhất).
@@ -464,9 +464,21 @@
         \item \textbf{Đánh đổi:} Đọc nhanh hơn so với ghi chậm hơn (chi phí bảo trì chỉ mục khi INSERT/UPDATE/DELETE).
     \end{itemize}
 
-    \subsubsection{Phân loại \& Chiến lược Lưu trữ}
+    \subsubsection{Các loại Chỉ mục Cơ bản}
+    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+        \item \textbf{Primary Index:} Trên trường \textbf{Khóa (Unique)} + File \textbf{đã sắp xếp}. (Thường là Sparse).
+        \item \textbf{Clustering Index:} Trên trường \textbf{Không Khóa (Non-Unique)} + File \textbf{đã sắp xếp}. (Sparse - 1 entry cho mỗi giá trị riêng biệt).
+        \item \textbf{Secondary Index:} Trên bất kỳ trường nào + File \textbf{không sắp xếp} (hoặc sắp xếp theo trường khác). (Luôn là Dense).
+    \end{enumerate}
 
+    \subsubsection{Phân loại \& Chiến lược Lưu trữ}
     \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Tổ chức Tập tin (File Organization):}
+        \begin{itemize}[leftmargin=*, label={-}]
+            \item \textbf{Heap / Unsorted:} Bản ghi được lưu theo thứ tự chèn; không hỗ trợ sparse primary index vì không có thứ tự vật lý theo khoá.
+            \item \textbf{Sorted / Ordered (Clustered):} File sắp xếp theo một khoá (ví dụ Pnumber). Primary / Clustering index có thể là \textbf{Sparse} (1 entry ~ 1 block).
+            \item \textbf{Hash File:} Băm theo khoá thành bucket; hiệu quả cho truy vấn bằng (=). Khi khoá là unique, chỉ mục hoặc cấu trúc thư mục băm thường biểu diễn một mục cho mỗi bản ghi hoặc mỗi bucket tùy triển khai (thường coi như \textbf{dense} nếu chỉ mục trên khoá chính và file không có thứ tự).
+        \end{itemize}
         \item \textbf{Dense Index (Chỉ mục Đặc):} 
         \begin{itemize}
             \item Có một index entry cho \textbf{mỗi record} trong data file.
@@ -481,14 +493,14 @@
             \item \textit{Ví dụ (Câu 13 - F1.1):} 70.000 records, bfr=17, sắp xếp theo SSN. Index trên SSN là Sparse.
             \newline $\Rightarrow$ Số entries = $70.000 / 17 \approx 4.118$.
         \end{itemize}
+        \item \textbf{Ghi chú thực tế \& Ví dụ minh hoạ:}
+        \begin{itemize}[leftmargin=*, label={-}]
+            \item \textbf{Thông số bài toán mẫu:} 50.000 dự án, bfr = 5 records/block $\Rightarrow$ $b = \lceil 50{,}000/5 \rceil = 10{,}000$ blocks.
+            \item \textbf{Trường hợp Hash file theo Pnumber (khóa duy nhất):} Chỉ mục trên Pnumber sẽ biểu diễn một entry cho mỗi bản ghi (hoặc directory/bucket tương đương) $\Rightarrow$ \textbf{Dense} với 50.000 entries.
+            \item \textbf{Trường hợp File sắp xếp theo Pnumber với Primary (clustered) index:} Chỉ mục \textbf{Sparse} với ~10.000 entries (một entry cho mỗi block) $\Rightarrow$.
+            \item \textbf{Trường hợp Secondary index trên thuộc tính không duy nhất (ví dụ Dno hoặc Pname):} Thường là \textbf{Dense}. Nếu Dno có 20 giá trị phân bố đều $\Rightarrow$ mỗi Dno ~2.500 bản ghi; nhưng số entries của index = 50.000 (một entry per record), không phải 2.500.
+        \end{itemize}
     \end{itemize}
-
-    \subsubsection{Các loại Chỉ mục Cơ bản}
-    \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
-        \item \textbf{Primary Index:} Trên trường \textbf{Khóa (Unique)} + File \textbf{đã sắp xếp}. (Thường là Sparse).
-        \item \textbf{Clustering Index:} Trên trường \textbf{Không Khóa (Non-Unique)} + File \textbf{đã sắp xếp}. (Sparse - 1 entry cho mỗi giá trị riêng biệt).
-        \item \textbf{Secondary Index:} Trên bất kỳ trường nào + File \textbf{không sắp xếp} (hoặc sắp xếp theo trường khác). (Luôn là Dense).
-    \end{enumerate}
 
     \subsubsection{Công thức Số lượng Index Entries}
     \textit{Xác định số hàng trong file chỉ mục (không phải chi phí truy cập).}
@@ -503,6 +515,8 @@
         \newline $\text{Entries} = r$
         \newline \textit{Lý do:} Mỗi record có 1 entry (dense index).
     \end{itemize}
+
+    \columnbreak
     % ----------------------------------------------------------------------------
     % B-TREES & B+-TREES (TRỌNG TÂM THI)
     % ----------------------------------------------------------------------------
@@ -639,8 +653,6 @@
         \item \textbf{Update nhiều:} Hạn chế tạo quá nhiều Index (vì tốn chi phí cập nhật cây).
         \item \textbf{Thuộc tính độ chọn lọc thấp (Giới tính, True/False):} Dùng \textbf{Bitmap Index}.
     \end{itemize}
-
-    \columnbreak
 
     % ----------------------------------------------------------------------------
     % SELECTION COST FUNCTIONS
@@ -884,7 +896,7 @@
     \subsubsection{Bảng Tra Cứu Nhanh Kế hoạch Đánh giá}
     \begin{center}
         \renewcommand{\arraystretch}{1.2}
-        \begin{tabular}{@{} p{0.2\linewidth} | p{0.38\linewidth} | p{0.38\linewidth} @{}}
+        \begin{tabular}{@{} p{0.21\linewidth} | p{0.35\linewidth} | p{0.35\linewidth} @{}}
             \hline
             \textbf{Đặc điểm} & \textbf{Materialization} & \textbf{Pipelining} \\
             \hline
@@ -898,8 +910,6 @@
             \hline
         \end{tabular}
     \end{center}
-
-    \columnbreak
 
     % ============================================================================
     % SECTION: Big Data & Data Engineering
@@ -930,6 +940,8 @@
         \end{itemize}
     \end{itemize}
 
+    \columnbreak
+
     \subsection{Paradigm: Batch vs Streaming}
     \textit{Hai mô hình xử lý dữ liệu cơ bản trong Big Data.}
     \begin{center}
@@ -953,8 +965,6 @@
         \item \textbf{Kappa Architecture:} Chỉ dùng Streaming (đơn giản hóa). Mọi dữ liệu qua stream processor, replay từ Kafka khi cần.
     \end{itemize}
 
-    \columnbreak
-
     \subsection{Partitioning \& Replication}
     
     \subsubsection{Sao chép (Replication)}
@@ -976,6 +986,8 @@
         \newline $\rightarrow$ \textit{Ưu:} Phân phối đều, tránh Hotspot.
         \newline $\rightarrow$ \textit{Nhược:} Mất khả năng Range Query (phải quét tất cả).
     \end{itemize}
+
+    \columnbreak
 
     \subsection{Định dạng Lưu trữ (File Formats)}
     \textit{Lựa chọn định dạng ảnh hưởng trực tiếp đến hiệu năng đọc/ghi.}
@@ -1036,6 +1048,8 @@
             \item \textit{Reduce:} Tổng hợp. Xử lý danh sách Value của mỗi Key.
         \end{itemize}
     \end{enumerate}
+
+    \columnbreak
 
     \subsection{Công nghệ NoSQL (Storage Tech)}
     \textit{Các mô hình NoSQL cho use case khác nhau.}
@@ -1112,6 +1126,8 @@
     \end{itemize}
     \textit{Phân biệt:} Các công cụ trên dùng cho \textbf{Analytics/OLAP}, khác với NoSQL (MongoDB, Cassandra) dùng cho \textbf{Operational/OLTP}.
 
+
+    \columnbreak
     % --- PHẦN 4: XỬ LÝ LUỒNG (STREAMING) ---
     \subsection{Streaming Processing}
     \textit{Xử lý dữ liệu liên tục, độ trễ thấp (Real-time).}
@@ -1164,6 +1180,8 @@
         \item \textbf{Advantage:} Decoupling (tách rời) - publisher không cần biết subscriber, scale dễ dàng.
     \end{itemize}
 
+    \columnbreak
+
     \paragraph{Topics (Routing Mechanism)}\mbox{}\\
     \textbf{Structure:} Hierarchical strings với topic levels phân cách bởi \texttt{/}.
     \begin{center}
@@ -1211,6 +1229,8 @@
         \item \textbf{Flow:} Sensors publish data đến broker với topics như \texttt{area1/moisture} $\rightarrow$ Management system subscribes topics $\rightarrow$ Real-time monitoring \& decision making.
         \item \textbf{Benefits:} Cost-effective, scalable, knowledge base creation cho farming management.
     \end{itemize}
+
+    \columnbreak
     
     \subsubsection{MQTT vs HTTP Comparison}
     \begin{center}
@@ -1295,7 +1315,7 @@
                 \item \textbf{ELT:} Hiệu quả với dữ liệu phức tạp hoặc khối lượng rất lớn (Big Data), khi kho dữ liệu/Cloud DW có khả năng xử lý transform ở quy mô (ví dụ: BigQuery, Snowflake).
                 \item \textbf{ETL:} Phù hợp với các ngữ cảnh cơ sở dữ liệu truyền thống hoặc khi cần chuyển đổi, làm sạch kỹ lưỡng trước khi nạp vào kho (ví dụ do yêu cầu bảo mật, chuẩn hoá dữ liệu, hoặc tài nguyên xử lý hạn chế ở đích).
             \end{itemize}
-        \item \textbf{Lưu ý khi trả lời trong đề thi:} Quan điểm đúng nhất thường là \textit{không} chọn tuyệt đối ETL hay ELT — cả hai đều có ưu, nhược điểm riêng và việc lựa chọn phụ thuộc vào ngữ cảnh ứng dụng cụ thể (yêu cầu hiệu năng, kích thước dữ liệu, khả năng xử lý của DW, chính sách bảo mật, v.v.).
+        \item \textbf{Lưu ý:} Quan điểm đúng nhất thường là \textit{không} chọn tuyệt đối ETL hay ELT — cả hai đều có ưu, nhược điểm riêng và việc lựa chọn phụ thuộc vào ngữ cảnh ứng dụng cụ thể (yêu cầu hiệu năng, kích thước dữ liệu, khả năng xử lý của DW, chính sách bảo mật, v.v.).
     \end{itemize}
 
     \paragraph{Common ETL Logic Patterns}\mbox{}\\
@@ -1308,6 +1328,7 @@
     \end{itemize}
 
     \columnbreak
+
     % ============================================================================
     % TIER 5: ANALYTICS & WAREHOUSING
     % ============================================================================
@@ -1495,8 +1516,6 @@
         \newline \textit{VD: REST API vs SOAP, HTTP vs FTP, Batch files vs Real-time streams, GraphQL vs SQL.}
     \end{itemize}
 
-    \columnbreak
-
     \subsubsection{Data Quality Dimensions}
     \textit{Các tiêu chí đánh giá chất lượng dữ liệu trong hệ thống thông tin.}
     
@@ -1524,21 +1543,6 @@
         \item \textbf{Uniqueness (Duy nhất):} Không có thứ nào được ghi lại nhiều hơn một lần dựa trên cách xác định thứ đó.
         \newline \textit{VD:} Không có duplicate records, một khách hàng chỉ có một ID duy nhất.
     \end{enumerate}
-    
-    \paragraph{Extended Dimensions}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Interpretability (Khả năng Diễn giải):} Liên quan đến tài liệu và metadata có sẵn để diễn giải chính xác ý nghĩa và thuộc tính của nguồn dữ liệu.
-        \newline \textit{VD:} Data dictionary, schema documentation, column descriptions, business glossary.
-        
-        \item \textbf{Accessibility (Khả năng Truy cập):} Đo lường khả năng người dùng truy cập dữ liệu từ văn hóa, trạng thái/chức năng vật lý và công nghệ có sẵn của họ.
-        \newline \textit{VD:} API with rate limit, role-based access (RBAC), multi-language support.
-        
-        \item \textbf{Usability (Khả dụng):} Đo lường hiệu quả, hiệu suất, sự hài lòng mà người dùng cụ thể cảm nhận và sử dụng dữ liệu.
-        \newline \textit{VD:} Dashboard dễ hiểu, query response time nhanh, format phù hợp với use case.
-        
-        \item \textbf{Trustworthiness:} Đo lường mức độ đáng tin cậy của tổ chức trong việc cung cấp nguồn dữ liệu.
-        \newline \textit{VD:} Clear data lineage, complete audit logs, data provenance.
-    \end{itemize}
 
     \subsubsection{Quản lý Thông tin}
     \textit{Quản lý dữ liệu như một tài sản chiến lược của doanh nghiệp.}
@@ -1572,8 +1576,6 @@
     
     \textit{Tổng thể:} Information Management bao gồm Data Governance (quản trị), Data Quality, Master Data Management (MDM), Security, và Lifecycle Management. Mục tiêu cuối cùng là đảm bảo dữ liệu \textbf{tin cậy, an toàn, dễ truy cập} để tạo giá trị kinh doanh.
 
-    \columnbreak
-
     \subsection{Distributed Systems Challenges}
     \textit{Khác với hệ thống đơn, hệ phân tán đối mặt với \textbf{partial failures} - một số phần hỏng trong khi phần khác hoạt động.}
     
@@ -1590,18 +1592,18 @@
         \item \textbf{Network is Homogeneous:} Mạng gồm nhiều vendor (routers, switches) $\rightarrow$ packet loss, anomalies.
     \end{enumerate}
     
-    \subsubsection{Unreliability: Network \& Time}
+    \subsubsection{Tính không đáng tin cậy: Mạng \& Thời gian}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Network Unreliability:}
+        \item \textbf{Mạng không đáng tin cậy:}
         \begin{itemize}
-            \item \textit{Timeouts:} No bounded time $\rightarrow$ must use timeout. Too short: false positive. Too long: delayed detection.
-            \item \textit{Network Partition (Netsplit):} Group of nodes isolated $\rightarrow$ "Split brain" (2 leaders both accept conflicting writes).
+            \item \textit{Timeouts:} Không có thời gian cố định cho các thao tác mạng $\rightarrow$ phải sử dụng timeout. Nếu chọn quá ngắn: báo false positive (nhầm là node chết). Nếu quá dài: phát hiện lỗi chậm.
+            \item \textit{Network Partition (Netsplit):} Một nhóm node bị cô lập $\rightarrow$ "Split brain" (hai leader cùng chấp nhận các ghi xung đột).
         \end{itemize}
-        \item \textbf{Time Unreliability:} "Time is an illusion" - không có global clock.
+        \item \textbf{Thời gian không đáng tin cậy:} "Time is an illusion" -- không tồn tại đồng hồ toàn cục.
         \begin{itemize}
-            \item \textit{Clock Drift:} Quartz clock drifts due to temperature. Even NTP sync has discrepancies.
-            \item \textit{Process Pauses:} GC or VM suspension $\rightarrow$ node pauses longer than lease timeout $\rightarrow$ declared dead but still thinks it's alive $\rightarrow$ data corruption.
-            \item \textit{Ordering Issues:} Last Write Wins (LWW) using timestamp dangerous - clocks not synced $\rightarrow$ overwrites new value with old.
+            \item \textit{Clock Drift:} Đồng hồ thạch anh (quartz) bị trôi do thay đổi nhiệt độ; ngay cả đồng bộ bằng NTP cũng có thể có sai lệch.
+            \item \textit{Process Pauses:} GC hoặc tạm dừng VM $\rightarrow$ node bị pause lâu hơn lease timeout $\rightarrow$ bị khai tử nhưng vẫn nghĩ mình còn sống $\rightarrow$ có thể gây hỏng dữ liệu.
+            \item \textit{Ordering Issues:} Dùng timestamp cho Last-Write-Wins (LWW) nguy hiểm -- đồng hồ không đồng bộ $\rightarrow$ ghi mới có thể bị ghi đè bởi giá trị cũ.
         \end{itemize}
     \end{itemize}
     
@@ -1706,7 +1708,7 @@
 
     \subsection{Kiến trúc \& Công nghệ}
     \includegraphics[width=1\linewidth, keepaspectratio]{./images/3_tier_arch_dwh.png}
-    \columnbreak
+    \footnotesize \textit{Minh họa kiến trúc 3-Tier cho Data Warehouse.}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{Mẫu giải: Thiết kế Hệ thống DWH cho Sales}
         \begin{itemize}[leftmargin=*, label={--}]
@@ -1773,29 +1775,6 @@
         \end{itemize}
     \end{itemize}
 
-    \subsection{SQL \& ETL Logic}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Extract (Trích xuất):}
-        \begin{itemize}
-            \item \textit{Filter:} Lọc data rác/cũ (VD: \texttt{WHERE is\_deleted = false}).
-            \item \textit{Dimensions:} Dùng \texttt{SELECT DISTINCT} từ bảng transaction để lấy list duy nhất (Khách hàng, SP).
-            \item \textit{Facts:} \texttt{JOIN} các bảng giao dịch (Order + OrderDetail) để lấy đủ thông tin.
-        \end{itemize}
-        \item \textbf{Transform (Biến đổi):}
-        \begin{itemize}
-            \item \textit{Calc Measures:} Tính cột phái sinh (VD: \texttt{Revenue = Price * Quantity}).
-            \item \textit{Time Hierarchy:} Tách \texttt{Date} $\to$ Day, Month, Quarter, Year.
-            \item \textit{Loc Hierarchy:} Tách Address $\to$ District, City, Region.
-            \item \textit{Lookups:} Map ID từ nguồn sang Surrogate Key của DW.
-        \end{itemize}
-        \item \textbf{Load (Nạp):}
-        \begin{itemize}
-            \item \textit{Fact:} Nạp **Incremental** (chỉ nạp dòng mới).
-            \item \textit{Dimension:} Nạp **Overwrite** (nếu nhỏ) hoặc **SCD/Upsert** (nếu lớn/cần lịch sử).
-            \item \textit{Schedule:} Định thời chạy (Daily/Weekly).
-        \end{itemize}
-    \end{itemize}
-
     \subsection{Lý thuyết Big Data}
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{CAP vs ACID:}
@@ -1854,8 +1833,6 @@
         \item[Q: Tìm Candidate Key?] $\rightarrow$ Tập thuộc tính nhỏ nhất xác định tất cả thuộc tính khác (không thể bỏ bớt).
         \newline \textit{Công thức:} Tính closure $X^+$, nếu $X^+ = $ All Attributes $\to$ X là superkey.
     \end{description}
-
-    \columnbreak
 
     \subsection{Chỉ mục (Indexing \& Physical Design)}
     \begin{description}[leftmargin=*, font=\bfseries\color{red!70!black}, itemsep=4pt]
@@ -1982,7 +1959,7 @@
         \item[Q: Spark Streaming vs Kafka Streams?] $\rightarrow$ \textbf{Spark Streaming:} Micro-batch (giả lập stream).
         \newline \textbf{Kafka Streams:} True streaming (event-by-event).
         
-        \item[Q: Checkpoint trong Spark Streaming?] $\rightarrow$ Lưu \textbf{RDD + metadata} xuống HDFS để recover khi lỗi.
+        \item[Q: Checkpoint trong Spark Streaming?] $\rightarrow$ Lưu \textbf{RDD + metadata} xuống HDFS để recover (khôi phục) khi lỗi.
         
         \item[Q: Apache Hive là gì?] $\rightarrow$ \textbf{SQL-on-Hadoop}. Viết SQL, Hive compile thành MapReduce/Spark jobs.
         \newline \textit{Use case:} DW trên HDFS.
@@ -1995,7 +1972,7 @@
         \item[Q: BASE vs ACID?] $\rightarrow$ \textbf{BASE:} Basically Available, Soft state, Eventually consistent (NoSQL).
         \newline \textbf{ACID:} Atomicity, Consistency, Isolation, Durability (SQL).
         
-        \item[Q: Master-Master vs Master-Slave?] $\rightarrow$ \textbf{M-M:} Cả hai đều write được (high availability).
+        \item[Q: Master-Master vs Master-Slave?] $\rightarrow$ \textbf{M-M:} Cả hai node đều write được (high availability).
         \newline \textbf{M-S:} Master write, Slave read-only (simpler, consistency).
     \end{description}
 
