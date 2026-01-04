@@ -647,67 +647,79 @@
         \item \textbf{Ưu điểm:} Gọn nhẹ (1 triệu dòng = 125 KB mỗi bitmap); thao tác bitwise nhanh; hiệu quả cho bộ lọc nhiều điều kiện; hỗ trợ COUNT qua đếm bit.
     \end{itemize}
 
+    \subsubsection{Heuristics chọn Index (Q12, 13 - F1.1)}
+    \begin{itemize}[leftmargin=*, nosep]
+        \item \textbf{Equality (=):} Hash Index (tốt nhất) > B+-tree.
+        \item \textbf{Range ($>, <$, BETWEEN):} B+-tree (bắt buộc) > Clustering (tốt) > Secondary. Hash vô dụng.
+        \item \textbf{Update Heavy:} Index làm chậm thao tác ghi (Insert/Update/Delete) vì phải cập nhật cả Index tree.
+        \item \textbf{Small File:} Linear Scan thường tốt hơn Index (do overhead I/O của index).
+    \end{itemize}
+
     % ----------------------------------------------------------------------------
     % SELECTION COST FUNCTIONS
     % ----------------------------------------------------------------------------
-    \subsection{Hàm Chi phí cho Các Phép Toán (Operation Cost Functions)}
+    \subsection{Hàm Chi phí \& Kỹ thuật Chỉ mục}
 
-    \subsubsection{Selection Cost Functions}
-    \textit{Phép chọn ($\sigma$) có thể dùng quét file hoặc truy cập index. Chi phí chưa tính ghi kết quả.}
+    % --- PHẦN BỔ SUNG QUAN TRỌNG TỪ ĐỀ THI ---
+    \subsubsection{Index Properties \& Calculations}
+    \begin{itemize}[leftmargin=*, nosep]
+        \item \textbf{Dense Index:} Mỗi record có 1 index entry (dùng cho Secondary Index hoặc Primary Index trên file chưa sắp xếp). 
+        \item \textbf{Sparse Index:} Mỗi block dữ liệu có 1 index entry (chỉ dùng cho Primary/Clustering Index trên file \textbf{đã sắp xếp}).
+        \item \textbf{Số lượng Index Entries ($n_i$):}
+        \begin{itemize}
+            \item Sparse: $n_i = b$ (số data blocks).
+            \item Dense: $n_i = r$ (số records).
+        \end{itemize}
+        \item \textbf{Số block của file Index ($b_i$):} $b_i = \lceil n_i / bfr_i \rceil$.
+        \item \textbf{Index Levels ($x$):} $x = \lceil \log_{fan\_out} (b_i) \rceil$.
+    \end{itemize}
+
+    \subsubsection{Selection Cost Functions ($\sigma$)}
+    \textit{Ký hiệu: $b$: data blocks, $r$: records, $x$: index levels, $s$: selection cardinality (số dòng thỏa điều kiện).}
 
     \paragraph{S1: Linear Search (File Scan)}\mbox{}\\
-    Quét mọi block và test tất cả records. Áp dụng cho mọi cấu trúc file.
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Trường hợp chung:} $\mathbf{C_{S1a} = b}$ blocks. 
-        \newline \textit{Time:} $t_S + b \times t_T$ (1 seek ban đầu + transfer all blocks).
-        \item \textbf{Equality on Key:} $\mathbf{C_{S1b} = b/2}$ blocks (trung bình, dừng khi tìm thấy).
-        \newline \textit{Time:} $t_S + (b/2) \times t_T$.
+    Quét toàn bộ file (Heap file hoặc file không có index phù hợp).
+    \begin{itemize}[leftmargin=*, label={--}, nosep]
+        \item \textbf{Tìm Unique (Key):} $b/2$ (Trung bình).
+        \item \textbf{Tìm Non-Unique/Range:} $b$ (Phải quét hết).
+        \item \textbf{Khi nào dùng?} File nhỏ hoặc Selectivity thấp ($s$ lớn, >15-20\% số dòng).
     \end{itemize}
 
-    \paragraph{S2: Binary Search}\mbox{}\\
-    File đã sắp xếp theo search attribute. $\mathbf{C_{S2} = \lceil \log_2 b \rceil + \lceil s/bfr \rceil - 1}$ blocks.
-    \newline \textit{Giải thích:} $\log_2 b$ để locate first block + $\lceil s/bfr \rceil$ để retrieve matching blocks contiguous.
+    \paragraph{S2: Binary Search (Sorted File)}\mbox{}\\
+    Chỉ áp dụng nếu file đã sắp xếp theo trường tìm kiếm ($A$).
+    \newline $\mathbf{C_{S2} = \lceil \log_2 b \rceil + \lceil s/bfr \rceil - 1}$
+    \newline \textit{Lưu ý:} Ít dùng trong DB thực tế, thường dùng Primary Index thay thế.
 
-    \paragraph{S3a: Primary Index (Equality on Unique Key)}\mbox{}\\
-    File được sắp xếp vật lý theo search key. $\mathbf{C_{S3a} = x + 1}$ blocks.
-    \newline \textit{Time:} $(h_i + 1) \times (t_T + t_S)$ (traverse index tree + 1 data block access).
-    \newline \textit{VD:} B+-tree height 3 $\rightarrow$ 3 index blocks + 1 data block = 4 I/Os.
+    \paragraph{S3a: Primary Index (Unique Key) [Quan trọng]}\mbox{}\\
+    File sắp xếp theo Key + B+-tree.
+    \newline $\mathbf{C_{S3a} = x + 1}$
+    \newline \textit{Exam Tip:} Nếu đề cho chiều cao cây (height) = $h$, thì $x=h$. Chi phí = Traversing Tree + 1 I/O lấy data.
 
-    \paragraph{S3b: Hash Index (Equality)}\mbox{}\\
-    $\mathbf{C_{S3b} = 1}$ (static/linear hashing) hoặc $\mathbf{2}$ (extendible hashing).
+    \paragraph{S3b: Hash Index (Equality Only)}\mbox{}\\
+    \textbf{Chỉ dùng cho so sánh bằng ($=$).}
+    \newline $\mathbf{C_{S3b} \approx 1}$.
+    \newline \textit{\textbf{Cảnh báo Exam (Q9 - F1.1):}} Hash index \textbf{KHÔNG} hỗ trợ Range Query ($>, <, \geq$). Nếu query là `WHERE Dno > 10`, Hash Index vô dụng $\rightarrow$ Dùng B+-tree hoặc Scan.
 
-    \paragraph{S5: Clustering Index (Equality on Non-Unique Key)}\mbox{}\\
-    File sắp xếp, matching records lưu contiguous. $\mathbf{C_{S5} = x + \lceil s/bfr \rceil}$ blocks.
-    \newline \textit{Time:} $h_i \times (t_T + t_S) + t_S + b_{matches} \times t_T$ (index + 1 seek to data + transfer).
-    \newline \textit{VD:} Tìm Dno=5 với 1000 matching records, bfr=10 $\rightarrow$ x + 100 blocks.
+    \paragraph{S5: Clustering Index (Non-Unique, Sorted File)}\mbox{}\\
+    File sắp xếp theo trường tìm kiếm (không phải Key). Records nằm liền nhau.
+    \newline $\mathbf{C_{S5} = x + \lceil s/bfr \rceil}$
+    \newline \textit{Hiệu quả:} Tốt nhất cho Range Query hoặc Non-Unique Equality.
 
-    \paragraph{S6a: Secondary Index (Equality on Non-Unique Key)}\mbox{}\\
-    File \textbf{không} sắp xếp theo attribute này $\rightarrow$ matching records phân tán. 
-    \newline $\mathbf{C_{S6a} = x + s + 1}$ blocks (worst case: mỗi record cần 1 random I/O).
-    \newline \textit{Time:} $(h_i + n) \times (t_T + t_S)$ với $n$ = số records.
-    \newline \textbf{Nguy cơ:} Nếu $s$ lớn, secondary index đắt hơn linear scan do nhiều random seeks.
+    \paragraph{S6a: Secondary Index (Equality) [Hay gặp nhất]}\mbox{}\\
+    File \textbf{không} sắp xếp theo trường này.
+    \newline $\mathbf{C_{S6a} = x + s}$ (hoặc $x + s + 1$ nếu tính cả block đầu).
+    \newline \textit{Worst case:} Mỗi record nằm ở 1 block khác nhau $\rightarrow$ $s$ lần Random I/O.
+    \newline \textit{So sánh (Q16 - F1.1):} Nếu truy vấn trả về 1 dòng ($s=1$) $\rightarrow$ Cost = $x+1$. Rất rẻ so với Linear Scan ($b$).
 
     \paragraph{S6b: Secondary Index (Range Query)}\mbox{}\\
-    $\mathbf{C_{S6b} = x + (b_{I1}/2) + (r/2)}$ (giả sử half file thỏa điều kiện).
-    \newline \textit{Performance Implication:} Nếu số records lớn, optimizer thích linear scan hơn secondary index.
+    Dùng B+-tree trên trường phụ.
+    \newline $\mathbf{C_{S6b} = x + (\text{leaf blocks}/2) + s}$
+    \newline \textit{Exam Trap:} Nếu Range rộng (lấy > 30\% dữ liệu), Optimizer sẽ bỏ qua Index và chọn Linear Scan (S1) vì Random I/O quá đắt.
 
-    \paragraph{Selections với Comparisons (Range Queries)}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Clustering Index:} Hiệu quả - records contiguous. 
-        \newline \textit{Cost:} $x + b_{range}$ (find first + sequential scan).
-        \item \textbf{Secondary Index:} Đắt - index leaves scan + random I/O cho mỗi record. 
-        \newline \textit{Nếu range lớn:} Prefer linear scan.
-    \end{itemize}
-
-    \paragraph{Complex Selections}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Conjunctive (AND):} Choose single most restrictive access path (smallest selectivity) $\rightarrow$ check remaining conditions in RAM. 
-        \newline \textit{Alternatively:} Use multiple secondary indices $\rightarrow$ retrieve pointers $\rightarrow$ compute \textbf{intersection}.
-        \item \textbf{Disjunctive (OR):} If 1 condition needs linear scan $\rightarrow$ entire query needs linear scan. 
-        \newline \textit{If indices for all:} Retrieve pointers $\rightarrow$ compute \textbf{union}.
-    \end{itemize}
-
-    \paragraph{Bảng Tóm tắt Chi phí SELECT}
+    % ----------------------------------------------------------------------------
+    % SUMMARY TABLE (Fit for Exam Quick Look)
+    % ----------------------------------------------------------------------------
+    \subsubsection{Bảng Tra Cứu Nhanh}
     \begin{center}
         \renewcommand{\arraystretch}{1.15}
         \begin{tabular}{@{} l | l | l @{}}
@@ -724,313 +736,180 @@
         \end{tabular}
     \end{center}
 
-    \textit{Lưu ý: Chi phí thời gian = $b \times t_T + S \times t_S$ (tách biệt transfer và seek).}
+    \subsubsection{Hàm Chi phí cho Phép Kết (JOIN Operations)}
 
-    % ----------------------------------------------------------------------------
-    % SELECTION EXAMPLES
-    % ----------------------------------------------------------------------------
-    \subsubsection{Ví dụ Tính toán Chi phí: Phép chọn trên EMPLOYEE}
-
-    \textit{Kịch bản:} Quan hệ EMPLOYEE có thông số:
+    \paragraph{Ký hiệu (Notation)}
     \begin{itemize}[leftmargin=*, nosep]
-        \item $r_E = 10{,}000$ records, $b_E = 2{,}000$ blocks, $bfr_E = 5$ records/block.
-        \item \textbf{Available Access Paths:}
-        \begin{itemize}
-            \item \textit{Ssn} (Secondary, Unique Key): $x=4$, $s=1$.
-            \item \textit{Dno} (Secondary, Non-Unique): $x=2$, $s=80$ (assumption: 125 depts, so $10{,}000/125=80$).
-            \item \textit{Salary} (Clustering, Non-Unique): $x=3$, $s=20$.
-            \item \textit{Sex} (Secondary, Non-Unique): $x=1$, $s=5{,}000$ (assumption: 2 values, so $10{,}000/2=5{,}000$).
-        \end{itemize}
+        \item $b_r, b_s$: Số block của quan hệ $R$ và $S$.
+        \item $n_r, n_s$: Số dòng (tuples) của quan hệ $R$ và $S$.
+        \item $n_B$: Số block bộ đệm (memory buffer) khả dụng.
+        \item \textbf{Nguyên tắc vàng:} Luôn chọn quan hệ nhỏ hơn (ít block hơn) làm vòng lặp ngoài (Outer Loop) để tối ưu hóa bộ đệm.
     \end{itemize}
 
-    \paragraph{Example 1: Equality on Unique Key}\mbox{}\\
-    Query: $\sigma_{\text{Ssn}='123456789'}(\text{EMPLOYEE})$.
+    \paragraph{J1: Block Nested-Loop Join (Quét toàn bộ)}\mbox{}\\
+    Dùng khi không có Index nào phù hợp. Đọc từng block của $R$ (ngoài), quét toàn bộ $S$ (trong).
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{S1b (Linear Search):} $C = b_E/2 = 2{,}000/2 = 1{,}000$ blocks.
-        \newline \textit{Explanation:} Scan half file on average until record found.
-        \item \textbf{S6a (Secondary Index on Key):} $C = x + 1 = 4 + 1 = 5$ blocks.
-        \newline \textit{Explanation:} Traverse 4-level index + retrieve 1 data block.
-        \item \textbf{Decision:} Use S6a (5 blocks $\ll$ 1{,}000 blocks). \textit{Speedup: 200x}.
-    \end{itemize}
-
-    \paragraph{Example 2: Equality on Non-Unique Key}\mbox{}\\
-    Query: $\sigma_{\text{Dno}=5}(\text{EMPLOYEE})$.
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{S1a (Linear Search):} $C = b_E = 2{,}000$ blocks.
-        \item \textbf{S6a (Secondary Index):} $C = x + s = 2 + 80 = 82$ blocks.
-        \newline \textit{Explanation:} 2 index blocks + 80 random I/Os (records scattered across blocks).
-        \item \textbf{S5 (If Clustering Index existed):} $C = x + \lceil s/bfr \rceil = 3 + \lceil 80/5 \rceil = 3 + 16 = 19$ blocks.
-        \newline \textit{Explanation:} 3 index blocks + 16 contiguous data blocks (records stored together).
-        \item \textbf{Decision:} Use S6a (82 blocks $\ll$ 2{,}000). \textit{Note: Clustering index would be 4.3x better (19 vs 82)}.
-    \end{itemize}
-
-    \paragraph{Example 3: Conjunctive Selection (Multiple Conditions)}\mbox{}\\
-    Query: $\sigma_{\text{Dno}=5 \land \text{Salary}>30{,}000 \land \text{Sex}='F'}(\text{EMPLOYEE})$.
-    \newline \textit{Strategy:} Choose most selective access path to retrieve candidate set, then filter remaining conditions in memory.
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Via Dno (S6a):} $C = x + s = 2 + 80 = 82$ blocks. \textit{Retrieves 80 records}.
-        \item \textbf{Via Salary Range (Clustering):} $C \approx x + (b_E/2) = 3 + 1{,}000 = 1{,}003$ blocks.
-        \newline \textit{Assumption: Half employees earn $>30{,}000$, need to scan half file.}
-        \item \textbf{Via Sex (S6a):} $C = x + s = 1 + 5{,}000 = 5{,}001$ blocks. \textit{5{,}000 random I/Os (very expensive)}.
-        \item \textbf{Linear Scan (S1a):} $C = 2{,}000$ blocks.
-        \item \textbf{Decision:} Use Dno index (82 blocks) to retrieve 80 candidate records $\rightarrow$ filter Salary $>30{,}000$ and Sex='F' in memory.
-        \newline \textit{Final result size estimated:} $80 \times 0.5 \times 0.5 = 20$ records (assuming 50\% pass each filter).
-    \end{itemize}
-
-    \paragraph{Example 4: Secondary Index vs Linear Scan Trade-off}\mbox{}\\
-    Query: $\sigma_{\text{Sex}='F'}(\text{EMPLOYEE})$ (highly non-selective).
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{S6a (Secondary Index):} $C = x + s = 1 + 5{,}000 = 5{,}001$ blocks.
-        \newline \textit{Problem:} 5{,}000 random seeks $\rightarrow$ extremely expensive. At $t_S=10$ms, $t_T=1$ms: $(1 + 5{,}000) \times 11 = 55{,}011$ms $\approx$ 55 seconds.
-        \item \textbf{S1a (Linear Scan):} $C = 2{,}000$ blocks.
-        \newline \textit{Time:} $1 \times 10 + 2{,}000 \times 1 = 2{,}010$ms $\approx$ 2 seconds.
-        \item \textbf{Decision:} Use linear scan (2{,}000 blocks $\ll$ 5{,}001 blocks). \textit{27x faster despite having index!}
-        \newline \textbf{Key Insight:} Secondary index only beneficial when selectivity is high ($s \ll b$).
-    \end{itemize}
-
-    % ----------------------------------------------------------------------------
-    % JOIN COST FUNCTIONS
-    % ----------------------------------------------------------------------------
-    \subsubsection{Cost Functions for JOIN Operations}
-
-    \paragraph{Notation}
-    \begin{itemize}[leftmargin=*, nosep]
-        \item $b_r, b_s$: Number of blocks (số khối) in relations $r$ and $s$.
-        \item $n_r, n_s$ (or $|R|, |S|$): Number of tuples (số bộ) in relations $r$ and $s$.
-        \item $js$: Join selectivity (độ chọn lọc kết nối) - fraction of tuple pairs matching. For equi-join: $js \approx 1/\max(NDV(A), NDV(B))$.
-        \item $jc$: Join cardinality (lực lượng kết nối) - number of result tuples = $js \times |R| \times |S|$.
-        \item $bfr_{result}$: Blocking factor (hệ số khối) of result relation.
-        \item $n_B$ (or $M$): Number of available memory buffer blocks (số khối bộ đệm).
-        \item $h_i$ (or $x$): Height of index tree (chiều cao B+-tree).
-        \item $s_B$: Selection cardinality - average matching records in index lookup.
-    \end{itemize}
-
-    \paragraph{J1: Nested-Loop Join Variants}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Basic Nested-Loop:} For each record in outer relation $r$, scan entire inner relation $s$.
-        \newline \textit{Cost:} $b_r + n_r \times b_s$ block transfers + $(n_r + b_r)$ seeks.
-        \newline \textit{Problem:} Extremely expensive if $n_r$ is large.
+        \item \textbf{Trường hợp Tệ nhất (Worst Case - 3 buffers):}
+        \newline $\mathbf{Cost = b_r + (b_r \times b_s)}$ block transfers.
+        \newline \textit{Giải thích:} Đọc mỗi block $R$ 1 lần, với mỗi block $R$ phải đọc lại toàn bộ $S$.
         
-        \item \textbf{Block Nested-Loop:} Process block-by-block instead of row-by-row.
-        \newline \textit{Cost (Worst):} $b_r + (b_r \times b_s)$ transfers + $2 \times b_r$ seeks.
-        \newline \textit{Cost (With $n_B$ buffers):} $b_r + \lceil b_r / (n_B - 2) \rceil \times b_s$ transfers.
-        \newline \textit{Strategy:} Use $n_B - 2$ buffers for outer, 1 for inner, 1 for output. Use smaller relation as outer.
+        \item \textbf{Trường hợp Có Buffer ($n_B > 3$):} 
+        \newline $\mathbf{Cost = b_r + \lceil b_r / (n_B - 2) \rceil \times b_s}$
+        \newline \textit{Exam Tip (Đề Tham Khảo Câu 2.2):} Hệ số $\lceil b_r / (n_B - 2) \rceil$ là số lần phải quét lại bảng $S$. Nếu $n_B$ càng lớn, chi phí càng giảm về gần $b_r + b_s$.
     \end{itemize}
 
-    \paragraph{J2: Indexed Nested-Loop Join}\mbox{}\\
-    Index exists on join attribute of inner relation $s$. Replace file scans with index lookups.
+    \paragraph{J2: Indexed Nested-Loop Join (Index trên bảng TRONG)}\mbox{}\\
+    Bảng ngoài ($R$) quét tuần tự, bảng trong ($S$) dùng Index để tìm khớp.
+    \newline \textbf{Điều kiện:} Bảng $S$ phải có Index trên thuộc tính Join.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{General Formula:} $b_r + (n_r \times \text{cost of selection on } s)$.
-        \newline \textit{Explanation:} Read outer $r$ ($b_r$) + perform $n_r$ index lookups on $s$.
-        \item \textbf{Secondary Index:} $b_r + n_r \times (x + s_B + 1)$ blocks.
-        \newline \textit{$s_B$:} Average matching records. Each record needs random I/O if non-unique.
-        \item \textbf{Primary/Clustering Index:} $b_r + n_r \times (x + 1)$ blocks.
-        \newline \textit{Assumption:} Unique keys or matching records stored contiguous.
+        \item \textbf{Công thức Tổng quát:}
+        \newline $\mathbf{Cost = b_r + n_r \times (\text{Cost per Probe})}$
+        \newline \textit{Lưu ý:} Phụ thuộc vào số dòng ($n_r$) của bảng ngoài, không phải số block ($b_r$). Do đó, bảng ngoài nên có ít dòng.
+        
+        \item \textbf{Chi tiết Cost per Probe:}
+        \begin{itemize}
+            \item \textit{Primary Index (S):} $x + 1$ (Rất rẻ).
+            \item \textit{Secondary Index (S):} $x + s$ (Đắt hơn nếu $s$ lớn).
+            \item \textit{Hash Index (S):} $\approx 1$ (Rất rẻ cho Equi-Join).
+        \end{itemize}
+        
+        \item \textbf{So sánh với J1 (Câu 11 - F1.1):} Optimizer thường chuyển Cross-Join (J1) thành Theta-Join/Equi-Join (J2) để tận dụng Index, giảm chi phí từ $b_r \times b_s$ xuống tuyến tính theo $n_r$.
     \end{itemize}
 
-    \paragraph{J3: Sort-Merge Join}\mbox{}\\
-    Both relations must be sorted on join attributes. Highly efficient if already pre-sorted.
+    \paragraph{J3: Sort-Merge Join (Dữ liệu đã sắp xếp)}\mbox{}\\
+    Hiệu quả nhất nếu cả hai bảng đã được sắp xếp theo thuộc tính Join.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{If already sorted:} $b_r + b_s$ block transfers (read both once).
-        \item \textbf{If not sorted:} Cost(Sort $r$) + Cost(Sort $s$) + $b_r + b_s$.
-        \newline \textit{Sort Cost:} Typically $b \times (2 \lceil \log_{n_B-1}(b/n_B) \rceil + 1)$ for external merge-sort.
-        \item \textbf{Best Use Case:} Data already sorted, or when result needs to be sorted.
+        \item \textbf{Chi phí (Đã sắp xếp):} $\mathbf{b_r + b_s}$. (Đọc mỗi bảng 1 lần).
+        \item \textbf{Chi phí (Chưa sắp xếp):} Cost(Sort $R$) + Cost(Sort $S$) + $b_r + b_s$.
+        \item \textbf{Khi nào dùng?} Khi kết quả cần sắp xếp (ORDER BY) hoặc dữ liệu đã có sẵn thứ tự (Clustered Index).
     \end{itemize}
 
-    \paragraph{J4: Hash Join}\mbox{}\\
-    Partition both relations by hash of join key. Matching tuples fall into same partition.
+    \paragraph{J4: Hash Join (In-Memory Partitioning)}\mbox{}\\
+    Chỉ dùng cho Equi-Join ($=$). Partition bảng $R$ và $S$ vào các bucket băm.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Standard Hash Join:} $3(b_r + b_s)$ block transfers.
-        \newline \textit{3 Passes:} 1. Read/write partitions for $r$. 2. Read/write partitions for $s$. 3. Join partitions.
-        \newline \textit{Requirement:} Partitions of smaller relation must fit in memory.
-        \item \textbf{Hybrid Hash Join:} $b_r + b_s$ (best case).
-        \newline \textit{Optimization:} If entire build relation fits in memory, skip disk writes for some partitions.
-    \end{itemize}
-
-    \paragraph{Writing the Result}\mbox{}\\
-    Above costs only estimate processing. Must add write cost to get total cost.
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Write Cost:} $jc / bfr_{result}$ blocks.
-        \item \textbf{Total Cost:} Processing Cost + $(js \times |R| \times |S|) / bfr_{result}$.
+        \item \textbf{Chi phí (Standard):} $\mathbf{3(b_r + b_s)}$.
+        \newline \textit{Giải thích:} 1. Đọc $R, S$ để partition (ghi ra đĩa) $\rightarrow$ 2. Đọc lại partition để join. Tổng cộng đọc + ghi + đọc = 3 lần.
+        \item \textbf{Điều kiện:} Partition của bảng nhỏ phải vừa đủ bộ nhớ (Memory).
     \end{itemize}
 
     % ----------------------------------------------------------------------------
-    % JOIN EXAMPLE
+    % VÍ DỤ TÍNH TOÁN THỰC TẾ (MÔ PHỎNG ĐỀ THI)
     % ----------------------------------------------------------------------------
-    \subsubsection{Example: EMPLOYEE $\bowtie$ DEPARTMENT}
-
-    \textbf{Scenario:} EMPLOYEE ($|E|=10{,}000$, $b_E=2{,}000$) $\bowtie_{Dno=Dnumber}$ DEPARTMENT ($|D|=125$, $b_D=13$).
-    \newline \textbf{Indices:} Secondary on $E.Dno$ ($x=2$, $s=80$). Primary on $D.Dnumber$ ($x=1$).
-    \newline \textbf{Parameters:} $js=1/125$, $jc=10{,}000$, $bfr_{result}=4$ $\rightarrow$ write cost $= 2{,}500$ blocks. $n_B=3$ buffers.
-
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{J1: Block Nested-Loop (D outer):} 
-        \newline $C = 13 + \lceil 13/1 \rceil \times 2{,}000 + 2{,}500 = 13 + 26{,}000 + 2{,}500 = \mathbf{28{,}513}$ blocks.
-        \newline \textit{Explanation:} Read D (13) + scan E 13 times (26,000) + write result (2,500).
-
-        \item \textbf{J2a: Indexed Nested-Loop (D outer $\to$ E inner):} 
-        \newline $C = 13 + 125 \times (2 + 80) + 2{,}500 = 13 + 10{,}250 + 2{,}500 = \mathbf{12{,}763}$ blocks.
-        \newline \textit{Explanation:} Read D (13) + 125 lookups on E (each: 2 index + 80 scattered records) + write.
-
-        \item \textbf{J2b: Indexed Nested-Loop (E outer $\to$ D inner):} 
-        \newline $C = 2{,}000 + 10{,}000 \times (1 + 1) + 2{,}500 = 2{,}000 + 20{,}000 + 2{,}500 = \mathbf{24{,}500}$ blocks.
-        \newline \textit{Explanation:} Read E (2,000) + 10,000 lookups on D (each: 1 index + 1 data block) + write.
-
-        \item \textbf{J3: Sort-Merge (if already sorted):}
-        \newline $C = 2{,}000 + 13 + 2{,}500 = \mathbf{4{,}513}$ blocks.
-        \newline \textit{Best case:} Only read both relations once + write result.
-        \newline \textit{If not sorted:} Add sorting cost (typically $\approx 2b \log b$ per relation).
-
-        \item \textbf{J4: Hash Join:}
-        \newline $C = 3 \times (2{,}000 + 13) + 2{,}500 = 6{,}039 + 2{,}500 = \mathbf{8{,}539}$ blocks.
-        \newline \textit{Explanation:} 3 passes through both relations (partition + build + probe) + write result.
+    \subsubsection{Ví dụ Tính Toán: EMPLOYEE $\bowtie$ DEPARTMENT}
+    \textit{Thông số:} 
+    \begin{itemize}[nosep]
+        \item \textbf{EMP (E):} $n_E = 10{,}000$, $b_E = 2{,}000$. (Bảng lớn)
+        \item \textbf{DEPT (D):} $n_D = 125$, $b_D = 13$. (Bảng nhỏ)
+        \item \textbf{Index:} Primary Key trên $D.Dnumber$ ($x=1$). Foreign Key trên $E.Dno$ (Secondary, $x=2$).
     \end{itemize}
 
-    \paragraph{Decision Ranking}\mbox{}\\
-    J3 (if sorted) $<$ J4 $<$ J2a $<$ J2b $<$ J1.
+    \paragraph{Kịch bản 1: Block Nested Loop (Không dùng Index)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Best:} Sort-Merge if already sorted (4,513).
-        \item \textbf{Good:} Hash Join if not sorted (8,539) - no sorting overhead.
-        \item \textbf{Moderate:} Indexed Nested-Loop with small outer (12,763).
-        \item \textbf{Avoid:} Block Nested-Loop (28,513) - only use when no index/memory.
+        \item \textit{D là Outer (Tối ưu):} $b_D + (b_D \times b_E) = 13 + (13 \times 2{,}000) = \mathbf{26{,}013}$.
+        \item \textit{E là Outer (Tệ):} $b_E + (b_E \times b_D) = 2{,}000 + (2{,}000 \times 13) = 28{,}000$.
+        \newline $\rightarrow$ Chọn bảng nhỏ làm Outer tiết kiệm được một chút, nhưng vẫn rất đắt.
+    \end{itemize}
+
+    \paragraph{Kịch bản 2: Indexed Nested Loop (Tận dụng Index)}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textit{Dùng Primary Index trên D (E là Outer):}
+        \newline Quét $E$ ($b_E$) + Tra cứu Index $D$ cho mỗi dòng $E$ ($n_E \times (x+1)$).
+        \newline $2{,}000 + 10{,}000 \times (1 + 1) = \mathbf{22{,}000}$ blocks. (Vẫn đắt do $n_E$ quá lớn).
+        
+        \item \textit{Dùng Secondary Index trên E (D là Outer - \textbf{BEST J2}):}
+        \newline Quét $D$ ($b_D$) + Tra cứu Index $E$ cho mỗi dòng $D$ ($n_D \times \text{Cost}(E)$).
+        \newline Cost tìm $E$ cho 1 $Dno$: Index ($x=2$) + Data ($s=80$ block ngẫu nhiên) = 82.
+        \newline Tổng: $13 + 125 \times 82 = 13 + 10{,}250 = \mathbf{10{,}263}$ blocks.
+        \newline $\rightarrow$ \textbf{Kết luận:} Dùng bảng nhỏ (D) làm Outer + Index trên bảng lớn (E) hiệu quả gấp đôi cách ngược lại.
+    \end{itemize}
+
+    \paragraph{Kịch bản 3: Hash Join vs Sort-Merge}
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textit{Sort-Merge (Chưa sort):} Cần sort $E$ ($2000 \log 2000$) rất đắt. Không chọn trừ khi đã sort sẵn.
+        \item \textit{Hash Join:} $3 \times (2{,}000 + 13) = \mathbf{6{,}039}$ blocks.
+        \newline $\rightarrow$ \textbf{Hash Join} chiến thắng tuyệt đối nếu bộ nhớ đủ chứa 13 block của $D$.
+    \end{itemize}
+    % ----------------------------------------------------------------------------
+    % TỐI ƯU HÓA THỨ TỰ KẾT NỐI
+    % ----------------------------------------------------------------------------
+    \subsubsection{Tối ưu hóa Thứ tự Phép Kết (Join Order Optimization)}
+    \textit{Mục tiêu: Tìm kế hoạch thực thi có chi phí thấp nhất trong số $n!$ thứ tự kết nối có thể.}
+
+    \paragraph{Quy hoạch Động (Phương pháp System R)}\mbox{}\\
+    Thuật toán chuẩn được hầu hết các bộ tối ưu hóa (optimizers) sử dụng.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Bước 1:} Tìm kế hoạch tốt nhất để truy cập từng quan hệ đơn lẻ (Quét chỉ mục vs Quét toàn bộ).
+        \item \textbf{Bước 2:} Tìm kế hoạch tốt nhất để kết nối các cặp quan hệ ($R \bowtie S$).
+        \item \textbf{Bước 3:} Tìm kế hoạch tốt nhất để kết nối 3 quan hệ sử dụng kết quả từ Bước 2.
+        \item \textbf{Nguyên lý Tối ưu (Principle of Optimality):} Một kế hoạch tối ưu cho $(R \bowtie S \bowtie T)$ bắt buộc phải chứa một kế hoạch tối ưu cho phép kết con $(R \bowtie S)$.
+    \end{itemize}
+
+    \paragraph{Cây Nghiêng Trái (Left-Deep Trees) [Khái niệm Quan trọng]}\mbox{}\\
+    Các bộ tối ưu hóa thường giới hạn không gian tìm kiếm vào các \textbf{Left-Deep Trees}.
+    \begin{itemize}[leftmargin=*, label={--}]
+        \item \textbf{Cấu trúc:} Nút con bên \textit{phải} của bất kỳ nút kết nối (join node) nào luôn là một \textbf{Bảng Cơ sở} (Base Table) (không phải là kết quả trung gian).
+        \item \textbf{Tại sao lại là Left-Deep? (Câu hỏi thi):}
+        \begin{itemize}
+            \item \textbf{Tận dụng Chỉ mục:} Vì quan hệ trong (bên phải) là một bảng cơ sở, ta có thể sử dụng các \textbf{Chỉ mục (Indexes)} hiện có cho thuật toán Nested-Loop Joins.
+            \item \textbf{Pipelining (Đường ống):} Cho phép thực hiện pipelining hiệu quả (dữ liệu đi lên từ phía trái, thăm dò/đối chiếu với phía phải).
+            \item \textbf{Không gian Tìm kiếm:} Giảm độ phức tạp từ $O(4^n)$ (Cây rậm - Bushy) xuống $O(n!)$.
+        \end{itemize}
+        \item \textbf{Đánh đổi:} Có thể bỏ lỡ kế hoạch tối ưu tuyệt đối (ví dụ: nếu một cây Bushy thực sự rẻ hơn), nhưng quá trình tối ưu hóa nhanh hơn nhiều.
     \end{itemize}
 
     % ----------------------------------------------------------------------------
-    % JOIN ORDER OPTIMIZATION
+    % ĐÁNH GIÁ TRUY VẤN (QUERY EVALUATION)
     % ----------------------------------------------------------------------------
-    \subsubsection{Join Order \& Left-Deep Trees}
+    \subsection{Phase 3: Query Evaluation (Thời gian chạy/Runtime)}
 
-    \paragraph{Optimization Decisions}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Choose Join Order:} Most critical decision for multi-way joins.
-        \newline \textit{Problem:} $n$ relations have $n!$ possible join orders (exponential search space).
-        \newline \textit{Selectivity Estimation:} $js \approx 1/\max(V(A,r), V(B,s))$ (assumption: uniform distribution, no correlation).
-        \newline \textit{Join Cardinality:} $jc = js \times |R| \times |S|$ - estimate intermediate result size.
-        \newline \textit{Strategy - Dynamic Programming:} Build optimal plans bottom-up:
-        \begin{enumerate}[nosep]
-            \item Find best access path for each base relation (1-way plans).
-            \item Find best plan to join any 2 relations (2-way plans).
-            \item Find best plan to join any 3 relations using optimal 2-way plans (3-way plans).
-            \item Continue until $n$-way plan found.
-        \end{enumerate}
-        \textit{Cost Principle:} If $(R \bowtie S)$ is part of optimal plan, then plan for $(R \bowtie S)$ must itself be optimal.
+    \subsubsection{Mô hình Iterator (Mô hình Volcano)}
+    Giao diện chuẩn cho tất cả các toán tử (Select, Join, Sort).
+    \begin{itemize}[leftmargin=*, nosep]
+        \item \textbf{open():} Khởi tạo trạng thái (ví dụ: cấp phát bộ đệm).
+        \item \textbf{next():} Trả về \textbf{từng bộ (tuple)} (hoặc một lô) tại một thời điểm.
+        \item \textbf{close():} Giải phóng tài nguyên.
+        \item \textit{Lợi ích:} Cho phép Pipelining (các toán tử kéo dữ liệu theo nhu cầu).
     \end{itemize}
 
-    \paragraph{Left-Deep Trees}
-    \textit{Common constraint in cost-based optimization to reduce search space while enabling efficient pipelined execution.}
+    \subsubsection{Materialization vs. Pipelining [So sánh trong Đề thi]}
+
+    \paragraph{1. Materialization (Vật chất hóa/Lưu trữ tạm)}\mbox{}\\
+    Ghi kết quả của mỗi phép toán vào một \textbf{Bảng Tạm (Temporary Table)} trên đĩa trước khi bắt đầu phép toán tiếp theo.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Structure:} In left-deep tree, right child of each join is always base relation (leaf), never intermediate result.
-        \newline \textit{Example:} $((R \bowtie S) \bowtie T) \bowtie U$ - left-deep. $(R \bowtie S) \bowtie (T \bowtie U)$ - bushy (not left-deep).
-        \item \textbf{Benefits:} 
-        \begin{itemize}
-            \item \textit{Index Availability:} Right child is base table $\rightarrow$ can use indices on right child for indexed nested-loop join.
-            \item \textit{Reduced Search Space:} Only $n!$ left-deep trees for $n$ relations vs $O(4^n)$ for all bushy trees.
-            \newline System R optimizer: 4-table join searches 24 plans instead of 256.
-            \item \textit{Pipelining-Friendly:} Left-deep trees naturally support pipelined evaluation (see Evaluation section).
-            \newline Tuples flow from one operation to next without materializing intermediate results to disk.
-        \end{itemize}
-        \item \textbf{Trade-off:} May miss optimal bushy tree, but optimization time reduction + pipelining benefits usually outweigh this.
-        \newline \textit{Modern Systems:} Some optimizers (PostgreSQL, Oracle) consider limited bushy trees for specific patterns.
+        \item \textbf{Ưu điểm:} Đơn giản; Checkpoint/Khởi động lại dễ dàng hơn; Tiết kiệm bộ nhớ.
+        \item \textbf{Nhược điểm:} \textbf{Chi phí I/O cao} (Ghi tạm + Đọc tạm); Độ trễ cao (phải đợi kết quả đầy đủ).
+        \item \textbf{Khi nào dùng?} Khi kết quả trung gian quá lớn so với bộ nhớ hoặc cần được sắp xếp.
     \end{itemize}
 
-    % ============================================================================
-    % PHASE 3: QUERY EVALUATION
-    % ============================================================================
-    \subsection{Phase 3: Query Evaluation}
-
-    \subsubsection{Evaluation Primitives}
-    \textit{Query-execution engine implements chosen execution plan using low-level evaluation primitives.}
+    \paragraph{2. Pipelining (Xử lý tức thì/Trên đường truyền)}\mbox{}\\
+    Truyền các bộ dữ liệu từ nút con sang nút cha ngay lập tức thông qua bộ đệm bộ nhớ.
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Annotated Operations:} Each relational operation in plan annotated with:
+        \item \textbf{Ưu điểm:} \textbf{Không có Disk I/O} cho kết quả trung gian; Độ trễ thấp (hàng đầu tiên xuất hiện ngay lập tức).
+        \item \textbf{Nhược điểm:} Yêu cầu nhiều bộ nhớ hoạt động hơn (các bộ đệm).
+        \item \textbf{Pipeline Breakers (Các toán tử gây chặn):} Các phép toán \textbf{không thể} pipeline vì chúng cần \textit{toàn bộ} đầu vào trước khi tạo ra hàng kết quả đầu tiên.
         \begin{itemize}
-            \item \textit{Algorithm choice:} e.g., "use hash join", "use index nested-loop", "use external merge-sort".
-            \item \textit{Access method:} e.g., "use B+-tree index on salary", "use file scan on instructor".
-            \item \textit{Buffer allocation:} How many memory buffers allocated to this operation.
-        \end{itemize}
-        \item \textbf{Iterator Model (Volcano/Pipeline):} Each operator implements:
-        \begin{itemize}
-            \item \texttt{open()}: Initialize operator state, allocate resources.
-            \item \texttt{next()}: Return next tuple (on-demand production).
-            \item \texttt{close()}: Clean up, release resources.
-        \end{itemize}
-        \textit{Composition:} Parent operator calls \texttt{next()} on child operators to pull tuples up the tree.
-    \end{itemize}
-
-    \subsubsection{Materialization vs Pipelining}
-    \textit{Two fundamental strategies for evaluating expression trees.}
-
-    \paragraph{Materialization (Eagerly Evaluate Subexpressions)}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Strategy:} Evaluate operations one at a time, bottom-up. Store complete result of each operation as temporary relation on disk before executing next operation.
-        \item \textbf{Process:}
-        \begin{enumerate}[nosep]
-            \item Evaluate lowest-level operations (selections on base relations).
-            \item Write complete intermediate result to temporary file.
-            \item Read temporary file as input to next operation.
-            \item Repeat until root operation completes.
-        \end{enumerate}
-        \item \textbf{Advantages:}
-        \begin{itemize}
-            \item Simple to implement - each operation independent.
-            \item Intermediate results reusable if needed multiple times.
-            \item Works for all operation types.
-        \end{itemize}
-        \item \textbf{Disadvantages:}
-        \begin{itemize}
-            \item \textit{High I/O Cost:} Write + read temporary file for each intermediate result.
-            \item \textit{Delayed Results:} Cannot produce output until all subexpressions evaluated.
-            \item \textit{Disk Space:} Requires storage for potentially large temporary relations.
-        \end{itemize}
-        \item \textbf{Example Cost:} Query with 5 operations $\rightarrow$ 4 temporary relations written + read = 8 extra disk operations.
-    \end{itemize}
-
-    \paragraph{Pipelining (On-Demand Evaluation)}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Strategy:} Pass tuples from one operation to next \textbf{without} storing intermediate results on disk. Operations combined into pipeline that runs concurrently.
-        \item \textbf{Mechanism:} When parent operation needs tuple, it calls \texttt{next()} on child operation:
-        \begin{itemize}
-            \item Child produces tuple $\rightarrow$ parent processes it $\rightarrow$ may produce output tuple.
-            \item Tuples flow through pipeline one-at-a-time or in small batches.
-        \end{itemize}
-        \item \textbf{Demand-Driven (Pull Model):} Root pulls tuples from children, children pull from their children (iterator model).
-        \newline \textit{Alternative - Producer-Driven (Push):} Each operation pushes tuples to parent as produced.
-        \item \textbf{Advantages:}
-        \begin{itemize}
-            \item \textit{Eliminate I/O:} No temporary file writes/reads for intermediate results.
-            \item \textit{Fast First Results:} System can start returning query results before complete evaluation finished.
-            \item \textit{Memory Efficiency:} Only small buffer of tuples in memory, not entire intermediate relation.
-        \end{itemize}
-        \item \textbf{Limitations (Pipeline Breakers):} Some operations require entire input before producing output:
-        \begin{itemize}
-            \item \textit{Sorting:} Must read all tuples to determine sort order.
-            \item \textit{Aggregation (GROUP BY):} Must see all tuples in group to compute aggregate.
-            \item \textit{Hash Join (Build Phase):} Must build complete hash table from inner relation.
-        \end{itemize}
-        \textit{Solution:} Use materialization for pipeline-breaking operations, pipelining elsewhere.
-        \item \textbf{Left-Deep Trees \& Pipelining:} Left-deep join trees enable long pipelines:
-        \newline Indexed nested-loop join: Outer tuples pipeline through join without materialization.
-        \newline Right child always base table $\rightarrow$ can use index lookups efficiently.
-    \end{itemize}
-
-    \paragraph{Hybrid Approach (Modern DBMS)}
-    \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Strategy:} Combine both techniques - use pipelining where possible, materialize when necessary.
-        \item \textbf{Example Query:} $\pi_{dept\_name, avg\_salary}(\sigma_{year=2017}(instructor) \bowtie department)$
-        \begin{enumerate}[nosep]
-            \item \textit{Pipeline:} File scan on instructor $\rightarrow$ selection $\rightarrow$ join (if indexed nested-loop).
-            \item \textit{Materialize:} Join result temporarily stored (needed for aggregation).
-            \item \textit{Pipeline:} Aggregation $\rightarrow$ projection to final output.
-        \end{enumerate}
-        \item \textbf{Optimization Decision:} Optimizer estimates cost/benefit:
-        \begin{itemize}
-            \item If intermediate result small $\rightarrow$ materialize (faster subsequent access).
-            \item If intermediate result large + used once $\rightarrow$ pipeline (save I/O).
+            \item \textbf{Sort (Sắp xếp):} Phải đọc tất cả các hàng để tìm hàng nhỏ nhất.
+            \item \textbf{Aggregate (GROUP BY):} Phải đọc tất cả các hàng trong một nhóm để tính tổng/đếm.
+            \item \textbf{Hash Join (Giai đoạn Build):} Phải xây dựng bảng băm đầy đủ trước khi thăm dò (probing).
         \end{itemize}
     \end{itemize}
 
+    \subsubsection{Bảng Tra Cứu Nhanh Kế hoạch Đánh giá}
     \begin{center}
-        \includegraphics[width=1\linewidth, keepaspectratio]{./images/sql_execution_order.png} \\
-        \footnotesize \textit{(SQL Execution Order)}
+        \renewcommand{\arraystretch}{1.2}
+        \begin{tabular}{@{} p{0.2\linewidth} | p{0.38\linewidth} | p{0.38\linewidth} @{}}
+            \hline
+            \textbf{Đặc điểm} & \textbf{Materialization} & \textbf{Pipelining} \\
+            \hline
+            \textbf{Chi phí I/O} & Cao (Ghi bảng tạm) & Thấp (Chỉ dùng bộ nhớ) \\
+            \hline
+            \textbf{Độ trễ (Latency)} & Cao (Đợi tất cả) & Thấp (Hàng đầu tiên nhanh) \\
+            \hline
+            \textbf{Bộ nhớ} & Thấp (Từng phép toán một) & Cao (Các phép toán đồng thời) \\
+            \hline
+            \textbf{Trường hợp dùng} & Sắp xếp phức tạp / Big Data & Truy vấn thời gian thực \\
+            \hline
+        \end{tabular}
     \end{center}
 
     \columnbreak
@@ -1423,6 +1302,13 @@
     \begin{itemize}[leftmargin=*, label={--}]
         \item \textbf{ETL (Extract-Transform-Load):} Transform \textit{trước} khi vào kho. Schema-on-write. Dữ liệu sạch, bảo mật. (Truyền thống).
         \item \textbf{ELT (Extract-Load-Transform):} Load raw vào kho \textit{trước}, transform sau. Schema-on-read. Tận dụng sức mạnh Cloud DW (BigQuery, Snowflake). (Hiện đại).
+        \item \textbf{Bản chất chung:} Cả \textbf{ETL} và \textbf{ELT} đều là các quá trình hỗ trợ \textbf{tích hợp dữ liệu} (data integration): trích xuất dữ liệu từ nguồn, đưa vào đích (DW/Sink) và chuẩn hoá/chuẩn bị dữ liệu cho phân tích hoặc hệ thống downstream.
+        \item \textbf{Ngữ cảnh sử dụng:}
+            \begin{itemize}[leftmargin=*, label={--}]
+                \item \textbf{ELT:} Hiệu quả với dữ liệu phức tạp hoặc khối lượng rất lớn (Big Data), khi kho dữ liệu/Cloud DW có khả năng xử lý transform ở quy mô (ví dụ: BigQuery, Snowflake).
+                \item \textbf{ETL:} Phù hợp với các ngữ cảnh cơ sở dữ liệu truyền thống hoặc khi cần chuyển đổi, làm sạch kỹ lưỡng trước khi nạp vào kho (ví dụ do yêu cầu bảo mật, chuẩn hoá dữ liệu, hoặc tài nguyên xử lý hạn chế ở đích).
+            \end{itemize}
+        \item \textbf{Lưu ý khi trả lời trong đề thi:} Quan điểm đúng nhất thường là \textit{không} chọn tuyệt đối ETL hay ELT — cả hai đều có ưu, nhược điểm riêng và việc lựa chọn phụ thuộc vào ngữ cảnh ứng dụng cụ thể (yêu cầu hiệu năng, kích thước dữ liệu, khả năng xử lý của DW, chính sách bảo mật, v.v.).
     \end{itemize}
 
     \paragraph{Common ETL Logic Patterns}\mbox{}\\
@@ -1434,6 +1320,7 @@
         \item \textbf{SCD for Price Changes:} Khi \texttt{Item\_price} thay đổi, dùng \textbf{Type 2 SCD} trong dimension hoặc snapshot fact table để lưu lịch sử giá.
     \end{itemize}
 
+    \columnbreak
     % ============================================================================
     % TIER 5: ANALYTICS & WAREHOUSING
     % ============================================================================
@@ -1545,8 +1432,6 @@
         \item \textbf{Data Lake:} Dữ liệu thô (Raw), đa dạng, giá rẻ, cho ML/DS.
         \item \textbf{Lakehouse:} Kết hợp (Lưu trữ rẻ của Lake + Quản lý/ACID của Warehouse).
     \end{itemize}
-
-    \columnbreak
 
     \subsubsection{SCD (Slowly Changing Dimensions)}
     \textit{Tại sao cần?} Để đảm bảo báo cáo lịch sử chính xác. Nếu KH chuyển từ HCM ra HN năm 2024, doanh số năm 2020 vẫn phải tính cho HCM.
@@ -1766,55 +1651,182 @@
     \end{itemize}
 
     \section{Appendix: Tự luận}
-    \textit{4 dạng bài chính \& cách trình bày}
-
     \subsection{Thiết kế Kho Dữ Liệu (Star Schema)}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Bước 1: Fact Table (Bảng Sự kiện)}
-        \begin{itemize}
-            \item \textit{Tên:} Phản ánh quy trình (VD: \texttt{Sales\_Fact}).
-            \item \textit{PK:} Composite Key từ các FK (VD: \texttt{TimeID, StoreID, ProductID}).
-            \item \textit{Measures:} Cột số liệu (Revenue, Qty). \textit{Lưu ý:} \texttt{Price} thường ở Dim, \texttt{Revenue} ở Fact.
+        \item \textbf{Ví dụ chi tiết (Câu 35 -- HK2 2022-2023 F1.1):}
+        \begin{itemize}[leftmargin=*, label={--}]
+            \item \textbf{Nguồn (OLTP):}\\
+            \texttt{ORDER(order\_id, date, customer\_name, customer\_address, customer\_phone, store\_name, store\_address, store\_district, store\_city, staff\_id, staff\_name, is\_deleted)},\\
+            \texttt{ORDER\_LINE(order\_id, SKU, item\_price, item\_quantity, promotion\_id, promotion\_name, promotion\_type, promotion\_value)},\\
+            \texttt{PRODUCT(SKU, item\_description, item\_category, item\_class, item\_brand, item\_cost)}.
+            \item \textbf{Yêu cầu:} Báo cáo \textbf{Total Revenue, Total Quantity, Total Cost} theo Date (day/week/month/year) và các chiều: Customer, Store, Staff, Product, Promotion.
         \end{itemize}
-        \item \textbf{Bước 2: Dimension Tables (Bảng Chiều)}
-        \begin{itemize}
-            \item \textit{Time Dim:} Luôn có. Hierarchy: Day $\to$ Month $\to$ Quarter $\to$ Year.
-            \item \textit{Other Dims:} Product, Customer, Store. Cấu trúc: \texttt{Surrogate Key} (PK), \texttt{Business Key} (Source ID), Attributes.
+
+        \item \textbf{Giải chi tiết (Kimball 4 bước):}
+        \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+            \item \textbf{Business Process:} Sales.
+            \item \textbf{Declare the Grain:} One row per \texttt{ORDER\_LINE} (mức sản phẩm trong đơn) -- cần vì đo lường theo SKU.
+            \item \textbf{Identify Dimensions:}
+            \begin{itemize}
+                \item \textbf{Dim\_Date:} date\_key, date, day, week, month, year.
+                \item \textbf{Dim\_Customer:} customer\_key, customer\_name, customer\_address, customer\_phone.
+                \item \textbf{Dim\_Store:} store\_key, store\_name, store\_address, store\_district, store\_city.
+                \item \textbf{Dim\_Staff:} staff\_key, staff\_id, staff\_name.
+                \item \textbf{Dim\_Product:} item\_key, SKU, item\_description, item\_category, item\_class, item\_brand, item\_cost.
+                \item \textbf{Dim\_Promotion:} promotion\_key, promotion\_id, promotion\_name, promotion\_type, promotion\_value.
+            \end{itemize}
+            \item \textbf{Identify Facts:} \textbf{FACT\_SALES} với FKs (date\_key, customer\_key, store\_key, staff\_key, item\_key, promotion\_key) và measures:
+            \begin{itemize}
+                \item total\_quantity = item\_quantity
+                \item total\_revenue = item\_price * item\_quantity
+                \item total\_cost = item\_cost * item\_quantity
+            \end{itemize}
+        \end{enumerate}
+
+        \item \textbf{Kết quả (mô tả cấu trúc):}
+        \begin{itemize}[leftmargin=*, label={--}]
+            \item \textbf{FACT\_SALES:}
+            \begin{center}
+                \scriptsize
+                \renewcommand{\arraystretch}{1.05}
+                \begin{tabular}{@{} l | l | p{0.48\linewidth} @{}}
+                    \toprule
+                    \textbf{Cột} & \textbf{Loại} & \textbf{Mô tả} \\
+                    \midrule
+                    date\_key & FK & Liên kết đến \texttt{Dim\_Date} \\
+                    store\_key & FK & Liên kết đến \texttt{Dim\_Store} \\
+                    staff\_key & FK & Liên kết đến \texttt{Dim\_Staff} \\
+                    customer\_key & FK & Liên kết đến \texttt{Dim\_Customer} \\
+                    promotion\_key & FK & Liên kết đến \texttt{Dim\_Promotion} \\
+                    item\_key & FK & Liên kết đến \texttt{Dim\_Product} \\
+                    total\_quantity & Measure & Tổng số lượng bán (SUM) \\
+                    total\_revenue & Measure & Tổng doanh thu (SUM of item\_price * qty) \\
+                    total\_cost & Measure & Tổng chi phí (SUM of item\_cost * qty) \\
+                    \bottomrule
+                \end{tabular}
+            \end{center}
         \end{itemize}
-        \item \textbf{Mẹo trình bày:}
-        \newline $\rightarrow$ \textbf{Vẽ hình:} Star Schema (Fact ở giữa, Dims xung quanh).
-        \newline $\rightarrow$ \textbf{Liệt kê Text:} Viết rõ schema dạng text để giám khảo dễ chấm.
-        \newline \textit{VD:} \texttt{Dim\_Time(TimeID, Day, Month, Year)}
+
+        \item \textbf{ETL Note:}
+        \begin{itemize}
+            \item Lọc \texttt{ORDER.is\_deleted = false} khi extract để loại đơn bị hủy.
+            \item Tạo \texttt{Surrogate Keys} (e.g., \texttt{customer\_key}) thay vì dùng PK nguồn để quản lý lịch sử và xử lý duplicate.
+            \item Lấy \texttt{item\_cost} từ \texttt{PRODUCT} để tính \texttt{total\_cost = item\_cost * item\_quantity} trên bước transform/load.
+        \end{itemize}
+
+        \item \textbf{Note:} Trong bài thi, trình bày theo (1) chọn process => (2) khai báo grain (nhấn mạnh "one row per ORDER\_LINE") => (3) liệt kê dimensions + attributes => (4) nêu measures và công thức tính => (5) lưu ý filter \texttt{is\_deleted}.
     \end{itemize}
 
     \subsection{Kiến trúc \& Công nghệ}
+    \includegraphics[width=1\linewidth, keepaspectratio]{./images/3_tier_arch_dwh.png}
+    \columnbreak
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Kiến trúc:} Đề xuất mô hình \textbf{3-Tier} (Source $\to$ Staging $\to$ DW $\to$ Data Mart) hoặc \textbf{Lambda} (Batch + Speed) cho Big Data.
-        \item \textbf{Integration Flow:}
-        \begin{itemize}
-            \item \textbf{ETL:} Nếu cần làm sạch kỹ, data nhạy cảm.
-            \item \textbf{ELT:} Nếu đích là Cloud DW (BigQuery) hoặc Hadoop (tận dụng sức mạnh xử lý đích).
-        \end{itemize}
-        \item \textbf{Tech Stack (Phân loại rõ):}
-        \begin{itemize}
-            \item \textit{Ingestion:} Kafka (Streaming), Airflow (Orchestrator).
-            \item \textit{Processing:} Spark (Processing), MapReduce.
-            \item \textit{Storage:} HDFS / S3 (Data Lake), MongoDB (NoSQL).
-            \item \textit{Serving/DW:} Hive, BigQuery, Snowflake.
+        \item \textbf{Mẫu giải: Thiết kế Hệ thống DWH cho Sales}
+        \begin{itemize}[leftmargin=*, label={--}]
+            \item \textbf{Kiến trúc (3-Tier):}
+            \begin{itemize}
+                \item \textbf{Source Layer:} Hệ thống OLTP (MySQL/Postgres) chứa \texttt{ORDER, ORDER\_LINE, PRODUCT}.
+                \item \textbf{Staging Area:} Lưu trữ dữ liệu thô (Parquet trên HDFS/S3) để làm sạch và chuyển đổi.
+                \item \textbf{Data Warehouse Layer:} Apache Hive (HDFS) hoặc BigQuery chứa các bảng Dim/Fact theo Star Schema.
+                \item \textbf{Serving / Data Mart (tùy chọn):} Views / Materialized Views để phục vụ BI (PowerBI/Tableau).
+            \end{itemize}
+
+
+            \item \textbf{Công nghệ đề xuất:}
+            \begin{center}
+                \renewcommand{\arraystretch}{1.05}
+                \begin{tabular}{@{} p{0.22\linewidth} | p{0.26\linewidth} | p{0.44\linewidth} @{}}
+                    \toprule
+                    \textbf{Thành phần} & \textbf{Công nghệ} & \textbf{Lý do / Ghi chú} \\
+                    \midrule
+                    Source & MySQL / PostgreSQL & RDBMS OLTP phổ biến, ACID đảm bảo tính nhất quán. \\
+                    ETL/ELT & Apache Spark/Kafka & Xử lý Batch \& Streaming, in-memory, dễ scale. \\
+                    Orchestration & Apache Airflow & Lên lịch, quản lý workflow, retry, monitoring. \\
+                    Storage (DWH) & Apache Hive (HDFS) / BigQuery & Hive phù hợp on-prem/Hadoop; BigQuery phù hợp cloud/serverless. \\
+                    Presentation & PowerBI / Tableau & Kết nối trực tiếp tới DWH cho dashboard báo cáo. \\
+                    \bottomrule
+                \end{tabular}
+            \end{center}
+
+            \item \textbf{Quy trình tích hợp dữ liệu (ETL/ELT):}
+            \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+                \item \textbf{Extract:}
+                \begin{itemize}
+                    \item Tần suất: Daily (Incremental), ví dụ: trích xuất các \texttt{ORDER} của ngày hôm qua.
+                    \item Chỉ lấy \texttt{ORDER.is\_deleted = false} để không tính các đơn hủy.
+                    \item Công cụ: Spark đọc từ MySQL/Postgres và ghi Parquet tới Staging (HDFS/S3).
+                \end{itemize}
+
+                \item \textbf{Transform:}
+                \begin{itemize}
+                    \item Làm sạch: Chuẩn hoá ngày, loại bỏ NULL/invalid, validate dữ liệu.
+                    \item Tính toán measures: \texttt{revenue = item\_price * item\_quantity}, \texttt{cost = item\_cost * item\_quantity}.
+                    \item Tra cứu \& ánh xạ Surrogate Keys: map \texttt{customer\_id} -> \texttt{customer\_key} v.v.
+                    \item Xử lý SCD (Type 1/Type 2) cho dimension khi cần.
+                \end{itemize}
+
+                \item \textbf{Load:}
+                \begin{itemize}
+                    \item Ghi Fact/Dimensions vào Hive (hoặc load vào BigQuery) theo Star Schema.
+                    \item Chiến lược nạp: Fact incremental, Dimension upsert / SCD policy.
+                    \item Toàn bộ workflow được điều phối bởi Airflow (schedule, dependencies, retries).
+                \end{itemize}
+            \end{enumerate}
+
+            \item \textbf{Mô tả tóm tắt (dùng để trả lời câu tự luận / vẽ hình):}
+            \begin{quote}
+                Hệ thống sử dụng kiến trúc \textbf{3-Tier}. Dữ liệu bán hàng từ MySQL được trích xuất hàng ngày bằng Apache Spark, lưu tạm tại HDFS (Staging) dưới dạng Parquet. Spark thực hiện làm sạch, tính toán doanh thu/chi phí và ánh xạ Surrogate Keys, sau đó nạp vào Apache Hive (Data Warehouse) theo Star Schema. Toàn bộ quy trình được điều phối bởi Apache Airflow và dashboard được hiển thị qua PowerBI/Tableau.
+            \end{quote}
+
+            \item \textbf{Ghi chú:}
+            \begin{itemize}
+                \item Nêu rõ tần suất (daily), policy lọc (is\_deleted), SCD policy, và nơi lưu Staging (HDFS/S3).
+                \item Nếu đề cho phép Cloud, thay Hive bằng BigQuery và nhấn mạnh ưu điểm serverless/fast queries.
+            \end{itemize}
         \end{itemize}
     \end{itemize}
 
     \subsection{SQL \& ETL Logic}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{Extract:} Dùng \texttt{SELECT DISTINCT} cho Dimension.
-        \item \textbf{Transform:} Dùng hàm time (\texttt{Month()}, \texttt{Year()}) tạo Time Dim.
-        \item \textbf{SCD Type 2:} Nếu đề hỏi về "lưu lịch sử thay đổi" \newline $\rightarrow$ Thêm cột \texttt{Effective\_Date}, \texttt{Expiry\_Date}, \texttt{Current\_Flag}.
+        \item \textbf{Extract (Trích xuất):}
+        \begin{itemize}
+            \item \textit{Filter:} Lọc data rác/cũ (VD: \texttt{WHERE is\_deleted = false}).
+            \item \textit{Dimensions:} Dùng \texttt{SELECT DISTINCT} từ bảng transaction để lấy list duy nhất (Khách hàng, SP).
+            \item \textit{Facts:} \texttt{JOIN} các bảng giao dịch (Order + OrderDetail) để lấy đủ thông tin.
+        \end{itemize}
+        \item \textbf{Transform (Biến đổi):}
+        \begin{itemize}
+            \item \textit{Calc Measures:} Tính cột phái sinh (VD: \texttt{Revenue = Price * Quantity}).
+            \item \textit{Time Hierarchy:} Tách \texttt{Date} $\to$ Day, Month, Quarter, Year.
+            \item \textit{Loc Hierarchy:} Tách Address $\to$ District, City, Region.
+            \item \textit{Lookups:} Map ID từ nguồn sang Surrogate Key của DW.
+        \end{itemize}
+        \item \textbf{Load (Nạp):}
+        \begin{itemize}
+            \item \textit{Fact:} Nạp **Incremental** (chỉ nạp dòng mới).
+            \item \textit{Dimension:} Nạp **Overwrite** (nếu nhỏ) hoặc **SCD/Upsert** (nếu lớn/cần lịch sử).
+            \item \textit{Schedule:} Định thời chạy (Daily/Weekly).
+        \end{itemize}
     \end{itemize}
 
     \subsection{Lý thuyết Big Data}
     \begin{itemize}[leftmargin=*, label={--}]
-        \item \textbf{CAP vs ACID:} So sánh Consisteny (Replicas vs Constraints).
-        \item \textbf{MapReduce Trace:} Vẽ bảng Input/Output từng pha: Map $\to$ Shuffle (Sort/Group) $\to$ Reduce.
+        \item \textbf{CAP vs ACID:}
+            \begin{itemize}[leftmargin=*, label={--}]
+                \item \textbf{CAP:}
+                \begin{enumerate}[leftmargin=*, label={\textbf{\arabic*.}}]
+                    \item \textbf{C — Consistency:} Replica consistency — tất cả bản sao nhìn thấy cùng dữ liệu tại cùng mốc.
+                    \item \textbf{A — Availability:} Mọi nút đang hoạt động trả lời yêu cầu (không im lặng).
+                    \item \textbf{P — Partition Tolerance:} Hệ thống tiếp tục hoạt động dù network partition.
+                \end{enumerate}
+
+                \item \textbf{Khác biệt chính so với ACID:}
+                \begin{itemize}[leftmargin=*, label={--}]
+                    \item \textbf{Phạm vi:} CAP = hệ thống phân tán; ACID = giao tác (transaction).
+                    \item \textbf{Ý nghĩa của "C":} CAP-C = Replica consistency; ACID-C = Logical integrity/constraints.
+                    \item \textbf{NOTE:} Viết 3 định nghĩa C/A/P, nêu scope và khác biệt của "C"; ví dụ: Cassandra/Dynamo (CAP trade-offs), Postgres/MySQL (ACID).
+                \end{itemize}
+            \end{itemize}
     \end{itemize}
 
 
